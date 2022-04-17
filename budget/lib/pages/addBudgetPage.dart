@@ -301,6 +301,8 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
         reoccurrence: mapRecurrence(selectedRecurrence),
         dateCreated: DateTime.now(),
         pinned: true,
+        order: 0,
+        walletFk: 0,
       ),
     );
     Navigator.pop(context);
