@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:budget/colors.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/pages/addBudgetPage.dart';
@@ -41,8 +43,19 @@ class _EditBudgetPageState extends State<EditBudgetPage> {
                   );
                 },
                 itemCount: snapshot.data!.length,
-                onReorder: (_, _int) {
-                  print("object");
+                onReorder: (_intPrevious, _intNew) async {
+                  Budget oldBudget = snapshot.data![_intPrevious];
+
+                  print(oldBudget.name);
+                  print(oldBudget.order);
+
+                  if (_intNew > _intPrevious) {
+                    await database.moveBudget(
+                        oldBudget.budgetPk, _intNew - 1, oldBudget.order);
+                  } else {
+                    await database.moveBudget(
+                        oldBudget.budgetPk, _intNew, oldBudget.order);
+                  }
                 },
               );
             }
@@ -51,9 +64,6 @@ class _EditBudgetPageState extends State<EditBudgetPage> {
             );
           },
         ),
-        SliverFillRemaining(),
-        SliverFillRemaining(),
-        SliverFillRemaining(),
       ],
     );
   }
@@ -79,7 +89,7 @@ class BudgetRowEntry extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          TextFont(text: budget.name),
+          TextFont(text: budget.name + " - " + budget.order.toString()),
           Row(
             children: [
               Tappable(
