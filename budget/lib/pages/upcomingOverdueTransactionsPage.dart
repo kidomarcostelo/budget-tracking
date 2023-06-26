@@ -6,6 +6,7 @@ import 'package:budget/pages/budgetPage.dart';
 import 'package:budget/pages/subscriptionsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/widgets/navigationSidebar.dart';
+import 'package:budget/widgets/noResults.dart';
 import 'package:budget/widgets/selectedTransactionsActionBar.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/widgets/framework/pageFramework.dart';
@@ -42,71 +43,18 @@ class UpcomingOverdueTransactions extends StatelessWidget {
             dragDownToDismiss: true,
             slivers: [
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 20),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: enableDoubleColumn(context)
-                        ? MainAxisAlignment.center
-                        : MainAxisAlignment.start,
-                    children: [
-                      StreamBuilder<double?>(
-                        stream: database.watchTotalOfUpcomingOverdue(
-                          Provider.of<AllWallets>(context),
-                          overdueTransactions,
-                        ),
-                        builder: (context, snapshot) {
-                          return CountNumber(
-                            count: snapshot.hasData == false ||
-                                    snapshot.data == null
-                                ? 0
-                                : (snapshot.data ?? 0).abs(),
-                            duration: Duration(milliseconds: 700),
-                            dynamicDecimals: true,
-                            initialCount: (0),
-                            textBuilder: (number) {
-                              return TextFont(
-                                text: convertToMoney(
-                                    Provider.of<AllWallets>(context), number,
-                                    finalNumber: snapshot.hasData == false ||
-                                            snapshot.data == null
-                                        ? 0
-                                        : (snapshot.data ?? 0).abs()),
-                                fontSize: 25,
-                                textColor: overdueTransactions
-                                    ? getColor(context, "unPaidOverdue")
-                                    : getColor(context, "unPaidUpcoming"),
-                                fontWeight: FontWeight.bold,
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      SizedBox(width: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 3.0),
-                        child: StreamBuilder<List<int?>>(
-                          stream: overdueTransactions
-                              ? database.watchCountOfOverdue()
-                              : database.watchCountOfUpcoming(),
-                          builder: (context, snapshot) {
-                            return TextFont(
-                              text: snapshot.hasData == false ||
-                                      snapshot.data![0] == null
-                                  ? "/"
-                                  : snapshot.data![0].toString() +
-                                      pluralString(snapshot.data![0] == 1,
-                                          " transaction"),
-                              fontSize: 15,
-                              textColor: getColor(context, "textLight"),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: CenteredAmountAndNumTransactions(
+                numTransactionsStream: overdueTransactions
+                    ? database.watchCountOfOverdue()
+                    : database.watchCountOfUpcoming(),
+                totalAmountStream: database.watchTotalOfUpcomingOverdue(
+                  Provider.of<AllWallets>(context),
+                  overdueTransactions,
                 ),
-              ),
+                textColor: overdueTransactions
+                    ? getColor(context, "unPaidOverdue")
+                    : getColor(context, "unPaidUpcoming"),
+              )),
               SliverToBoxAdapter(
                 child: SizedBox(height: 20),
               ),
@@ -119,20 +67,10 @@ class UpcomingOverdueTransactions extends StatelessWidget {
                     if (snapshot.data!.length <= 0) {
                       return SliverToBoxAdapter(
                         child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                                top: 35, right: 30, left: 30),
-                            child: TextFont(
-                              maxLines: 4,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              text: "No " +
-                                  (overdueTransactions
-                                      ? "overdue"
-                                      : "upcoming") +
-                                  " transactions.",
-                              textAlign: TextAlign.center,
-                            ),
+                          child: NoResults(
+                            message: "No " +
+                                (overdueTransactions ? "overdue" : "upcoming") +
+                                " transactions.",
                           ),
                         ),
                       );
@@ -173,6 +111,69 @@ class UpcomingOverdueTransactions extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class CenteredAmountAndNumTransactions extends StatelessWidget {
+  const CenteredAmountAndNumTransactions(
+      {required this.numTransactionsStream,
+      required this.totalAmountStream,
+      required this.textColor,
+      super.key});
+
+  final Stream<List<int?>> numTransactionsStream;
+  final Stream<double?> totalAmountStream;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(height: 20),
+        StreamBuilder<double?>(
+          stream: totalAmountStream,
+          builder: (context, snapshot) {
+            return CountNumber(
+              count: snapshot.hasData == false || snapshot.data == null
+                  ? 0
+                  : (snapshot.data ?? 0).abs(),
+              duration: Duration(milliseconds: 700),
+              dynamicDecimals: true,
+              initialCount: (0),
+              textBuilder: (number) {
+                return TextFont(
+                  text: convertToMoney(Provider.of<AllWallets>(context), number,
+                      finalNumber:
+                          snapshot.hasData == false || snapshot.data == null
+                              ? 0
+                              : (snapshot.data ?? 0).abs()),
+                  fontSize: 30,
+                  textColor: textColor,
+                  fontWeight: FontWeight.bold,
+                );
+              },
+            );
+          },
+        ),
+        SizedBox(height: 5),
+        StreamBuilder<List<int?>>(
+          stream: numTransactionsStream,
+          builder: (context, snapshot) {
+            return TextFont(
+              text: snapshot.hasData == false || snapshot.data![0] == null
+                  ? "/"
+                  : snapshot.data![0].toString() +
+                      pluralString(snapshot.data![0] == 1, " transaction"),
+              fontSize: 16,
+              textColor: getColor(context, "textLight"),
+            );
+          },
+        ),
+        SizedBox(height: 15),
+      ],
     );
   }
 }
