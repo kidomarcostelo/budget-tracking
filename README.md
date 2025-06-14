@@ -23,6 +23,12 @@
   </a>
 </div>
 
+<h3 align="center" style="font-size:28px; line-height:1">
+  <a href="https://github.com/jameskokoska/Cashew/issues/725">🚀 Cashew Beta Testing</a>
+</h3>
+
+---
+
 <br />
 
 <a href="https://cashewapp.web.app/">
@@ -32,8 +38,6 @@
 </a>
 
 <br />
-
----
 
 Cashew is a full-fledged, feature-rich application designed to empower users in managing their finances effectively. Built using Flutter - with Drift's SQL package, and Firebase - this app offers a seamless and intuitive user experience across various devices. Development started in September 2021.
 
