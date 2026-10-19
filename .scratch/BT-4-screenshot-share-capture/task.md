@@ -26,11 +26,11 @@
 ---
 
 ## 3. Wayfinder Map Breakdown & Progress
-- [ ] **Phase 1: Native Spike & Intent Receiver** ([#9](https://github.com/kidomarcostelo/budget-tracking/issues/9) `wayfinder:prototype`)
-  - [ ] Add `ACTION_SEND` intent filter for `image/*` to `android/app/src/main/AndroidManifest.xml`.
-  - [ ] Add `com.google.mlkit:text-recognition:16.0.1` to `android/app/build.gradle`.
-  - [ ] Implement Kotlin `MethodChannel` (`com.budget.tracker/ocr`) in `MainActivity.kt`.
-  - [ ] Verify clean build on Flutter 3.19.6 and passing GitHub Actions CI.
+- [x] **Phase 1: Native Spike & Intent Receiver** ([#9](https://github.com/kidomarcostelo/budget-tracking/issues/9) `wayfinder:prototype`)
+  - [x] Add `ACTION_SEND` intent filter for `image/*` to `android/app/src/main/AndroidManifest.xml`.
+  - [x] Add `com.google.mlkit:text-recognition:16.0.1` to `android/app/build.gradle`.
+  - [x] Implement Kotlin `MethodChannel` (`com.budget.tracker_app/ocr`) in `MainActivity.kt`.
+  - [x] Verify clean build on Flutter 3.19.6 and passing GitHub Actions CI.
 - [ ] **Phase 2: Bank Receipt OCR Layout Analysis & Extraction Heuristics** ([#10](https://github.com/kidomarcostelo/budget-tracking/issues/10) `wayfinder:research`)
   - [ ] Analyze OCR text block output for MariBank, UnionBank, and major e-wallets.
   - [ ] Formulate robust regex and spatial heuristics for `Amount`, `Timestamp`, `Accounts`, and `Reference Number`.
