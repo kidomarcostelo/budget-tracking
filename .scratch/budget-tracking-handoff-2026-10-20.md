@@ -95,6 +95,7 @@ When capturing an inter-bank transfer between user-owned accounts (e.g. UnionBan
 
 ## 5. Non-Negotiable Constraints & Guardrails
 
+- **Strict PR Workflow (No Direct Push to Main)**: NEVER push directly to `main`. Always create a feature branch (`feat/...` or `fix/...`), push to the fork, and open a Pull Request using `gh pr create` for review and double-checking before merge.
 - **No AI / Co-authored-by Trailers**: Never add `Co-authored-by` or assistant attribution trailers in git commit messages.
 - **Local-First Privacy**: 100% on-device processing. No external identity services or cloud APIs.
-- **Quality Gates**: Maintain 0 `flutter analyze` warnings, 0 `dart format` diffs, and all tests passing before pushing to `origin/main`.
+- **Quality Gates**: Maintain 0 `flutter analyze` warnings, 0 `dart format` diffs, and all tests passing.
