@@ -34,6 +34,12 @@ Type: [Debit / Credit / Transfer / Payment]
 ```
 
 ## Curated Banks & Samples
-- **UnionBank**: [`unionbank/sample-transfer.md`](unionbank/sample-transfer.md) (Outgoing Fund Transfer via InstaPay to MariBank)
-- **MariBank**: [`maribank/sample-received-transfer.md`](maribank/sample-received-transfer.md) (Incoming Fund Transfer from UnionBank)
+- **GoTyme Bank**: [`gotyme/sample-receipt.md`](gotyme/sample-receipt.md) (App Receipt: Fund Transfer via InstaPay to MariBank)
+- **Maya**: [`maya/sample-receipt.md`](maya/sample-receipt.md) (App Receipt: P2P Send Money / Expense)
+- **MariBank**:
+  - [`maribank/sample-receipt-app.md`](maribank/sample-receipt-app.md) (App Receipt: Fund Transfer via InstaPay to Maya)
+  - [`maribank/sample-received-transfer.md`](maribank/sample-received-transfer.md) (Email: Received Transfer from UnionBank)
+- **UnionBank**:
+  - [`unionbank/sample-receipt-app.md`](unionbank/sample-receipt-app.md) (App Receipt: Fund Transfer via InstaPay to MariBank)
+  - [`unionbank/sample-transfer.md`](unionbank/sample-transfer.md) (Email: Outgoing Transfer to MariBank)
 
