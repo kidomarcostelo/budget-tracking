@@ -82,8 +82,7 @@ class _InitializeSharedReceiptCaptureState
     if (appStateSettings['hasOnboarded'] != true) return;
 
     try {
-      final receipt =
-          await SharedReceiptProcessor.processSharedImage(filePath);
+      final receipt = await SharedReceiptProcessor.processSharedImage(filePath);
       if (receipt == null) {
         openSnackbar(SnackbarMessage(
           title: 'failed-to-preview-image'.tr(),
@@ -94,8 +93,7 @@ class _InitializeSharedReceiptCaptureState
         return;
       }
 
-      final matchedWallet =
-          await SharedReceiptProcessor.resolveWallet(receipt);
+      final matchedWallet = await SharedReceiptProcessor.resolveWallet(receipt);
       final matchedCategory =
           await SharedReceiptProcessor.resolveCategory(receipt);
       final title = SharedReceiptProcessor.formatTitle(receipt);
