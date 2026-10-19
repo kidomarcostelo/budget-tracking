@@ -104,8 +104,11 @@ class BankReceiptParser {
 
     final date = _parseDateTime(
       text,
-      RegExp(r'Date\s*([0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{4}\s+at\s+[0-9]{1,2}:[0-9]{2}\s+[AP]M)',
-          caseSensitive: false),
+      RegExp(
+        r'Date\s*([0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{4}\s+at\s+'
+        r'[0-9]{1,2}:[0-9]{2}\s+[AP]M)',
+        caseSensitive: false,
+      ),
       'd MMM yyyy \'at\' hh:mm a',
     );
 
@@ -190,8 +193,11 @@ class BankReceiptParser {
 
     final date = _parseDateTime(
       text,
-      RegExp(r'Transaction Date & Time\s*([0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{4},\s+[0-9]{1,2}:[0-9]{2})',
-          caseSensitive: false),
+      RegExp(
+        r'Transaction Date & Time\s*'
+        r'([0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{4},\s+[0-9]{1,2}:[0-9]{2})',
+        caseSensitive: false,
+      ),
       'd MMM yyyy, HH:mm',
     );
 
@@ -236,7 +242,10 @@ class BankReceiptParser {
 
     final date = _parseDateTime(
       text,
-      RegExp(r'([A-Za-z]{3}\s+[0-9]{1,2},\s+[0-9]{4}\s*\|\s*[0-9]{1,2}:[0-9]{2}\s+[AP]M)'),
+      RegExp(
+        r'([A-Za-z]{3}\s+[0-9]{1,2},\s+[0-9]{4}\s*\|\s*'
+        r'[0-9]{1,2}:[0-9]{2}\s+[AP]M)',
+      ),
       'MMM d, yyyy | hh:mm a',
     );
 
