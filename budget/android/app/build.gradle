@@ -95,4 +95,7 @@ dependencies {
     // In-App-Review dependecies. More info https://developer.android.com/guide/playcore/in-app-review/kotlin-java#java
     implementation 'com.google.android.play:review:2.0.1'
     implementation 'com.google.android.play:review-ktx:2.0.1'
+
+    // Google ML Kit Text Recognition for on-device screenshot receipt parsing
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
 }
