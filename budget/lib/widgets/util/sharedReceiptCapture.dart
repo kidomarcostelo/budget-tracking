@@ -8,6 +8,7 @@ import 'package:budget/struct/sharedReceiptProcessor.dart';
 import 'package:budget/struct/throttler.dart';
 import 'package:budget/widgets/globalSnackbar.dart';
 import 'package:budget/widgets/navigationFramework.dart';
+import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/openSnackbar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
