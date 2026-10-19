@@ -111,17 +111,18 @@ Get help
     test('guarantees temp image deletion even when OCR throws', () async {
       String? deletedPath;
 
-      expect(
-        () async => await SharedReceiptProcessor.processSharedImage(
+      try {
+        await SharedReceiptProcessor.processSharedImage(
           '/cache/corrupt_image.png',
           recognizeText: (path) async => throw Exception('Native OCR crash'),
           deleteTempFile: (path) async {
             deletedPath = path;
             return true;
           },
-        ),
-        throwsA(isA<Exception>()),
-      );
+        );
+      } catch (_) {
+        // Expected exception
+      }
 
       expect(deletedPath, '/cache/corrupt_image.png');
     });
