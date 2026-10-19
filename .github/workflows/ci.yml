@@ -1,0 +1,44 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality_gate:
+    name: Lint, Format, and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        working-directory: budget
+        run: flutter pub get
+
+      - name: Verify code formatting
+        working-directory: budget
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Run static analysis
+        working-directory: budget
+        run: flutter analyze
+
+      - name: Run unit & widget tests
+        working-directory: budget
+        run: flutter test
