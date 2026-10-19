@@ -1,7 +1,7 @@
 # Task: Capture transactions from shared banking screenshots (Android first)
 
 **Issue Reference:** [#8](https://github.com/kidomarcostelo/budget-tracking/issues/8)  
-**Status:** In Progress (Wayfinder Map Active)  
+**Status:** Completed (All Map Sub-Issues Verified & Closed)  
 **Assignee / Agent:** Antigravity  
 
 ---
@@ -31,19 +31,20 @@
   - [x] Add `com.google.mlkit:text-recognition:16.0.1` to `android/app/build.gradle`.
   - [x] Implement Kotlin `MethodChannel` (`com.budget.tracker_app/ocr`) in `MainActivity.kt`.
   - [x] Verify clean build on Flutter 3.19.6 and passing GitHub Actions CI.
-- [ ] **Phase 2: Bank Receipt OCR Layout Analysis & Extraction Heuristics** ([#10](https://github.com/kidomarcostelo/budget-tracking/issues/10) `wayfinder:research`)
-  - [ ] Analyze OCR text block output for MariBank, UnionBank, and major e-wallets.
-  - [ ] Formulate robust regex and spatial heuristics for `Amount`, `Timestamp`, `Accounts`, and `Reference Number`.
-  - [ ] Create unit tests and fixtures.
-- [ ] **Phase 3: Integration & AddTransactionPage Prefill** ([#11](https://github.com/kidomarcostelo/budget-tracking/issues/11) `wayfinder:task`)
-  - [ ] Handle intent on cold-start (`getInitialIntent`) and warm-resume (`onNewIntent`).
-  - [ ] Pipe extracted fields to `AddTransactionPage`.
-  - [ ] Delete temporary cached image.
+- [x] **Phase 2: Bank Receipt OCR Layout Analysis & Extraction Heuristics** ([#10](https://github.com/kidomarcostelo/budget-tracking/issues/10) `wayfinder:research`)
+  - [x] Analyze OCR text block output for GoTyme, Maya, MariBank, and UnionBank.
+  - [x] Formulate robust regex and spatial heuristics for `Amount`, `Timestamp`, `Accounts`, and `Reference Number`.
+  - [x] Create unit tests and fixtures (`budget/test/receipt_parser_test.dart`).
+- [x] **Phase 3: Integration & AddTransactionPage Prefill** ([#11](https://github.com/kidomarcostelo/budget-tracking/issues/11) `wayfinder:task`)
+  - [x] Handle intent on cold-start (`getInitialSharedData`) and warm-resume (`sharedDataStream`).
+  - [x] Pipe extracted fields to `AddTransactionPage` via `InitializeSharedReceiptCapture`.
+  - [x] Delete temporary cached image immediately in `finally` block via `SharedReceiptProcessor`.
 
 ---
 
 ## 4. Verification & Testing
-- [ ] Unit tests for receipt regex extraction heuristics.
-- [ ] Static analysis passes: `flutter analyze` (0 errors, 0 warnings).
-- [ ] Code formatted: `dart format --output=none --set-exit-if-changed .`.
-- [ ] GitHub Actions CI passes.
+- [x] Unit tests for receipt regex extraction heuristics (all 12 assertions passing).
+- [x] Unit tests for pipeline execution and guaranteed temp file cleanup (all 5 assertions passing).
+- [x] Static analysis passes: `flutter analyze` (0 errors, 0 warnings).
+- [x] Code formatted: `dart format --output=none --set-exit-if-changed .` (0 diffs).
+- [x] GitHub Actions CI passes (Run 39275121004).
