@@ -56,16 +56,46 @@ class BankReceiptParser {
   /// Detect the bank institution from OCR text.
   static BankInstitution detectInstitution(String text) {
     final lower = text.toLowerCase();
-    if (lower.contains('gotyme')) return BankInstitution.goTyme;
-    if (lower.contains('maya') || lower.contains('paymaya')) {
+
+    // 1. Strong issuer-specific markers
+    if (lower.contains('receipt generated from maribank') ||
+        lower.contains('maribank transaction receipt') ||
+        lower.contains('maribank:')) {
+      return BankInstitution.mariBank;
+    }
+    if (lower.contains('unionbank online') ||
+        lower.contains('using unionbank') ||
+        RegExp(r'\bUB\d{6,}', caseSensitive: false).hasMatch(text)) {
+      return BankInstitution.unionBank;
+    }
+    if (lower.contains('gotyme bank') ||
+        lower.contains('trace id') ||
+        RegExp(r'\bITO\d{10,}', caseSensitive: false).hasMatch(text)) {
+      return BankInstitution.goTyme;
+    }
+    if (lower.contains('source my wallet') ||
+        lower.contains('my wallet') ||
+        (lower.contains('sent money') && lower.contains('reference id'))) {
       return BankInstitution.maya;
     }
-    if (lower.contains('maribank')) return BankInstitution.mariBank;
-    if (lower.contains('unionbank') ||
-        lower.contains('union bank') ||
-        lower.contains('ub1') ||
-        lower.contains('ub2')) {
+
+    // 2. Check headers / first 3 lines
+    final firstLines = text.split('\n').take(3).join(' ').toLowerCase();
+    if (firstLines.contains('maribank')) return BankInstitution.mariBank;
+    if (firstLines.contains('unionbank') || firstLines.contains('union bank')) {
       return BankInstitution.unionBank;
+    }
+    if (firstLines.contains('gotyme')) return BankInstitution.goTyme;
+    if (firstLines.contains('maya')) return BankInstitution.maya;
+
+    // 3. Fallback: general keywords
+    if (lower.contains('gotyme')) return BankInstitution.goTyme;
+    if (lower.contains('unionbank') || lower.contains('union bank')) {
+      return BankInstitution.unionBank;
+    }
+    if (lower.contains('maribank')) return BankInstitution.mariBank;
+    if (lower.contains('maya') || lower.contains('paymaya')) {
+      return BankInstitution.maya;
     }
     return BankInstitution.unknown;
   }
@@ -114,12 +144,14 @@ class BankReceiptParser {
 
     final destAccount = _extractFirstMatch(
       text,
-      RegExp(r'To[\s\S]*?([0-9*]{4,})'),
+      RegExp(r'To[\s\S]*?(?:^|\n)\s*([*Xx\s]{4,}\d{3,}|\d{4,})',
+          multiLine: true),
     );
 
     final sourceAccount = _extractFirstMatch(
       text,
-      RegExp(r'From[\s\S]*?([0-9*]{4,})'),
+      RegExp(r'From[\s\S]*?(?:^|\n)\s*([*Xx\s]{4,}\d{3,}|\d{4,})',
+          multiLine: true),
     );
 
     return ParsedBankReceipt(
@@ -203,12 +235,19 @@ class BankReceiptParser {
 
     final sourceAccount = _extractFirstMatch(
       text,
-      RegExp(r'From[\s\S]*?([0-9*]{4,})'),
+      RegExp(
+        r'From[\s\S]*?(?:^|\n)\s*(?:MariBank:\s*)?([*Xx\s]{4,}\d{3,}|\d{4,})',
+        multiLine: true,
+      ),
     );
 
     final destAccount = _extractFirstMatch(
       text,
-      RegExp(r'To[\s\S]*?(09[0-9]{9}|[0-9*]{4,})'),
+      RegExp(
+        r'To[\s\S]*?(?:^|\n)\s*(?:Mobile No\.:\s*)?'
+        r'(09[0-9]{9}|[*Xx\s]{4,}\d{3,}|\d{4,})',
+        multiLine: true,
+      ),
     );
 
     final isTransfer = text.toLowerCase().contains('transfer') ||
@@ -251,12 +290,14 @@ class BankReceiptParser {
 
     final sourceAccount = _extractFirstMatch(
       text,
-      RegExp(r'From[\s\S]*?([0-9*]{4,})'),
+      RegExp(r'From[\s\S]*?(?:^|\n)\s*([*Xx\s]{4,}\d{3,}|\d{4,})',
+          multiLine: true),
     );
 
     final destAccount = _extractFirstMatch(
       text,
-      RegExp(r'To[\s\S]*?([0-9\s]{8,})'),
+      RegExp(r'To[\s\S]*?(?:^|\n)\s*([0-9\s]{8,})[\s\S]*?Amount',
+          multiLine: true),
     )?.replaceAll(' ', '');
 
     return ParsedBankReceipt(
