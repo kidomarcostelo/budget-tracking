@@ -92,8 +92,11 @@ flowchart TD
 
 - [ ] **Step 1: Expand `ParsedBankReceipt` model**:
   - Add `sourceName` and `destinationBank` fields to `ParsedBankReceipt` in `budget/lib/struct/receiptParser.dart`.
-- [ ] **Step 2: Update Bank Parsers**:
-  - Extract sender name (`sourceName`) in `_parseGoTyme`, `_parseMaya`, `_parseMariBank`, `_parseUnionBank`.
+- [ ] **Step 2: Update Bank Parsers (Dynamic Extraction & Eliminate Hardcoded Defaults)**:
+  - Eliminate hardcoded `destinationName` strings (`Maya Wallet` in MariBank, `MariBank` in GoTyme, `Maribank` in UnionBank).
+  - Extract sender name (`sourceName`) across all parsers (`_parseGoTyme`, `_parseMaya`, `_parseMariBank`, `_parseUnionBank`).
+  - Extract destination bank (`destinationBank`) and recipient name (`destinationName`) dynamically from OCR lines under `To`.
+  - Fix MariBank -> UnionBank transfer scenario so it does not falsely attribute destination to Maya.
 - [ ] **Step 3: Implement `OwnerResolver` utility**:
   - Create `budget/lib/struct/ownerResolver.dart` with tokenized name matching and Google Sign-In profile inspection.
 - [ ] **Step 4: Update `SharedReceiptProcessor`**:

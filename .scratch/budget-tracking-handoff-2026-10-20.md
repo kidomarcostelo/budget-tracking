@@ -37,12 +37,13 @@ When capturing an inter-bank transfer between user-owned accounts (e.g. UnionBan
    - Add `"accountOwnerName": ""` in [`budget/lib/struct/defaultPreferences.dart`](budget/lib/struct/defaultPreferences.dart).
    - In [`budget/lib/widgets/accountAndBackup.dart`](budget/lib/widgets/accountAndBackup.dart), if `accountOwnerName` is empty when signing in with Google, initialize it to `googleUser?.displayName ?? ""`.
    - Expose an editable "Account Owner Name" text field in settings (e.g. [`budget/lib/pages/accountsPage.dart`](budget/lib/pages/accountsPage.dart)).
-2. **Model Expansion**:
+2. **Model Expansion & Dynamic Extraction (Bugfix for Hardcoded Defaults)**:
    - Add `sourceName` and `destinationBank` to `ParsedBankReceipt` in [`budget/lib/struct/receiptParser.dart`](budget/lib/struct/receiptParser.dart).
-   - Update parsers (`_parseGoTyme`, `_parseMaya`, `_parseMariBank`, `_parseUnionBank`) to extract sender and recipient names/banks:
+   - **Crucial Bugfix**: Eliminate hardcoded `destinationName` strings (`Maya Wallet` in `_parseMariBank`, `MariBank` in `_parseGoTyme`, `Maribank` in `_parseUnionBank`). During stress testing, a **MariBank -> UnionBank** transfer falsely logged destination details for Maya because of `destinationName: 'Maya Wallet'`.
+   - Update parsers (`_parseGoTyme`, `_parseMaya`, `_parseMariBank`, `_parseUnionBank`) to dynamically extract sender and recipient names/banks from OCR lines under `From` and `To`:
      - GoTyme: `From: KID O*** C******` -> `sourceName`, `To: KID O*** C*` -> `destinationName`, `MariBank Philippines (SeaBank)` -> `destinationBank`.
      - Maya: `- from KID OMAR` -> `sourceName`, `Destination RICA T.` -> `destinationName`.
-     - MariBank: `From KID OMAR C.` -> `sourceName`, `To Kid Omar Costelo` -> `destinationName`, `Maya Philippines` -> `destinationBank`.
+     - MariBank: `From KID OMAR C.` -> `sourceName`, `To Kid Omar Costelo` -> `destinationName`, dynamically parse destination bank (e.g. `UnionBank`, `Maya`, etc.) -> `destinationBank`.
      - UnionBank: `From KID OMAR RENDON COSTELO` -> `sourceName`, `To Kid Omar Costelo` -> `destinationName`, `Maribank` -> `destinationBank`.
 3. **OwnerResolver Engine**:
    - Create `budget/lib/struct/ownerResolver.dart`.
