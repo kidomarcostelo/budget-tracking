@@ -12,6 +12,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+const String lifetimeUnlockedPurchaseID = "lifetime_unlocked";
+
 // default settings, defaultSettings, initial settings
 Future<Map<String, dynamic>> getDefaultPreferences() async {
   return {
@@ -202,7 +204,7 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "premiumPopupAddTransactionLastShown": DateTime.now().toString(),
     "premiumPopupFreeSeen": false,
     "previewDemo": false,
-    "purchaseID": null,
+    "purchaseID": lifetimeUnlockedPurchaseID,
     "showAccountLabelTagInTransactionEntry": false,
     "showCurrencyLabel": false,
     "showTransactionsMonthlySpendingSummary": true,
