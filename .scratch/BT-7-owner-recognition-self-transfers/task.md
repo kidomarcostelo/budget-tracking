@@ -30,7 +30,7 @@ When a user captures an on-device receipt screenshot (e.g. sending PHP 500 from 
 ### B. Heuristic 2: Google Account / Profile Name Matching (`sourceName == ownerName`)
 - Retrieve the user's primary identity from:
   1. `googleUser?.displayName` (if signed in with Google in Cashew).
-  2. Fallback setting: `appStateSettings["userOwnerName"]` (user-configurable or auto-learned).
+  2. Setting: `appStateSettings["accountOwnerName"]` (user-configurable in Settings, initialized from Google Sign-In displayName).
 - If `receipt.sourceName` matches the owner name, and the receipt is an outward transfer:
   - Check if `receipt.destinationName` or `receipt.destinationBank` matches an existing `TransactionWallet` in Cashew's database (`database.getRelatingWallet(...)`).
   - If a matching wallet exists for the destination bank, it confirms a transfer between user-owned accounts!
