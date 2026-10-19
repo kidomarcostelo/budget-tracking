@@ -32,6 +32,7 @@ Run these commands from `budget/` (e.g. `cd budget && ...`):
 - **Credentials & Keys:** Never commit `.env`, Firebase service account JSONs, or API keys.
 - **Suppressions:** Do not add `// ignore:` or `// ignore_for_file:` directives without documented justification.
 - **Commit Trailers:** Do not add `Co-authored-by` trailers to commit messages, including GitHub Copilot or other AI co-author lines. Commit messages contain only the subject and body.
+- **Branching & Pull Requests:** NEVER push directly to the `main` branch. Always create a feature branch (e.g. `feat/owner-recognition`), push the branch, and open a Pull Request (PR) against `main` using `gh pr create` so changes can be reviewed before merging.
 
 ## Agent skills
 
