@@ -31,6 +31,7 @@ Run these commands from `budget/` (e.g. `cd budget && ...`):
 - **Drift Migrations:** NEVER edit past migration steps in `budget/lib/database/schema_versions.dart` or files in `budget/drift_schemas/`. Always create a new version step when modifying tables.
 - **Credentials & Keys:** Never commit `.env`, Firebase service account JSONs, or API keys.
 - **Suppressions:** Do not add `// ignore:` or `// ignore_for_file:` directives without documented justification.
+- **Commit Trailers:** Do not add `Co-authored-by` trailers to commit messages, including GitHub Copilot or other AI co-author lines. Commit messages contain only the subject and body.
 
 ## Agent skills
 
