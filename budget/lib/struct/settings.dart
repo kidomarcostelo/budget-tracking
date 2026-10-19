@@ -87,6 +87,10 @@ Future<bool> initializeSettings() async {
   await attemptToMigrateSetLongTermLoansAmountTo0();
   attemptToMigrateCustomNumberFormattingSettings();
 
+  if (appStateSettings["purchaseID"] == null) {
+    appStateSettings["purchaseID"] = lifetimeUnlockedPurchaseID;
+  }
+
   // Disable sync every change is not on web
   // It will still sync when user pulls down to refresh
   // if (!kIsWeb) {
@@ -243,6 +247,9 @@ Future<Map<String, dynamic>> getUserSettings() async {
         userSettingsJSON[key] = userPreferencesDefault[key];
       }
     });
+    if (userSettingsJSON["purchaseID"] == null) {
+      userSettingsJSON["purchaseID"] = lifetimeUnlockedPurchaseID;
+    }
     return userSettingsJSON;
   } catch (e) {
     print("There was an error, settings corrupted: " + e.toString());
