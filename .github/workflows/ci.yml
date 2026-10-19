@@ -34,10 +34,7 @@ jobs:
 
       - name: Verify code formatting
         working-directory: budget
-        run: |
-          dart format .
-          git diff
-        continue-on-error: true
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Run static analysis
         working-directory: budget
