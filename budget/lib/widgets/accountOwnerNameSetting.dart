@@ -32,11 +32,14 @@ void openAccountOwnerNamePopup(BuildContext context, {VoidCallback? onSaved}) {
     description: "account-owner-name-description".tr(),
     descriptionWidget: Padding(
       padding: const EdgeInsetsDirectional.only(top: 15),
-      child: TextInput(
-        controller: controller,
-        autoFocus: true,
-        labelText: "name".tr(),
-        onSubmitted: save,
+      child: Material(
+        type: MaterialType.transparency,
+        child: TextInput(
+          controller: controller,
+          autoFocus: true,
+          labelText: "name".tr(),
+          onSubmitted: save,
+        ),
       ),
     ),
     onSubmit: () => save(controller.text),
