@@ -2,12 +2,16 @@ import 'dart:async';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addTransactionPage.dart';
+import 'package:budget/pages/addWalletPage.dart';
+import 'package:budget/struct/ownerResolver.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/shareIntentOcr.dart';
 import 'package:budget/struct/sharedReceiptProcessor.dart';
 import 'package:budget/struct/throttler.dart';
+import 'package:budget/widgets/accountAndBackup.dart';
 import 'package:budget/widgets/globalSnackbar.dart';
 import 'package:budget/widgets/navigationFramework.dart';
+import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/openSnackbar.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -94,37 +98,86 @@ class _InitializeSharedReceiptCaptureState
         return;
       }
 
-      final matchedWallet = await SharedReceiptProcessor.resolveWallet(receipt);
-      final matchedCategory =
-          await SharedReceiptProcessor.resolveCategory(receipt);
-      final title = SharedReceiptProcessor.formatTitle(receipt);
+      final matchedWalletFrom =
+          await SharedReceiptProcessor.resolveWallet(receipt);
+      final matchedWalletTo =
+          await SharedReceiptProcessor.resolveDestinationWallet(receipt);
+
+      final isSelfTransfer = OwnerResolver.isSelfTransfer(
+        receipt: receipt,
+        ownerName: appStateSettings['accountOwnerName'],
+        googleDisplayName: googleUser?.displayName,
+        destinationWalletExists: matchedWalletTo != null,
+      );
+
+      final title = SharedReceiptProcessor.formatTitle(
+        receipt,
+        isTransfer: isSelfTransfer,
+      );
       final notes = SharedReceiptProcessor.formatNotes(receipt);
 
-      await Future.delayed(const Duration(milliseconds: 100), () async {
-        await pushRoute(
-          context,
-          AddTransactionPage(
-            routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-            selectedAmount: receipt.amount,
-            selectedDate: receipt.dateTime ?? DateTime.now(),
-            selectedTitle: title,
-            selectedNotes: notes,
-            selectedIncome: false,
-            selectedWallet: matchedWallet,
-            selectedCategory: matchedCategory,
-            startInitialAddTransactionSequence: false,
-          ),
-        );
-      });
+      if (isSelfTransfer &&
+          (matchedWalletFrom != null || matchedWalletTo != null)) {
+        await Future.delayed(const Duration(milliseconds: 100), () async {
+          await openBottomSheet(
+            context,
+            fullSnap: true,
+            TransferBalancePopup(
+              allowEditWallet: true,
+              wallet: matchedWalletFrom,
+              walletTo: matchedWalletTo,
+              showAllEditDetails: true,
+              initialAmount: receipt.amount,
+              initialDate: receipt.dateTime ?? DateTime.now(),
+              initialTitle: title,
+            ),
+          );
+        });
 
-      openSnackbar(SnackbarMessage(
-        title: 'added-transaction'.tr(),
-        description: '${receipt.institutionName}: ${receipt.currency} '
-            '${receipt.amount.toStringAsFixed(2)}',
-        icon: appStateSettings['outlinedIcons']
-            ? Icons.receipt_long_outlined
-            : Icons.receipt_long_rounded,
-      ));
+        final targetName = receipt.destinationBank ??
+            receipt.destinationName ??
+            matchedWalletTo?.name ??
+            'transfer'.tr();
+
+        openSnackbar(SnackbarMessage(
+          title: 'transfer'.tr(),
+          description:
+              '${receipt.institutionName} → $targetName: ${receipt.currency} '
+              '${receipt.amount.toStringAsFixed(2)}',
+          icon: appStateSettings['outlinedIcons']
+              ? Icons.compare_arrows_outlined
+              : Icons.compare_arrows_rounded,
+        ));
+      } else {
+        final matchedCategory =
+            await SharedReceiptProcessor.resolveCategory(receipt);
+
+        await Future.delayed(const Duration(milliseconds: 100), () async {
+          await pushRoute(
+            context,
+            AddTransactionPage(
+              routesToPopAfterDelete: RoutesToPopAfterDelete.None,
+              selectedAmount: receipt.amount,
+              selectedDate: receipt.dateTime ?? DateTime.now(),
+              selectedTitle: title,
+              selectedNotes: notes,
+              selectedIncome: false,
+              selectedWallet: matchedWalletFrom,
+              selectedCategory: matchedCategory,
+              startInitialAddTransactionSequence: false,
+            ),
+          );
+        });
+
+        openSnackbar(SnackbarMessage(
+          title: 'added-transaction'.tr(),
+          description: '${receipt.institutionName}: ${receipt.currency} '
+              '${receipt.amount.toStringAsFixed(2)}',
+          icon: appStateSettings['outlinedIcons']
+              ? Icons.receipt_long_outlined
+              : Icons.receipt_long_rounded,
+        ));
+      }
     } catch (_) {
       // Gracefully ignore extraction errors
     }

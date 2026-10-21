@@ -158,6 +158,7 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "colorTintCategoryIcon": false,
     "sendTransactionsToServerQueue": {},
     "currentUserEmail": "",
+    "accountOwnerName": "",
     "usersNicknames": {},
     "requireAuth": false,
     "cachedCurrencyExchange": {},
