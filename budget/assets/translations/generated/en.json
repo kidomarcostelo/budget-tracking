@@ -1182,6 +1182,6 @@
   "duplicate-budget-question": "Duplicate Budget?",
   "duplicate-budget": "Duplicate Budget",
   "account-owner-name": "Account Owner Name",
-  "account-owner-name-description": "Used to recognize self-transfers between your accounts during receipt capture.",
+  "account-owner-name-description": "Used to recognize self-transfers between your wallets during receipt capture.",
   "set-account-owner-name": "Set Account Owner Name"
 }

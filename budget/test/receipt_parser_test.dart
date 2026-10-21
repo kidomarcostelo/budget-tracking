@@ -68,6 +68,7 @@ maya
       expect(receipt.referenceNumber, '456C6B393301');
       expect(receipt.sourceName, 'KID OMAR');
       expect(receipt.destinationName, 'RICA T.');
+      expect(receipt.destinationBank, isNull);
       expect(receipt.destinationAccount, contains('639206923443'));
       expect(receipt.note, 'KID OMAR');
       expect(receipt.isTransfer, isFalse);
