@@ -38,7 +38,7 @@ class OwnerResolver {
   /// Check if two tokens match:
   /// 1. Exact match: `a == b`
   /// 2. Initial match: single letter matches start of other (`c` matches `costelo`)
-  /// 3. Mask match: `*` or `x` in token (`o***` matches `omar`, `c******` matches `costelo`)
+  /// 3. Mask match: `*` or `x` in token (`o***` matches `omar`, `c******` or `cxxxx` matches `costelo`)
   static bool areTokensMatching(String tokenA, String tokenB) {
     if (tokenA == tokenB) return true;
     if (tokenA.isEmpty || tokenB.isEmpty) return false;
@@ -47,31 +47,41 @@ class OwnerResolver {
     if (tokenA.length == 1 && tokenB.startsWith(tokenA)) return true;
     if (tokenB.length == 1 && tokenA.startsWith(tokenB)) return true;
 
-    // Masked matching
-    final isMaskA = tokenA.contains('*');
-    final isMaskB = tokenB.contains('*');
+    // Masked matching (supports '*' and 'x'/'X' masks)
+    final isMaskA = tokenA.contains('*') ||
+        (tokenA.length > 2 && tokenA.toLowerCase().contains('x'));
+    final isMaskB = tokenB.contains('*') ||
+        (tokenB.length > 2 && tokenB.toLowerCase().contains('x'));
 
     if (isMaskA || isMaskB) {
       final maskToken = isMaskA ? tokenA : tokenB;
       final targetToken = isMaskA ? tokenB : tokenA;
 
       // Both must start with the same initial character
-      if (maskToken[0] != targetToken[0]) return false;
+      if (maskToken[0].toLowerCase() != targetToken[0].toLowerCase()) {
+        return false;
+      }
 
-      // If both are masks (e.g. `c*` vs `c******`)
+      // If both are masks (e.g. `c*` vs `c******` or `cxxx`)
       if (isMaskA && isMaskB) {
-        return maskToken[0] == targetToken[0];
+        return maskToken[0].toLowerCase() == targetToken[0].toLowerCase();
       }
 
       // Check unmasked leading characters (e.g. "ki*" vs "kid")
       int prefixLen = 0;
       while (prefixLen < maskToken.length &&
           maskToken[prefixLen] != '*' &&
+          maskToken[prefixLen].toLowerCase() != 'x' &&
           prefixLen < targetToken.length) {
-        if (maskToken[prefixLen] != targetToken[prefixLen]) return false;
+        if (maskToken[prefixLen].toLowerCase() !=
+            targetToken[prefixLen].toLowerCase()) {
+          return false;
+        }
         prefixLen++;
       }
-      if (prefixLen < maskToken.length && maskToken[prefixLen] != '*') {
+      if (prefixLen < maskToken.length &&
+          maskToken[prefixLen] != '*' &&
+          maskToken[prefixLen].toLowerCase() != 'x') {
         return false;
       }
 
@@ -116,7 +126,7 @@ class OwnerResolver {
     // If all tokens of the shorter list matched (e.g. "Kid Omar C." in "Kid Omar Costelo")
     if (matchedCount == shorter.length && shorter.isNotEmpty) {
       if (matchedCount >= 2) return true;
-      if (shorter[0].length >= 4 && !shorter[0].contains('*')) return true;
+      if (shorter[0].length >= 3 && !shorter[0].contains('*')) return true;
     }
 
     // Or if at least 2 significant tokens match (e.g. "KID OMAR RENDON COSTELO" vs "Kid Omar Costelo")
@@ -132,6 +142,7 @@ class OwnerResolver {
     String? name, {
     String? ownerName,
     String? googleDisplayName,
+    String? currentUserEmail,
   }) {
     if (name == null || name.trim().isEmpty) return false;
 
@@ -143,6 +154,13 @@ class OwnerResolver {
       if (areNamesMatching(name, googleDisplayName)) return true;
     }
 
+    if (currentUserEmail != null && currentUserEmail.trim().isNotEmpty) {
+      final emailPrefix = currentUserEmail.split('@').firstOrNull;
+      if (emailPrefix != null && emailPrefix.isNotEmpty) {
+        if (areNamesMatching(name, emailPrefix)) return true;
+      }
+    }
+
     return false;
   }
 
@@ -152,7 +170,9 @@ class OwnerResolver {
     required ParsedBankReceipt receipt,
     String? ownerName,
     String? googleDisplayName,
+    String? currentUserEmail,
     required bool destinationWalletExists,
+    bool sourceWalletExists = false,
   }) {
     // 1. Identical From and To: guaranteed self-transfer
     if (receipt.sourceName != null &&
@@ -162,15 +182,18 @@ class OwnerResolver {
     }
 
     final isSourceOwner = isOwnerMatch(
-      receipt.sourceName,
-      ownerName: ownerName,
-      googleDisplayName: googleDisplayName,
-    );
+          receipt.sourceName,
+          ownerName: ownerName,
+          googleDisplayName: googleDisplayName,
+          currentUserEmail: currentUserEmail,
+        ) ||
+        (receipt.sourceName == null && sourceWalletExists);
 
     final isDestOwner = isOwnerMatch(
       receipt.destinationName,
       ownerName: ownerName,
       googleDisplayName: googleDisplayName,
+      currentUserEmail: currentUserEmail,
     );
 
     // 2. Both source and destination resolve to the owner

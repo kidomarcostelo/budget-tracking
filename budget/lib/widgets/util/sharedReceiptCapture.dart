@@ -98,16 +98,17 @@ class _InitializeSharedReceiptCaptureState
         return;
       }
 
-      final matchedWalletFrom =
-          await SharedReceiptProcessor.resolveWallet(receipt);
-      final matchedWalletTo =
-          await SharedReceiptProcessor.resolveDestinationWallet(receipt);
+      final wallets = await SharedReceiptProcessor.resolveTransfer(receipt);
+      final matchedWalletFrom = wallets.from;
+      final matchedWalletTo = wallets.to;
 
-      final isSelfTransfer = OwnerResolver.isSelfTransfer(
-        receipt: receipt,
+      final isSelfTransfer = SharedReceiptProcessor.isSelfTransfer(
+        receipt,
         ownerName: appStateSettings['accountOwnerName'],
         googleDisplayName: googleUser?.displayName,
+        currentUserEmail: appStateSettings['currentUserEmail'],
         destinationWalletExists: matchedWalletTo != null,
+        sourceWalletExists: matchedWalletFrom != null,
       );
 
       final title = SharedReceiptProcessor.formatTitle(
@@ -116,8 +117,7 @@ class _InitializeSharedReceiptCaptureState
       );
       final notes = SharedReceiptProcessor.formatNotes(receipt);
 
-      if (isSelfTransfer &&
-          (matchedWalletFrom != null || matchedWalletTo != null)) {
+      if (isSelfTransfer && matchedWalletTo != null) {
         await Future.delayed(const Duration(milliseconds: 100), () async {
           await openBottomSheet(
             context,
@@ -130,6 +130,7 @@ class _InitializeSharedReceiptCaptureState
               initialAmount: receipt.amount,
               initialDate: receipt.dateTime ?? DateTime.now(),
               initialTitle: title,
+              initialNote: notes,
             ),
           );
         });

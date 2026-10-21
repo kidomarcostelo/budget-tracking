@@ -1028,6 +1028,7 @@ class TransferBalancePopup extends StatefulWidget {
     this.initialAmount,
     this.initialDate,
     this.initialTitle,
+    this.initialNote,
     this.initialObjectiveLoanPk,
     this.initialIsNegative,
     super.key,
@@ -1039,6 +1040,7 @@ class TransferBalancePopup extends StatefulWidget {
   final double? initialAmount;
   final DateTime? initialDate;
   final String? initialTitle;
+  final String? initialNote;
   final String? initialObjectiveLoanPk;
   final bool? initialIsNegative;
 
@@ -1176,6 +1178,9 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
         getWalletStringName(allWallets, walletTo);
 
     String note = "transferred-balance".tr() + "\n" + transferString;
+    if (widget.initialNote != null && widget.initialNote!.trim().isNotEmpty) {
+      note += "\n${widget.initialNote!.trim()}";
+    }
 
     // Want these times to be the same so we know the pairing of balance corrections
     DateTime selectedDateTimeSetToNow = selectedDateTime ?? DateTime.now();
