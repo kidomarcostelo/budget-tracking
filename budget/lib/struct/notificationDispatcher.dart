@@ -113,8 +113,7 @@ class NotificationDispatcher {
 
     // Check if event is from Google Wallet / Google Pay
     if (GooglePayParser.isGooglePayEvent(event)) {
-      final googlePayResult =
-          GooglePayParser.parse(event.title, event.content);
+      final googlePayResult = GooglePayParser.parse(event.title, event.content);
       if (googlePayResult != null) {
         final gPayHandler = onGooglePayTransaction ??
             GooglePayParser.processGooglePayTransaction;
