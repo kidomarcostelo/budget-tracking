@@ -4,6 +4,9 @@ import 'package:budget/functions.dart';
 import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
+import 'package:budget/widgets/navigationFramework.dart';
+import 'package:budget/widgets/openPopup.dart';
+import 'package:budget/widgets/util/appLinks.dart';
 import 'package:notification_listener_service/notification_event.dart';
 
 /// Parsed data from a Google Wallet / Google Pay transaction notification.
@@ -216,13 +219,15 @@ class GooglePayParser {
         ),
       );
     } else {
-      processAddTransactionFromParams(navigatorKey.currentContext!, {
-        'title': result.merchant,
-        'categoryPk': category?.categoryPk,
-        'walletPk': wallet?.walletPk,
-        'amount': result.amount.toString(),
-        'date': (dateTime ?? DateTime.now()).toString(),
-      });
+      if (navigatorKey.currentContext != null) {
+        processAddTransactionFromParams(navigatorKey.currentContext!, {
+          'title': result.merchant,
+          'categoryPk': category?.categoryPk,
+          'walletPk': wallet?.walletPk,
+          'amount': result.amount.toString(),
+          'date': (dateTime ?? DateTime.now()).toString(),
+        });
+      }
     }
     return true;
   }
