@@ -1,5 +1,6 @@
 import 'package:budget/struct/ownerResolver.dart';
 import 'package:budget/struct/receiptParser.dart';
+import 'package:budget/struct/sharedReceiptProcessor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -41,6 +42,17 @@ void main() {
       );
       expect(
         OwnerResolver.areNamesMatching('K** O*** C******', 'Kid Omar Costelo'),
+        isTrue,
+      );
+    });
+
+    test('matches masked names with X / x characters', () {
+      expect(
+        OwnerResolver.areNamesMatching('KID OXXX CXXXXXX', 'Kid Omar Costelo'),
+        isTrue,
+      );
+      expect(
+        OwnerResolver.areNamesMatching('KID Oxxx Cxxxxxx', 'KID O*** C******'),
         isTrue,
       );
     });
@@ -137,9 +149,19 @@ void main() {
         isFalse,
       );
     });
+
+    test('matches against currentUserEmail prefix profile', () {
+      expect(
+        OwnerResolver.isOwnerMatch(
+          'Kid Omar',
+          currentUserEmail: 'kidomar@gmail.com',
+        ),
+        isTrue,
+      );
+    });
   });
 
-  group('OwnerResolver.isSelfTransfer', () {
+  group('OwnerResolver.isSelfTransfer & SharedReceiptProcessor.isSelfTransfer', () {
     test('classifies as self-transfer when sender and recipient match (GoTyme to MariBank)', () {
       const receipt = ParsedBankReceipt(
         institution: BankInstitution.goTyme,
@@ -152,10 +174,11 @@ void main() {
         rawText: '',
       );
 
-      final isSelf = OwnerResolver.isSelfTransfer(
-        receipt: receipt,
+      final isSelf = SharedReceiptProcessor.isSelfTransfer(
+        receipt,
         ownerName: 'Kid Omar Costelo',
         destinationWalletExists: true,
+        sourceWalletExists: true,
       );
 
       expect(isSelf, isTrue);
@@ -173,10 +196,32 @@ void main() {
         rawText: '',
       );
 
-      final isSelf = OwnerResolver.isSelfTransfer(
-        receipt: receipt,
+      final isSelf = SharedReceiptProcessor.isSelfTransfer(
+        receipt,
         ownerName: 'Kid Omar Costelo',
         destinationWalletExists: true,
+      );
+
+      expect(isSelf, isTrue);
+    });
+
+    test('falls back to sourceWalletExists when sender name is not extracted', () {
+      const receipt = ParsedBankReceipt(
+        institution: BankInstitution.unionBank,
+        institutionName: 'UnionBank',
+        amount: 1200.0,
+        sourceAccount: '**** 9227',
+        destinationName: 'Kid Omar Costelo',
+        destinationBank: 'MariBank',
+        isTransfer: true,
+        rawText: '',
+      );
+
+      final isSelf = SharedReceiptProcessor.isSelfTransfer(
+        receipt,
+        ownerName: 'Kid Omar Costelo',
+        destinationWalletExists: true,
+        sourceWalletExists: true,
       );
 
       expect(isSelf, isTrue);
@@ -189,13 +234,12 @@ void main() {
         amount: 100.0,
         sourceName: 'KID OMAR',
         destinationName: 'RICA T.',
-        destinationBank: 'Maya',
         isTransfer: false,
         rawText: '',
       );
 
-      final isSelf = OwnerResolver.isSelfTransfer(
-        receipt: receipt,
+      final isSelf = SharedReceiptProcessor.isSelfTransfer(
+        receipt,
         ownerName: 'Kid Omar Costelo',
         destinationWalletExists: false,
       );
@@ -215,8 +259,8 @@ void main() {
         rawText: '',
       );
 
-      final isSelf = OwnerResolver.isSelfTransfer(
-        receipt: receipt,
+      final isSelf = SharedReceiptProcessor.isSelfTransfer(
+        receipt,
         ownerName: 'Kid Omar Costelo',
         destinationWalletExists: true,
       );

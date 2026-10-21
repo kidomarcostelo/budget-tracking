@@ -42,6 +42,14 @@ class AccountsPageState extends State<AccountsPage> {
   void openAccountOwnerNamePopup() {
     final TextEditingController controller =
         TextEditingController(text: appStateSettings["accountOwnerName"] ?? "");
+
+    Future<void> save(String name) async {
+      await updateSettings("accountOwnerName", name.trim(),
+          updateGlobalState: false);
+      popRoute(context);
+      setState(() {});
+    }
+
     openPopup(
       context,
       icon: appStateSettings["outlinedIcons"]
@@ -55,20 +63,10 @@ class AccountsPageState extends State<AccountsPage> {
           controller: controller,
           autoFocus: true,
           labelText: "name".tr(),
-          onSubmitted: (value) async {
-            await updateSettings("accountOwnerName", value.trim(),
-                updateGlobalState: false);
-            popRoute(context);
-            setState(() {});
-          },
+          onSubmitted: save,
         ),
       ),
-      onSubmit: () async {
-        await updateSettings("accountOwnerName", controller.text.trim(),
-            updateGlobalState: false);
-        popRoute(context);
-        setState(() {});
-      },
+      onSubmit: () => save(controller.text),
       onSubmitLabel: "save".tr(),
       onCancel: () {
         popRoute(context);
