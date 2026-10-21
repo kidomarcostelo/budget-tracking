@@ -153,9 +153,17 @@ class OwnerResolver {
     }
 
     if (currentUserEmail != null && currentUserEmail.trim().isNotEmpty) {
-      final emailPrefix = currentUserEmail.split('@').firstOrNull;
+      final emailPrefix =
+          currentUserEmail.split('@').firstOrNull?.toLowerCase();
       if (emailPrefix != null && emailPrefix.isNotEmpty) {
         if (areNamesMatching(name, emailPrefix)) return true;
+        final cleanedName =
+            name.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
+        if (cleanedName.isNotEmpty &&
+            (emailPrefix.contains(cleanedName) ||
+                cleanedName.contains(emailPrefix))) {
+          return true;
+        }
       }
     }
 
