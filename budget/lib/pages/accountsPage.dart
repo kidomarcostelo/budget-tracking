@@ -14,6 +14,7 @@ import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/framework/pageFramework.dart';
 import 'package:budget/widgets/openPopup.dart';
+import 'package:budget/widgets/accountOwnerNameSetting.dart';
 import 'package:budget/widgets/settingsContainers.dart';
 import 'package:budget/widgets/tappable.dart';
 import 'package:budget/widgets/textInput.dart';
@@ -39,60 +40,7 @@ class AccountsPageState extends State<AccountsPage> {
     setState(() {});
   }
 
-  void openAccountOwnerNamePopup() {
-    final TextEditingController controller =
-        TextEditingController(text: appStateSettings["accountOwnerName"] ?? "");
 
-    Future<void> save(String name) async {
-      await updateSettings("accountOwnerName", name.trim(),
-          updateGlobalState: false);
-      popRoute(context);
-      setState(() {});
-    }
-
-    openPopup(
-      context,
-      icon: appStateSettings["outlinedIcons"]
-          ? Icons.badge_outlined
-          : Icons.badge_rounded,
-      title: "account-owner-name".tr(),
-      description: "account-owner-name-description".tr(),
-      descriptionWidget: Padding(
-        padding: const EdgeInsetsDirectional.only(top: 15),
-        child: TextInput(
-          controller: controller,
-          autoFocus: true,
-          labelText: "name".tr(),
-          onSubmitted: save,
-        ),
-      ),
-      onSubmit: () => save(controller.text),
-      onSubmitLabel: "save".tr(),
-      onCancel: () {
-        popRoute(context);
-      },
-      onCancelLabel: "cancel".tr(),
-    );
-  }
-
-  Widget _buildAccountOwnerNameTile({bool isExpanded = true}) {
-    final String current = (appStateSettings["accountOwnerName"] == null ||
-            appStateSettings["accountOwnerName"].toString().trim().isEmpty)
-        ? (googleUser?.displayName ?? "set-account-owner-name".tr())
-        : appStateSettings["accountOwnerName"].toString();
-
-    return SettingsContainerOutlined(
-      onTap: () {
-        openAccountOwnerNamePopup();
-      },
-      title: "account-owner-name".tr(),
-      description: current,
-      icon: appStateSettings["outlinedIcons"]
-          ? Icons.badge_outlined
-          : Icons.badge_rounded,
-      isExpanded: isExpanded,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +134,10 @@ class AccountsPageState extends State<AccountsPage> {
                         },
                       ),
                       SizedBox(height: 15),
-                      _buildAccountOwnerNameTile(isExpanded: false),
+                      AccountOwnerNameSetting(
+                        isOutlined: true,
+                        isExpanded: false,
+                      ),
                     ],
                   )
                 : Column(
@@ -268,7 +219,9 @@ class AccountsPageState extends State<AccountsPage> {
                       Padding(
                         padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: 18, vertical: 4),
-                        child: _buildAccountOwnerNameTile(),
+                        child: AccountOwnerNameSetting(
+                          isOutlined: true,
+                        ),
                       ),
                       SizedBox(height: 15),
                       Padding(
