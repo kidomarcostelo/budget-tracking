@@ -30,6 +30,7 @@ import 'package:budget/pages/editWalletsPage.dart';
 import 'package:budget/pages/notificationsPage.dart';
 import 'package:budget/pages/subscriptionsPage.dart';
 import 'package:budget/widgets/accountAndBackup.dart';
+import 'package:budget/widgets/accountOwnerNameSetting.dart';
 import 'package:budget/widgets/importDB.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/notificationsSettings.dart';
@@ -529,6 +530,8 @@ class SettingsPageContent extends StatelessWidget {
             : SizedBox.shrink(),
 
         BiometricsSettingToggle(),
+
+        AccountOwnerNameSetting(),
 
         SettingsContainer(
           title: "language".tr(),
