@@ -30,7 +30,9 @@ void main() {
       );
     });
 
-    test('formatTitle formats transfer title with arrow when isTransfer is true', () {
+    test(
+        'formatTitle formats transfer title with arrow when isTransfer is true',
+        () {
       const transferReceipt = ParsedBankReceipt(
         institution: BankInstitution.mariBank,
         institutionName: 'MariBank',
@@ -46,7 +48,8 @@ void main() {
       );
     });
 
-    test('formatNotes formats reference, source, destination, bank, and note', () {
+    test('formatNotes formats reference, source, destination, bank, and note',
+        () {
       const receipt = ParsedBankReceipt(
         institution: BankInstitution.maya,
         institutionName: 'Maya',

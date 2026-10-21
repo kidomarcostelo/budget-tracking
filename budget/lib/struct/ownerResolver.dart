@@ -23,10 +23,8 @@ class OwnerResolver {
   /// and split into non-empty tokens.
   static List<String> tokenize(String? raw) {
     if (raw == null) return [];
-    final cleaned = raw
-        .toLowerCase()
-        .replaceAll(RegExp(r'[,.\-_/()\[\]{}:;]'), ' ')
-        .trim();
+    final cleaned =
+        raw.toLowerCase().replaceAll(RegExp(r'[,.\-_/()\[\]{}:;]'), ' ').trim();
     if (cleaned.isEmpty) return [];
 
     return cleaned
