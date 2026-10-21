@@ -1180,5 +1180,8 @@
   "import-warning": "Babala sa Pag-import",
   "import-warning-description": "Maaaring mabigo ang pag-import! Pakitiyak na nakapili ka ng wastong Cashew [.sqlite] o [.sql] backup file",
   "duplicate-budget-question": "Duplicate na Badyet?",
-  "duplicate-budget": "Dobleng Badyet"
+  "duplicate-budget": "Dobleng Badyet",
+  "account-owner-name": "Pangalan ng May-ari ng Account",
+  "account-owner-name-description": "Ginagamit upang awtomatikong kilalanin ang mga self-transfer sa pagitan ng iyong mga account sa pag-scan ng resibo.",
+  "set-account-owner-name": "Itakda ang Pangalan ng May-ari ng Account"
 }

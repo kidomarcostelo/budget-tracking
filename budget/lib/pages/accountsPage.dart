@@ -16,6 +16,7 @@ import 'package:budget/widgets/framework/pageFramework.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/settingsContainers.dart';
 import 'package:budget/widgets/tappable.dart';
+import 'package:budget/widgets/textInput.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -36,6 +37,63 @@ class AccountsPageState extends State<AccountsPage> {
 
   void refreshState() {
     setState(() {});
+  }
+
+  void openAccountOwnerNamePopup() {
+    final TextEditingController controller =
+        TextEditingController(text: appStateSettings["accountOwnerName"] ?? "");
+    openPopup(
+      context,
+      icon: appStateSettings["outlinedIcons"]
+          ? Icons.badge_outlined
+          : Icons.badge_rounded,
+      title: "account-owner-name".tr(),
+      description: "account-owner-name-description".tr(),
+      descriptionWidget: Padding(
+        padding: const EdgeInsetsDirectional.only(top: 15),
+        child: TextInput(
+          controller: controller,
+          autoFocus: true,
+          labelText: "name".tr(),
+          onSubmitted: (value) async {
+            await updateSettings("accountOwnerName", value.trim(),
+                updateGlobalState: false);
+            popRoute(context);
+            setState(() {});
+          },
+        ),
+      ),
+      onSubmit: () async {
+        await updateSettings("accountOwnerName", controller.text.trim(),
+            updateGlobalState: false);
+        popRoute(context);
+        setState(() {});
+      },
+      onSubmitLabel: "save".tr(),
+      onCancel: () {
+        popRoute(context);
+      },
+      onCancelLabel: "cancel".tr(),
+    );
+  }
+
+  Widget _buildAccountOwnerNameTile({bool isExpanded = true}) {
+    final String current = (appStateSettings["accountOwnerName"] == null ||
+            appStateSettings["accountOwnerName"].toString().trim().isEmpty)
+        ? (googleUser?.displayName ?? "set-account-owner-name".tr())
+        : appStateSettings["accountOwnerName"].toString();
+
+    return SettingsContainerOutlined(
+      onTap: () {
+        openAccountOwnerNamePopup();
+      },
+      title: "account-owner-name".tr(),
+      description: current,
+      icon: appStateSettings["outlinedIcons"]
+          ? Icons.badge_outlined
+          : Icons.badge_rounded,
+      isExpanded: isExpanded,
+    );
   }
 
   @override
@@ -128,7 +186,9 @@ class AccountsPageState extends State<AccountsPage> {
                         onTap: () async {
                           await signInAndSync(context, next: () {});
                         },
-                      )
+                      ),
+                      SizedBox(height: 15),
+                      _buildAccountOwnerNameTile(isExpanded: false),
                     ],
                   )
                 : Column(
@@ -206,7 +266,13 @@ class AccountsPageState extends State<AccountsPage> {
                           fontSize: 15,
                         ),
                       ),
-                      SizedBox(height: 25),
+                      SizedBox(height: 15),
+                      Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: 18, vertical: 4),
+                        child: _buildAccountOwnerNameTile(),
+                      ),
+                      SizedBox(height: 15),
                       Padding(
                         padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: 18.0),

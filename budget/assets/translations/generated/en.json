@@ -1180,5 +1180,8 @@
   "import-warning": "Import Warning",
   "import-warning-description": "Import may fail! Please make sure you have selected a valid Cashew [.sqlite] or [.sql] backup file",
   "duplicate-budget-question": "Duplicate Budget?",
-  "duplicate-budget": "Duplicate Budget"
+  "duplicate-budget": "Duplicate Budget",
+  "account-owner-name": "Account Owner Name",
+  "account-owner-name-description": "Used to recognize self-transfers between your accounts during receipt capture.",
+  "set-account-owner-name": "Set Account Owner Name"
 }
