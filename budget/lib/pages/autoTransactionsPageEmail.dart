@@ -41,18 +41,6 @@ Future initNotificationScanning() async {
   await NotificationDispatcher.instance.initNotificationScanning();
 }
 
-Future<bool> requestReadNotificationPermission() async {
-  return await NotificationDispatcher.instance
-      .requestReadNotificationPermission();
-}
-
-onNotification(ServiceNotificationEvent event) async {
-  await NotificationDispatcher.instance.handleEvent(
-    event,
-    customQueueHandler: queueTransactionFromMessage,
-  );
-}
-
 class InitializeNotificationService extends StatefulWidget {
   const InitializeNotificationService({required this.child, super.key});
   final Widget child;
@@ -147,10 +135,6 @@ Future queueTransactionFromMessage(String messageString,
   }
 }
 
-String getNotificationMessage(ServiceNotificationEvent event) {
-  return NotificationDispatcher.formatNotificationMessage(event);
-}
-
 class AutoTransactionsPageNotifications extends StatefulWidget {
   const AutoTransactionsPageNotifications({Key? key}) : super(key: key);
 
@@ -199,7 +183,8 @@ class _AutoTransactionsPageNotificationsState
             await updateSettings("notificationScanning", value,
                 updateGlobalState: false);
             if (value == true) {
-              bool status = await requestReadNotificationPermission();
+              bool status = await NotificationDispatcher.instance
+                  .requestReadNotificationPermission();
               if (status == false) {
                 await updateSettings("notificationScanning", false,
                     updateGlobalState: false);
@@ -212,7 +197,7 @@ class _AutoTransactionsPageNotificationsState
           },
           title: "Notification Transactions",
           description:
-              "When a notification is received and the app is open, attempt to add a transaction given its information. Create a template so Cashew understands the format of a notification.",
+              "When a notification is dismissed and the app is open, attempt to add a transaction given its information. Create a template so Cashew understands the format of a notification.",
           initialValue: appStateSettings["notificationScanning"],
         ),
         StreamBuilder<List<ScannerTemplate>>(

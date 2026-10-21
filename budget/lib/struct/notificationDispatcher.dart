@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:budget/functions.dart';
+import 'package:budget/struct/settings.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
 
@@ -23,8 +24,6 @@ class NotificationDispatcher {
 
   TransactionQueueHandler? queueHandler;
 
-  bool get isListening => _subscription != null;
-
   /// Checks if notification listener access has been granted by the user.
   Future<bool> isPermissionGranted() async {
     try {
@@ -37,7 +36,7 @@ class NotificationDispatcher {
   /// Requests notification listener permission via system settings.
   Future<bool> requestReadNotificationPermission() async {
     try {
-      bool status = await NotificationListenerService.isPermissionGranted();
+      bool status = await isPermissionGranted();
       if (status != true) {
         status = await NotificationListenerService.requestPermission();
       }
