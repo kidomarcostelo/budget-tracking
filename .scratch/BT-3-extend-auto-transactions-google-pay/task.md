@@ -58,7 +58,7 @@ Each slice ends in something runnable and testable. S1 to S4 depend on S0.
 - [x] **S0 Research (blocking).** Output: `research.md`. Covers Google Wallet notification package and fields, plugin stream semantics (broadcast vs single subscription; `id`; posted/removed behavior), Android `onNotificationPosted` re-post semantics, Play policy for notification access, and whether any official consumer transaction API exists.
 - [x] **S0b Plugin upgrade decision.** Upstream inspection of `notification_listener_service: 1.0.0` completed. Upgrading is recommended: it fixes plugin issue #35 (`RECEIVER_NOT_EXPORTED` on API 34+), adds `timestamp` needed for dedupe windows, and retains full Dart API backwards compatibility with existing methods. Caveat: `EXTRA_BIG_TEXT` is still unhandled upstream in 1.0.0 (plugin still uses `EXTRA_TEXT` truncated to 500 chars).
 - [x] **S1 Single dispatcher (tracer for the refactor).** Move the global subscription into one dispatcher (`NotificationDispatcher`). Ignore `hasRemoved == true` events to eliminate duplicate transaction creation on notification dismissals. Keep current behavior for existing templates. Added unit test suite in `budget/test/notification_dispatcher_test.dart`.
-- [ ] **S2 Google Pay source tracer bullet.** Add source classification by `packageName` (`com.google.android.apps.walletnfcrel` for Google Wallet, `com.google.android.apps.nbu.paisa.user` for Google Pay, per `research.md`). The plugin reads only `EXTRA_TEXT`, so check whether `EXTRA_BIG_TEXT` is needed for full merchant and amount. Parse one redacted Google Pay sample into a prefilled `AddTransactionPage`. Reuse `ScannerTemplates` or add a built-in Google Pay template. Demoable: one notification produces one prefilled Transaction.
+- [x] **S2 Google Pay source tracer bullet.** Added source classification by `packageName` (`com.google.android.apps.walletnfcrel`, `com.google.android.apps.nbu.paisa.user`, and `com.google.android.gms`), implemented `GooglePayParser` parsing merchant, amount, currency, and card hints, and wired into `NotificationDispatcher` to prefill `AddTransactionPage`. Verified that payload length (~49 chars) fits within `EXTRA_TEXT` (500 chars). Added unit tests in `google_pay_parser_test.dart` and real device sample in `.scratch/bank-samples/google-pay/sample-notification.md`.
 - [ ] **S3 Dedupe ledger.** Record a key per event (`packageName` + `id` + normalized amount/title/timestamp bucket) with a time window (default 5 min, to be tuned from S0 samples). A second match within the window is suppressed or sent to review. Store in a new Drift table (additive migration). Covers:
   - posted + removed events for the same notification
   - Google Pay + bank notification for the same payment
@@ -78,17 +78,18 @@ Each slice ends in something runnable and testable. S1 to S4 depend on S0.
 
 ## Roadblock
 
-S2 is blocked on acquiring a real Google Pay / Google Wallet payment notification payload on device (determining channel, title, text structure, and whether `EXTRA_TEXT` suffices or `EXTRA_BIG_TEXT` is required).
+None blocking S3. S3 (Dedupe ledger in Drift) is unblocked and ready for implementation.
 
 ## Tried
 
 - S0 research written to `.scratch/BT-3-extend-auto-transactions-google-pay/research.md`.
 - S0b evaluation of `notification_listener_service: 1.0.0` completed and recorded in `research.md`.
 - S1 implemented: upgraded to `notification_listener_service: ^1.0.0`, created `NotificationDispatcher` to own the listener stream, filtered out `hasRemoved == true` events, and added unit tests in `notification_dispatcher_test.dart`.
+- S2 implemented: created `GooglePayParser`, classified packages and payment content, routed to prefilled `AddTransactionPage`, and added unit tests with real 7-Eleven sample in `google_pay_parser_test.dart`.
 
 ## Resume / next step
 
-Execute on-device notification capture for S2 (Google Wallet/Pay sample) to inspect payload fields and create parsing fixture.
+Proceed to S3: Design and implement the additive Drift dedupe ledger table with composite event key and time-window duplicate suppression.
 
 ## Links
 
