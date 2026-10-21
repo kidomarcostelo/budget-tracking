@@ -221,6 +221,12 @@ class BankReceiptParser {
 
     final sourceName = note;
 
+    final destBank = _extractFirstMatch(
+      text,
+      RegExp(r'(?:Bank|To Bank|Partner Bank)[:\s]*([^\n\r]+)',
+          caseSensitive: false),
+    );
+
     return ParsedBankReceipt(
       institution: BankInstitution.maya,
       institutionName: 'Maya',
@@ -231,7 +237,7 @@ class BankReceiptParser {
       sourceName: sourceName,
       destinationAccount: destPhone,
       destinationName: destName,
-      destinationBank: 'Maya',
+      destinationBank: destBank,
       isTransfer: false, // Maya P2P send money to another person is an Expense
       note: note,
       rawText: text,

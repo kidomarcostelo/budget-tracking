@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:budget/database/tables.dart';
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/ownerResolver.dart';
 import 'package:budget/struct/receiptParser.dart';
 import 'package:budget/struct/shareIntentOcr.dart';
 
@@ -74,6 +75,33 @@ class SharedReceiptProcessor {
     }
 
     return null;
+  }
+
+  /// Resolve both source (walletFrom) and destination (walletTo) wallets.
+  static Future<({TransactionWallet? from, TransactionWallet? to})>
+      resolveTransfer(ParsedBankReceipt receipt) async {
+    final from = await resolveWallet(receipt);
+    final to = await resolveDestinationWallet(receipt);
+    return (from: from, to: to);
+  }
+
+  /// Classify if receipt represents a self-transfer using owner profile and wallet matches.
+  static bool isSelfTransfer(
+    ParsedBankReceipt receipt, {
+    String? ownerName,
+    String? googleDisplayName,
+    String? currentUserEmail,
+    required bool destinationWalletExists,
+    bool sourceWalletExists = false,
+  }) {
+    return OwnerResolver.isSelfTransfer(
+      receipt: receipt,
+      ownerName: ownerName,
+      googleDisplayName: googleDisplayName,
+      currentUserEmail: currentUserEmail,
+      destinationWalletExists: destinationWalletExists,
+      sourceWalletExists: sourceWalletExists,
+    );
   }
 
   /// Suggest a matching wallet given a bank, wallet, or institution name string.
