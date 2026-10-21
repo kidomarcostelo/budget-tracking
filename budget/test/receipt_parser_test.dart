@@ -112,7 +112,9 @@ Receipt generated from MariBank app
       expect(receipt.dateTime!.minute, 26);
     });
 
-    test('correctly parses MariBank to UnionBank dynamic transfer receipt (no hardcoded Maya)', () {
+    test(
+        'correctly parses MariBank to UnionBank dynamic transfer receipt (no hardcoded Maya)',
+        () {
       const mbToUbText = '''
 MariBank
 Transaction Receipt

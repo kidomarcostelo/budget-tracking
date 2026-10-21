@@ -160,7 +160,10 @@ Future<bool> signInGoogle(
             updateGlobalState: false);
         if (googleUser?.displayName != null &&
             (appStateSettings["accountOwnerName"] == null ||
-                appStateSettings["accountOwnerName"].toString().trim().isEmpty)) {
+                appStateSettings["accountOwnerName"]
+                    .toString()
+                    .trim()
+                    .isEmpty)) {
           await updateSettings(
               "accountOwnerName", googleUser!.displayName ?? "",
               updateGlobalState: false);

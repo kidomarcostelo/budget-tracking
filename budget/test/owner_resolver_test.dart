@@ -161,8 +161,11 @@ void main() {
     });
   });
 
-  group('OwnerResolver.isSelfTransfer & SharedReceiptProcessor.isSelfTransfer', () {
-    test('classifies as self-transfer when sender and recipient match (GoTyme to MariBank)', () {
+  group('OwnerResolver.isSelfTransfer & SharedReceiptProcessor.isSelfTransfer',
+      () {
+    test(
+        'classifies as self-transfer when sender and recipient match (GoTyme to MariBank)',
+        () {
       const receipt = ParsedBankReceipt(
         institution: BankInstitution.goTyme,
         institutionName: 'GoTyme Bank',
@@ -184,7 +187,9 @@ void main() {
       expect(isSelf, isTrue);
     });
 
-    test('classifies as self-transfer when sender and recipient match (MariBank to UnionBank)', () {
+    test(
+        'classifies as self-transfer when sender and recipient match (MariBank to UnionBank)',
+        () {
       const receipt = ParsedBankReceipt(
         institution: BankInstitution.mariBank,
         institutionName: 'MariBank',
@@ -205,7 +210,8 @@ void main() {
       expect(isSelf, isTrue);
     });
 
-    test('falls back to sourceWalletExists when sender name is not extracted', () {
+    test('falls back to sourceWalletExists when sender name is not extracted',
+        () {
       const receipt = ParsedBankReceipt(
         institution: BankInstitution.unionBank,
         institutionName: 'UnionBank',
@@ -227,7 +233,9 @@ void main() {
       expect(isSelf, isTrue);
     });
 
-    test('classifies as expense when user pays an external recipient (Maya to Rica T.)', () {
+    test(
+        'classifies as expense when user pays an external recipient (Maya to Rica T.)',
+        () {
       const receipt = ParsedBankReceipt(
         institution: BankInstitution.maya,
         institutionName: 'Maya',
@@ -247,7 +255,9 @@ void main() {
       expect(isSelf, isFalse);
     });
 
-    test('classifies as expense if destination is external even if a generic wallet happens to exist', () {
+    test(
+        'classifies as expense if destination is external even if a generic wallet happens to exist',
+        () {
       const receipt = ParsedBankReceipt(
         institution: BankInstitution.unionBank,
         institutionName: 'UnionBank',
