@@ -2,18 +2,45 @@ import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:notification_listener_service/notification_event.dart';
 
+ServiceNotificationEvent createTestEvent({
+  int id = 1,
+  String packageName = 'com.example.bank',
+  String title = 'Notification Title',
+  String content = 'Notification Content',
+  bool hasRemoved = false,
+  bool canReply = false,
+  bool haveExtraPicture = false,
+  bool onGoing = false,
+  int timestamp = 0,
+}) {
+  return ServiceNotificationEvent(
+    id: id,
+    packageName: packageName,
+    title: title,
+    content: content,
+    hasRemoved: hasRemoved,
+    canReply: canReply,
+    haveExtraPicture: haveExtraPicture,
+    onGoing: onGoing,
+    timestamp: timestamp,
+    appIcon: null,
+    extrasPicture: null,
+    largeIcon: null,
+  );
+}
+
 void main() {
   group('NotificationDispatcher.formatNotificationMessage', () {
     test(
       'formats event details according to Cashew standard notification format',
       () {
-        final event = ServiceNotificationEvent.fromMap({
-          'id': 42,
-          'packageName': 'com.google.android.apps.walletnfcrel',
-          'title': 'Google Wallet Payment',
-          'content': 'Paid PHP 250.00 at Merchant',
-          'hasRemoved': false,
-        });
+        final event = createTestEvent(
+          id: 42,
+          packageName: 'com.google.android.apps.walletnfcrel',
+          title: 'Google Wallet Payment',
+          content: 'Paid PHP 250.00 at Merchant',
+          hasRemoved: false,
+        );
 
         final formatted =
             NotificationDispatcher.formatNotificationMessage(event);
@@ -51,23 +78,23 @@ void main() {
       'processes GoTyme bank sample fixture and ignores subsequent dismissal',
       () async {
         // Redacted sample based on .scratch/bank-samples/gotyme/sample-receipt.md
-        final gotymePosted = ServiceNotificationEvent.fromMap({
-          'id': 101,
-          'packageName': 'com.gotyme',
-          'title': 'GoTyme Bank Transfer',
-          'content':
+        final gotymePosted = createTestEvent(
+          id: 101,
+          packageName: 'com.gotyme',
+          title: 'GoTyme Bank Transfer',
+          content:
               'Transferred ₱3,600.00 to MariBank Philippines. Ref: ITO261019143038004',
-          'hasRemoved': false,
-        });
+          hasRemoved: false,
+        );
 
-        final gotymeRemoved = ServiceNotificationEvent.fromMap({
-          'id': 101,
-          'packageName': 'com.gotyme',
-          'title': 'GoTyme Bank Transfer',
-          'content':
+        final gotymeRemoved = createTestEvent(
+          id: 101,
+          packageName: 'com.gotyme',
+          title: 'GoTyme Bank Transfer',
+          content:
               'Transferred ₱3,600.00 to MariBank Philippines. Ref: ITO261019143038004',
-          'hasRemoved': true,
-        });
+          hasRemoved: true,
+        );
 
         int queueCount = 0;
         String? capturedMessage;
@@ -109,23 +136,23 @@ void main() {
       'processes MariBank sample fixture and suppresses duplicate on dismissal',
       () async {
         // Redacted sample based on .scratch/bank-samples/maribank/sample-receipt-app.md
-        final maribankPosted = ServiceNotificationEvent.fromMap({
-          'id': 202,
-          'packageName': 'com.maribank',
-          'title': 'MariBank Transfer Sent',
-          'content':
+        final maribankPosted = createTestEvent(
+          id: 202,
+          packageName: 'com.maribank',
+          title: 'MariBank Transfer Sent',
+          content:
               'Sent PHP 1,000.00 to Kid Omar Costelo (Maya Wallet). Ref: 454658',
-          'hasRemoved': false,
-        });
+          hasRemoved: false,
+        );
 
-        final maribankDismissed = ServiceNotificationEvent.fromMap({
-          'id': 202,
-          'packageName': 'com.maribank',
-          'title': 'MariBank Transfer Sent',
-          'content':
+        final maribankDismissed = createTestEvent(
+          id: 202,
+          packageName: 'com.maribank',
+          title: 'MariBank Transfer Sent',
+          content:
               'Sent PHP 1,000.00 to Kid Omar Costelo (Maya Wallet). Ref: 454658',
-          'hasRemoved': true,
-        });
+          hasRemoved: true,
+        );
 
         int dispatchCount = 0;
         final handledPosted = await dispatcher.handleEvent(
@@ -154,13 +181,13 @@ void main() {
       'processes Maya sample fixture correctly',
       () async {
         // Redacted sample based on .scratch/bank-samples/maya/sample-receipt.md
-        final mayaPosted = ServiceNotificationEvent.fromMap({
-          'id': 303,
-          'packageName': 'com.maya',
-          'title': 'Money Sent',
-          'content': 'You sent ₱100.00 to RICA T. Ref: 456C6B393301',
-          'hasRemoved': false,
-        });
+        final mayaPosted = createTestEvent(
+          id: 303,
+          packageName: 'com.maya',
+          title: 'Money Sent',
+          content: 'You sent ₱100.00 to RICA T. Ref: 456C6B393301',
+          hasRemoved: false,
+        );
 
         String? dispatchedMsg;
         final handled = await dispatcher.handleEvent(
