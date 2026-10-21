@@ -19,6 +19,7 @@ import 'package:budget/widgets/openSnackbar.dart';
 import 'package:budget/widgets/framework/pageFramework.dart';
 import 'package:budget/widgets/radioItems.dart';
 import 'package:budget/widgets/settingsContainers.dart';
+import 'package:budget/widgets/accountOwnerNameSetting.dart';
 import 'package:budget/widgets/tappable.dart';
 import 'package:budget/widgets/textInput.dart';
 import 'package:budget/widgets/textWidgets.dart';
@@ -737,6 +738,7 @@ class WalletsSettings extends StatelessWidget {
         ShowAccountLabelSettingToggle(),
         ShowCurrencyLabelSettingToggle(),
         ExchangeRateSettingPage(backgroundColor: backgroundColor),
+        AccountOwnerNameSetting(backgroundColor: backgroundColor),
       ],
     );
   }
