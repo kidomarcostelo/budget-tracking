@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:budget/functions.dart';
+import 'package:budget/struct/googlePayParser.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
@@ -23,6 +24,7 @@ class NotificationDispatcher {
   final List<String> recentCapturedNotifications = [];
 
   TransactionQueueHandler? queueHandler;
+  Future<bool> Function(GooglePayTransactionResult)? onGooglePayTransaction;
 
   /// Checks if notification listener access has been granted by the user.
   Future<bool> isPermissionGranted() async {
@@ -103,7 +105,25 @@ class NotificationDispatcher {
     String messageString = formatNotificationMessage(event);
     addCapturedNotification(messageString);
 
-    TransactionQueueHandler? handler = customQueueHandler ?? queueHandler;
+    // If custom queue handler was supplied (e.g. in tests), prioritize it
+    if (customQueueHandler != null) {
+      await customQueueHandler(messageString);
+      return true;
+    }
+
+    // Check if event is from Google Wallet / Google Pay
+    if (GooglePayParser.isGooglePayEvent(event)) {
+      final googlePayResult =
+          GooglePayParser.parse(event.title, event.content);
+      if (googlePayResult != null) {
+        final gPayHandler = onGooglePayTransaction ??
+            GooglePayParser.processGooglePayTransaction;
+        await gPayHandler(googlePayResult);
+        return true;
+      }
+    }
+
+    TransactionQueueHandler? handler = queueHandler;
     if (handler != null) {
       await handler(messageString);
     }
