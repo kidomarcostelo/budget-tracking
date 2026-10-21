@@ -158,6 +158,13 @@ Future<bool> signInGoogle(
         googleUser = account;
         await updateSettings("currentUserEmail", googleUser?.email ?? "",
             updateGlobalState: false);
+        if (googleUser?.displayName != null &&
+            (appStateSettings["accountOwnerName"] == null ||
+                appStateSettings["accountOwnerName"].toString().trim().isEmpty)) {
+          await updateSettings(
+              "accountOwnerName", googleUser!.displayName ?? "",
+              updateGlobalState: false);
+        }
       } else {
         throw ("Login failed");
       }
