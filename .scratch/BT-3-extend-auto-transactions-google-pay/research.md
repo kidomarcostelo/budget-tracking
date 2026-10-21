@@ -135,4 +135,32 @@ Source: plugin 0.3.3 pub archive (`https://pub.dev/packages/notification_listene
 7. Whether re-posts (updates) happen for the same payment, and whether they carry the same key.
 8. Whether `EXTRA_TEXT` holds the full merchant and amount, or whether `EXTRA_BIG_TEXT` is needed (the plugin ignores it).
 9. Whether the "Google Pay app no longer available for use" banner on the Play listing applies to the test region.
-10. Whether plugin 0.3.3 broadcast spoofing (#35) is practically exploitable on the target device. Upgrading to 1.0.0 would close it.
+10. Whether plugin 0.3.3 broadcast spoofing (#35) is practically exploitable on the target device. Upgrading to 1.0.0 closes it (verified: uses `RECEIVER_NOT_EXPORTED` on API 34+).
+
+---
+
+## Q7. notification_listener_service: 0.3.3 vs 1.0.0 Evaluation (S0b)
+
+Source: Upstream GitHub repository `X-SLAYER/notification_listener_service` at `main` (containing 1.0.0 release) and pub.dev listing.
+
+1. **Security Fix (Android 14+ / API 34+):**
+   - Plugin issue #35 reported an exported broadcast receiver on API 34+.
+   - In 1.0.0, `NotificationListenerServicePlugin.java` explicitly registers the receiver with `Context.RECEIVER_NOT_EXPORTED` on `Build.VERSION_CODES.UPSIDE_DOWN_CAKE` (API 34+), closing the broadcast spoofing vulnerability.
+
+2. **API & Interface Compatibility:**
+   - Dart API: `NotificationListenerService.notificationsStream` continues to return `Stream<ServiceNotificationEvent>`.
+   - `isPermissionGranted()` and `requestPermission()` have identical signatures and behavior.
+   - `ServiceNotificationEvent` retains `id`, `canReply`, `haveExtraPicture`, `hasRemoved`, `packageName`, `title`, and `content`.
+   - Added fields: `onGoing` (bool), `timestamp` (int, milliseconds since epoch), `humanTime` (DateTime getter), `appIcon` (Uint8List?), `extrasPicture` (Uint8List?), `largeIcon` (Uint8List?).
+   - Added method: `NotificationListenerService.getActiveNotifications()` returns `Future<List<ServiceNotificationEvent>>`.
+   - Impact on Cashew: **100% backward-compatible** with existing usages in `autoTransactionsPageEmail.dart`.
+
+3. **Content Extraction & `EXTRA_BIG_TEXT` Limitation:**
+   - In 1.0.0, `NotificationListener.java` still queries `extras.getCharSequence(Notification.EXTRA_TEXT)` (line 168) and truncates to 500 characters.
+   - `EXTRA_BIG_TEXT` is **still NOT read** in 1.0.0.
+   - If Google Wallet or banking apps place full transaction details in `EXTRA_BIG_TEXT` (e.g. `NotificationCompat.BigTextStyle`), upgrading to 1.0.0 alone does not resolve that limitation. A native patch or plugin fork would be required if on-device testing proves `EXTRA_TEXT` is insufficient.
+
+4. **Recommendation / Decision (S0b):**
+   - **Upgrade to `notification_listener_service: ^1.0.0`:** The upgrade is safe, non-breaking, resolves the API 34 security flaw, and provides `timestamp` necessary for the deduplication time window in S3.
+   - S1 (Single dispatcher & ignore `hasRemoved`) is unblocked and can proceed.
+

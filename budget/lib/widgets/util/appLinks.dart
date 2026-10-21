@@ -6,6 +6,7 @@ import 'package:budget/pages/addEmailTemplate.dart';
 import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/autoTransactionsPageEmail.dart';
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/throttler.dart';
 import 'package:budget/widgets/globalSnackbar.dart';
@@ -257,8 +258,7 @@ Future processAddTransactionRouteFromParams(
 Future processMessageToParse(
     BuildContext context, Map<String, String?> params) async {
   String messageString = params["messageToParse"].toString();
-  recentCapturedNotifications.insert(0, messageString);
-  recentCapturedNotifications.take(50);
+  NotificationDispatcher.instance.addCapturedNotification(messageString);
   dynamic result = await queueTransactionFromMessage(
     messageString,
     willPushRoute: true,
