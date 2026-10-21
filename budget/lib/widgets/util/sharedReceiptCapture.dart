@@ -117,7 +117,7 @@ class _InitializeSharedReceiptCaptureState
       );
       final notes = SharedReceiptProcessor.formatNotes(receipt);
 
-      if (isSelfTransfer && matchedWalletTo != null) {
+      if (isSelfTransfer) {
         await Future.delayed(const Duration(milliseconds: 100), () async {
           await openBottomSheet(
             context,
@@ -134,21 +134,6 @@ class _InitializeSharedReceiptCaptureState
             ),
           );
         });
-
-        final targetName = receipt.destinationBank ??
-            receipt.destinationName ??
-            matchedWalletTo?.name ??
-            'transfer'.tr();
-
-        openSnackbar(SnackbarMessage(
-          title: 'transfer'.tr(),
-          description:
-              '${receipt.institutionName} → $targetName: ${receipt.currency} '
-              '${receipt.amount.toStringAsFixed(2)}',
-          icon: appStateSettings['outlinedIcons']
-              ? Icons.compare_arrows_outlined
-              : Icons.compare_arrows_rounded,
-        ));
       } else {
         final matchedCategory =
             await SharedReceiptProcessor.resolveCategory(receipt);
@@ -169,15 +154,6 @@ class _InitializeSharedReceiptCaptureState
             ),
           );
         });
-
-        openSnackbar(SnackbarMessage(
-          title: 'added-transaction'.tr(),
-          description: '${receipt.institutionName}: ${receipt.currency} '
-              '${receipt.amount.toStringAsFixed(2)}',
-          icon: appStateSettings['outlinedIcons']
-              ? Icons.receipt_long_outlined
-              : Icons.receipt_long_rounded,
-        ));
       }
     } catch (_) {
       // Gracefully ignore extraction errors
