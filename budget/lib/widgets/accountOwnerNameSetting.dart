@@ -1,4 +1,5 @@
 import 'package:budget/database/tables.dart' hide AppSettings;
+import 'package:budget/functions.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/accountAndBackup.dart';
 import 'package:budget/widgets/navigationFramework.dart';
