@@ -27,40 +27,30 @@ import 'package:provider/provider.dart';
 import 'package:budget/functions.dart';
 import 'package:googleapis/gmail/v1.dart' as gMail;
 import 'package:html/parser.dart';
+import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
 
 import 'addButton.dart';
 
-StreamSubscription<ServiceNotificationEvent>? notificationListenerSubscription;
-List<String> recentCapturedNotifications = [];
+List<String> get recentCapturedNotifications =>
+    NotificationDispatcher.instance.recentCapturedNotifications;
 
 Future initNotificationScanning() async {
-  if (getPlatform(ignoreEmulation: true) != PlatformOS.isAndroid) return;
-  notificationListenerSubscription?.cancel();
-  if (appStateSettings["notificationScanning"] != true) return;
-
-  bool status = await requestReadNotificationPermission();
-
-  if (status == true) {
-    notificationListenerSubscription =
-        NotificationListenerService.notificationsStream.listen(onNotification);
-  }
+  NotificationDispatcher.instance.queueHandler = queueTransactionFromMessage;
+  await NotificationDispatcher.instance.initNotificationScanning();
 }
 
 Future<bool> requestReadNotificationPermission() async {
-  bool status = await NotificationListenerService.isPermissionGranted();
-  if (status != true) {
-    status = await NotificationListenerService.requestPermission();
-  }
-  return status;
+  return await NotificationDispatcher.instance
+      .requestReadNotificationPermission();
 }
 
 onNotification(ServiceNotificationEvent event) async {
-  String messageString = getNotificationMessage(event);
-  recentCapturedNotifications.insert(0, messageString);
-  recentCapturedNotifications.take(50);
-  queueTransactionFromMessage(messageString);
+  await NotificationDispatcher.instance.handleEvent(
+    event,
+    customQueueHandler: queueTransactionFromMessage,
+  );
 }
 
 class InitializeNotificationService extends StatefulWidget {
@@ -158,14 +148,7 @@ Future queueTransactionFromMessage(String messageString,
 }
 
 String getNotificationMessage(ServiceNotificationEvent event) {
-  String output = "";
-  output = output + "Package name: " + event.packageName.toString() + "\n";
-  output =
-      output + "Notification removed: " + event.hasRemoved.toString() + "\n";
-  output = output + "\n----\n\n";
-  output = output + "Notification Title: " + event.title.toString() + "\n\n";
-  output = output + "Notification Content: " + event.content.toString();
-  return output;
+  return NotificationDispatcher.formatNotificationMessage(event);
 }
 
 class AutoTransactionsPageNotifications extends StatefulWidget {
@@ -224,12 +207,12 @@ class _AutoTransactionsPageNotificationsState
                 initNotificationScanning();
               }
             } else {
-              notificationListenerSubscription?.cancel();
+              await NotificationDispatcher.instance.stopListening();
             }
           },
           title: "Notification Transactions",
           description:
-              "When a notification is dismissed and the app is open, attempt to add a transaction given its information. Create a template so Cashew understands the format of a notification.",
+              "When a notification is received and the app is open, attempt to add a transaction given its information. Create a template so Cashew understands the format of a notification.",
           initialValue: appStateSettings["notificationScanning"],
         ),
         StreamBuilder<List<ScannerTemplate>>(
