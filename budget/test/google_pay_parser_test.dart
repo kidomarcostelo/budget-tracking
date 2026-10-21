@@ -212,7 +212,8 @@ void main() {
         };
 
         bool standardQueueCalled = false;
-        dispatcher.queueHandler = (msg, {dateTime, willPushRoute = true}) async {
+        dispatcher.queueHandler =
+            (msg, {dateTime, willPushRoute = true}) async {
           standardQueueCalled = true;
         };
 
@@ -243,7 +244,8 @@ void main() {
         };
 
         String? standardQueueMsg;
-        dispatcher.queueHandler = (msg, {dateTime, willPushRoute = true}) async {
+        dispatcher.queueHandler =
+            (msg, {dateTime, willPushRoute = true}) async {
           standardQueueMsg = msg;
         };
 
