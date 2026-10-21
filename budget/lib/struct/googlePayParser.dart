@@ -52,7 +52,8 @@ class GooglePayParser {
   );
 
   static final RegExp _withCardRegex = RegExp(
-    r'(?i)\bwith\s+([^,.\n]+)',
+    r'\bwith\s+([^,.\n]+)',
+    caseSensitive: false,
   );
 
   static final RegExp _cardLast4Regex = RegExp(
@@ -60,7 +61,8 @@ class GooglePayParser {
   );
 
   static final RegExp _atMerchantRegex = RegExp(
-    r'(?i)\b(?:at|to|in)\s+([^,.\n]+)',
+    r'\b(?:at|to|in)\s+([^,.\n]+)',
+    caseSensitive: false,
   );
 
   /// Checks if the package belongs to Google Wallet or Google Pay ecosystem.
