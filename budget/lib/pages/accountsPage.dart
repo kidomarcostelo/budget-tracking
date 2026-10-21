@@ -40,8 +40,6 @@ class AccountsPageState extends State<AccountsPage> {
     setState(() {});
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     Widget profileWidget = Container(
