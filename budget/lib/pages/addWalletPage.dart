@@ -1023,6 +1023,7 @@ class TransferBalancePopup extends StatefulWidget {
   const TransferBalancePopup({
     required this.wallet,
     required this.allowEditWallet,
+    this.walletTo,
     this.showAllEditDetails = false,
     this.initialAmount,
     this.initialDate,
@@ -1032,6 +1033,7 @@ class TransferBalancePopup extends StatefulWidget {
     super.key,
   });
   final TransactionWallet? wallet;
+  final TransactionWallet? walletTo;
   final bool allowEditWallet;
   final bool showAllEditDetails;
   final double? initialAmount;
@@ -1049,7 +1051,7 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
   late double enteredAmount = widget.initialAmount ?? 0;
   late bool isNegative = widget.initialIsNegative ?? false;
   late TransactionWallet? walletFrom = widget.wallet;
-  TransactionWallet? walletTo;
+  late TransactionWallet? walletTo = widget.walletTo;
   late TimeOfDay? selectedTime = widget.initialDate != null
       ? TimeOfDay(
           hour: widget.initialDate!.hour, minute: widget.initialDate!.minute)

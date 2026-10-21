@@ -32,6 +32,9 @@ Get help
       expect(receipt.isTransfer, isTrue);
       expect(receipt.sourceAccount, contains('3887'));
       expect(receipt.destinationAccount, contains('6603'));
+      expect(receipt.sourceName, 'KID O*** C******');
+      expect(receipt.destinationName, 'KID O*** C*');
+      expect(receipt.destinationBank, contains('MariBank'));
       expect(receipt.dateTime, isNotNull);
       expect(receipt.dateTime!.day, 19);
       expect(receipt.dateTime!.month, 10);
@@ -63,6 +66,7 @@ maya
       expect(receipt!.institution, BankInstitution.maya);
       expect(receipt.amount, 100.00);
       expect(receipt.referenceNumber, '456C6B393301');
+      expect(receipt.sourceName, 'KID OMAR');
       expect(receipt.destinationName, 'RICA T.');
       expect(receipt.destinationAccount, contains('639206923443'));
       expect(receipt.note, 'KID OMAR');
@@ -99,9 +103,40 @@ Receipt generated from MariBank app
       expect(receipt.isTransfer, isTrue);
       expect(receipt.sourceAccount, contains('6603'));
       expect(receipt.destinationAccount, contains('09568579768'));
+      expect(receipt.sourceName, 'KID OMAR C.');
+      expect(receipt.destinationName, 'Kid Omar Costelo');
+      expect(receipt.destinationBank, contains('Maya'));
       expect(receipt.dateTime, isNotNull);
       expect(receipt.dateTime!.hour, 22);
       expect(receipt.dateTime!.minute, 26);
+    });
+
+    test('correctly parses MariBank to UnionBank dynamic transfer receipt (no hardcoded Maya)', () {
+      const mbToUbText = '''
+MariBank
+Transaction Receipt
+PHP 2,500.00
+From KID OMAR C.
+MariBank: *******6603
+To Kid Omar Costelo
+UnionBank of the Philippines
+Account No.: 109358291032
+Transfer Amount PHP 2,500.00
+Transfer Fee FREE
+Total Amount PHP 2,500.00
+Reference Number 998877
+Transfer Method instaPay
+Transaction Date & Time 20 Oct 2026, 14:15
+Receipt generated from MariBank app
+''';
+      final receipt = BankReceiptParser.parse(mbToUbText);
+      expect(receipt, isNotNull);
+      expect(receipt!.institution, BankInstitution.mariBank);
+      expect(receipt.amount, 2500.00);
+      expect(receipt.sourceName, 'KID OMAR C.');
+      expect(receipt.destinationName, 'Kid Omar Costelo');
+      expect(receipt.destinationBank, contains('UnionBank'));
+      expect(receipt.destinationBank, isNot(contains('Maya')));
     });
   });
 
@@ -144,6 +179,9 @@ Thank you for using UnionBank Online
       expect(receipt.isTransfer, isTrue);
       expect(receipt.sourceAccount, contains('9227'));
       expect(receipt.destinationAccount, contains('19530416603'));
+      expect(receipt.sourceName, 'KID OMAR RENDON COSTELO');
+      expect(receipt.destinationName, 'Kid Omar Costelo');
+      expect(receipt.destinationBank, 'Maribank');
       expect(receipt.dateTime, isNotNull);
       expect(receipt.dateTime!.month, 10);
       expect(receipt.dateTime!.day, 19);
