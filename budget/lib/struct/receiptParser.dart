@@ -18,8 +18,10 @@ class ParsedBankReceipt {
   final DateTime? dateTime;
   final String? referenceNumber;
   final String? sourceAccount;
+  final String? sourceName;
   final String? destinationAccount;
   final String? destinationName;
+  final String? destinationBank;
   final bool isTransfer;
   final String? note;
   final String rawText;
@@ -32,8 +34,10 @@ class ParsedBankReceipt {
     this.dateTime,
     this.referenceNumber,
     this.sourceAccount,
+    this.sourceName,
     this.destinationAccount,
     this.destinationName,
+    this.destinationBank,
     this.isTransfer = false,
     this.note,
     required this.rawText,
@@ -47,7 +51,7 @@ class ParsedBankReceipt {
         'ref: $referenceNumber, '
         'date: $dateTime, '
         'isTransfer: $isTransfer, '
-        'from: $sourceAccount -> to: $destinationAccount ($destinationName))';
+        'from: $sourceAccount ($sourceName) -> to: $destinationAccount ($destinationName, $destinationBank))';
   }
 }
 
@@ -154,6 +158,24 @@ class BankReceiptParser {
           multiLine: true),
     );
 
+    final destName = _extractFirstMatch(
+      text,
+      RegExp(r'To\s+([^\n\r]+)', caseSensitive: false),
+    );
+
+    final sourceName = _extractFirstMatch(
+      text,
+      RegExp(r'From\s+([^\n\r]+)', caseSensitive: false),
+    );
+
+    final destBank = _extractFirstMatch(
+      text,
+      RegExp(
+        r'(?:To[\s\S]*?(?:[*Xx\s]{4,}\d{3,}|\d{4,})\s*\n\s*)([^\n\r]+?)(?:\s*\n\s*From)',
+        multiLine: true,
+      ),
+    );
+
     return ParsedBankReceipt(
       institution: BankInstitution.goTyme,
       institutionName: 'GoTyme Bank',
@@ -161,8 +183,10 @@ class BankReceiptParser {
       dateTime: date,
       referenceNumber: ref,
       sourceAccount: sourceAccount,
+      sourceName: sourceName,
       destinationAccount: destAccount,
-      destinationName: 'MariBank',
+      destinationName: destName,
+      destinationBank: destBank,
       isTransfer: true,
       rawText: text,
     );
@@ -195,6 +219,8 @@ class BankReceiptParser {
       RegExp(r'-\s*from\s*([^\n\r]+)', caseSensitive: false),
     )?.trim();
 
+    final sourceName = note;
+
     return ParsedBankReceipt(
       institution: BankInstitution.maya,
       institutionName: 'Maya',
@@ -202,8 +228,10 @@ class BankReceiptParser {
       dateTime: DateTime.now(),
       referenceNumber: ref,
       sourceAccount: 'My Wallet',
+      sourceName: sourceName,
       destinationAccount: destPhone,
       destinationName: destName,
+      destinationBank: 'Maya',
       isTransfer: false, // Maya P2P send money to another person is an Expense
       note: note,
       rawText: text,
@@ -244,11 +272,33 @@ class BankReceiptParser {
     final destAccount = _extractFirstMatch(
       text,
       RegExp(
-        r'To[\s\S]*?(?:^|\n)\s*(?:Mobile No\.:\s*)?'
+        r'To[\s\S]*?(?:^|\n)\s*(?:Mobile No\.:\s*|Account No\.:\s*)?'
         r'(09[0-9]{9}|[*Xx\s]{4,}\d{3,}|\d{4,})',
         multiLine: true,
       ),
     );
+
+    final sourceName = _extractFirstMatch(
+      text,
+      RegExp(r'From\s+([^\n\r]+)', caseSensitive: false),
+    );
+
+    final toMatch = RegExp(
+      r'To\s+([^\n\r]+)(?:\s*\n\s*([^\n\r]+))?',
+      caseSensitive: false,
+    ).firstMatch(text);
+
+    final destName = toMatch?.group(1)?.trim();
+    String? destBank = toMatch?.group(2)?.trim();
+    if (destBank != null) {
+      final lower = destBank.toLowerCase();
+      if (lower.startsWith('mobile no') ||
+          lower.startsWith('account no') ||
+          lower.startsWith('transfer amount') ||
+          lower.startsWith('php')) {
+        destBank = null;
+      }
+    }
 
     final isTransfer = text.toLowerCase().contains('transfer') ||
         text.toLowerCase().contains('instapay');
@@ -260,8 +310,10 @@ class BankReceiptParser {
       dateTime: date,
       referenceNumber: ref,
       sourceAccount: sourceAccount,
+      sourceName: sourceName,
       destinationAccount: destAccount,
-      destinationName: 'Maya Wallet',
+      destinationName: destName,
+      destinationBank: destBank,
       isTransfer: isTransfer,
       rawText: text,
     );
@@ -300,6 +352,48 @@ class BankReceiptParser {
           multiLine: true),
     )?.replaceAll(' ', '');
 
+    String? destName;
+    String? destBank;
+    final toSection = _extractFirstMatch(
+      text,
+      RegExp(
+        r'(?:^|\n)To\s*\n([\s\S]*?)(?:Amount|\n\s*\n)',
+        caseSensitive: false,
+      ),
+    );
+    if (toSection != null) {
+      final lines = toSection
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
+      if (lines.isNotEmpty) {
+        destName = lines[0];
+      }
+      if (lines.length > 1 && !RegExp(r'^\d[\d\s]+$').hasMatch(lines[1])) {
+        destBank = lines[1];
+      }
+    }
+
+    String? sourceName;
+    final fromSection = _extractFirstMatch(
+      text,
+      RegExp(
+        r'(?:^|\n)From\s*\n([\s\S]*?)(?:Thank you|\n\s*\n|$)',
+        caseSensitive: false,
+      ),
+    );
+    if (fromSection != null) {
+      final lines = fromSection
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
+      if (lines.isNotEmpty) {
+        sourceName = lines[0];
+      }
+    }
+
     return ParsedBankReceipt(
       institution: BankInstitution.unionBank,
       institutionName: 'UnionBank',
@@ -307,8 +401,10 @@ class BankReceiptParser {
       dateTime: date,
       referenceNumber: ref,
       sourceAccount: sourceAccount,
+      sourceName: sourceName,
       destinationAccount: destAccount,
-      destinationName: 'Maribank',
+      destinationName: destName,
+      destinationBank: destBank,
       isTransfer: true,
       rawText: text,
     );
@@ -327,12 +423,25 @@ class BankReceiptParser {
           caseSensitive: false),
     );
 
+    final destName = _extractFirstMatch(
+      text,
+      RegExp(r'(?:To|Recipient|Destination)[:\s]*([^\n\r]+)',
+          caseSensitive: false),
+    );
+
+    final sourceName = _extractFirstMatch(
+      text,
+      RegExp(r'(?:From|Sender)[:\s]*([^\n\r]+)', caseSensitive: false),
+    );
+
     return ParsedBankReceipt(
       institution: BankInstitution.unknown,
       institutionName: 'Receipt',
       amount: amount,
       dateTime: DateTime.now(),
       referenceNumber: ref,
+      sourceName: sourceName,
+      destinationName: destName,
       rawText: text,
     );
   }

@@ -2,7 +2,7 @@
 
 **ID:** BT-7  
 **Issue Reference:** [#12](https://github.com/kidomarcostelo/budget-tracking/issues/12)  
-**Status:** In Progress (Ideation & Planning)  
+**Status:** Completed (Ready for PR)  
 **Assignee:** Agent
 
 ---
@@ -90,22 +90,22 @@ flowchart TD
 
 ## 5. Plan & Implementation Steps
 
-- [ ] **Step 1: Expand `ParsedBankReceipt` model**:
+- [x] **Step 1: Expand `ParsedBankReceipt` model**:
   - Add `sourceName` and `destinationBank` fields to `ParsedBankReceipt` in `budget/lib/struct/receiptParser.dart`.
-- [ ] **Step 2: Update Bank Parsers (Dynamic Extraction & Eliminate Hardcoded Defaults)**:
+- [x] **Step 2: Update Bank Parsers (Dynamic Extraction & Eliminate Hardcoded Defaults)**:
   - Eliminate hardcoded `destinationName` strings (`Maya Wallet` in MariBank, `MariBank` in GoTyme, `Maribank` in UnionBank).
   - Extract sender name (`sourceName`) across all parsers (`_parseGoTyme`, `_parseMaya`, `_parseMariBank`, `_parseUnionBank`).
   - Extract destination bank (`destinationBank`) and recipient name (`destinationName`) dynamically from OCR lines under `To`.
   - Fix MariBank -> UnionBank transfer scenario so it does not falsely attribute destination to Maya.
-- [ ] **Step 3: Implement `OwnerResolver` utility**:
+- [x] **Step 3: Implement `OwnerResolver` utility**:
   - Create `budget/lib/struct/ownerResolver.dart` with tokenized name matching and Google Sign-In profile inspection.
-- [ ] **Step 4: Update `SharedReceiptProcessor`**:
+- [x] **Step 4: Update `SharedReceiptProcessor`**:
   - Implement `resolveTransfer(receipt)` to resolve both `walletFrom` and `walletTo`.
   - Add `isSelfTransfer(receipt)` heuristic.
-- [ ] **Step 5: Conditional UI Launch in `sharedReceiptCapture.dart`**:
+- [x] **Step 5: Conditional UI Launch in `sharedReceiptCapture.dart`**:
   - If `isSelfTransfer`: open `TransferBalancePopup(wallet: walletFrom, walletTo: walletTo, initialAmount: amount, ...)`.
   - If not self-transfer: open `AddTransactionPage(...)` (Expense).
-- [ ] **Step 6: Unit & Integration Tests**:
+- [x] **Step 6: Unit & Integration Tests**:
   - Test exact name match, initials match, surname-first match, and routing branches.
 
 ---

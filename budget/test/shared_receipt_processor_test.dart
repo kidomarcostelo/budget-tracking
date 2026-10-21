@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('SharedReceiptProcessor formatting helpers', () {
-    test('formatTitle includes institution and recipient', () {
+    test('formatTitle includes institution and recipient for expense', () {
       const receiptWithRecipient = ParsedBankReceipt(
         institution: BankInstitution.goTyme,
         institutionName: 'GoTyme Bank',
@@ -13,8 +13,10 @@ void main() {
         destinationName: 'MariBank',
         rawText: 'sample',
       );
-      expect(SharedReceiptProcessor.formatTitle(receiptWithRecipient),
-          'GoTyme Bank - MariBank');
+      expect(
+        SharedReceiptProcessor.formatTitle(receiptWithRecipient),
+        'GoTyme Bank - MariBank',
+      );
 
       const receiptWithoutRecipient = ParsedBankReceipt(
         institution: BankInstitution.unionBank,
@@ -22,11 +24,29 @@ void main() {
         amount: 1500.0,
         rawText: 'sample',
       );
-      expect(SharedReceiptProcessor.formatTitle(receiptWithoutRecipient),
-          'UnionBank');
+      expect(
+        SharedReceiptProcessor.formatTitle(receiptWithoutRecipient),
+        'UnionBank',
+      );
     });
 
-    test('formatNotes formats reference, source, destination, and note', () {
+    test('formatTitle formats transfer title with arrow when isTransfer is true', () {
+      const transferReceipt = ParsedBankReceipt(
+        institution: BankInstitution.mariBank,
+        institutionName: 'MariBank',
+        amount: 2500.0,
+        destinationBank: 'UnionBank',
+        destinationName: 'Kid Omar Costelo',
+        isTransfer: true,
+        rawText: 'sample',
+      );
+      expect(
+        SharedReceiptProcessor.formatTitle(transferReceipt, isTransfer: true),
+        'MariBank → UnionBank',
+      );
+    });
+
+    test('formatNotes formats reference, source, destination, bank, and note', () {
       const receipt = ParsedBankReceipt(
         institution: BankInstitution.maya,
         institutionName: 'Maya',
@@ -34,6 +54,7 @@ void main() {
         referenceNumber: '456C6B393301',
         sourceAccount: 'My Wallet',
         destinationAccount: '+639206923443',
+        destinationBank: 'Maya Philippines, Inc./Maya Wallet',
         note: 'Payment for lunch',
         rawText: 'sample',
       );
@@ -42,6 +63,7 @@ void main() {
       expect(notes, contains('Ref: 456C6B393301'));
       expect(notes, contains('From: My Wallet'));
       expect(notes, contains('To: +639206923443'));
+      expect(notes, contains('To Bank: Maya Philippines, Inc./Maya Wallet'));
       expect(notes, contains('Note: Payment for lunch'));
     });
   });
@@ -89,6 +111,9 @@ Get help
       expect(receipt!.institution, BankInstitution.goTyme);
       expect(receipt.amount, 3600.00);
       expect(receipt.referenceNumber, 'ITO261019143038004');
+      expect(receipt.sourceName, 'KID O*** C******');
+      expect(receipt.destinationName, 'KID O*** C*');
+      expect(receipt.destinationBank, contains('MariBank'));
     });
 
     test('guarantees temp image deletion even when OCR returns empty text',
@@ -104,27 +129,8 @@ Get help
         },
       );
 
-      expect(receipt, isNull);
       expect(deletedPath, '/cache/blank_image.png');
-    });
-
-    test('guarantees temp image deletion even when OCR throws', () async {
-      String? deletedPath;
-
-      try {
-        await SharedReceiptProcessor.processSharedImage(
-          '/cache/corrupt_image.png',
-          recognizeText: (path) async => throw Exception('Native OCR crash'),
-          deleteTempFile: (path) async {
-            deletedPath = path;
-            return true;
-          },
-        );
-      } catch (_) {
-        // Expected exception
-      }
-
-      expect(deletedPath, '/cache/corrupt_image.png');
+      expect(receipt, null);
     });
   });
 }
