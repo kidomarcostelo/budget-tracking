@@ -208,6 +208,7 @@ Future<Transaction?> processAddTransactionFromParams(
         selectedDate: dateCreated,
         selectedTitle: title.isNotEmpty ? title : null,
         selectedNotes: note.isNotEmpty ? note : null,
+        startInitialAddTransactionSequence: false,
         isPossibleDuplicate: true,
         possibleDuplicateEntry: dedupeResult.matchedEntry,
       ),
