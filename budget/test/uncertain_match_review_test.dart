@@ -5,9 +5,11 @@ import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/settings.dart';
+import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/possibleDuplicateBanner.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:drift/native.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +17,13 @@ import 'package:sqlite3/open.dart';
 
 void main() {
   setUpAll(() {
+    EasyLocalization.logger.enableLevels = [];
+    appStateSettings["materialYou"] = false;
+    appStateSettings["selectedWalletPk"] = "test-wallet-1";
+    appStateSettings["outlinedIcons"] = false;
+    appStateSettings["askForTransactionTitle"] = false;
+    appStateSettings["showMethodAdded"] = false;
+    appStateSettings["showTransactionPk"] = false;
     open.overrideFor(OperatingSystem.linux, () {
       try {
         return DynamicLibrary.open('libsqlite3.so');
@@ -86,6 +95,55 @@ void main() {
       expect(find.byKey(const ValueKey('possibleDuplicateBanner')),
           findsOneWidget);
       expect(find.textContaining('Possible duplicate'), findsOneWidget);
+    });
+
+    testWidgets('renders correctly when only amount is present',
+        (WidgetTester tester) async {
+      final matchedEntry = DedupeEntryRecord(
+        eventKey: 'notif:com.bank:amount-only',
+        amount: 500.0,
+        amountNormalized: '500.00',
+        currency: 'USD',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PossibleDuplicateBanner(
+              matchedEntry: matchedEntry,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const ValueKey('possibleDuplicateBanner')),
+          findsOneWidget);
+      expect(find.textContaining('USD 500.00'), findsOneWidget);
+      // Dismiss button should not be present when onDismiss is null
+      expect(find.byKey(const ValueKey('dismissPossibleDuplicateBanner')),
+          findsNothing);
+    });
+
+    testWidgets('renders correctly when only title is present',
+        (WidgetTester tester) async {
+      final matchedEntry = DedupeEntryRecord(
+        eventKey: 'notif:com.bank:title-only',
+        title: 'Shell Gas Station',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PossibleDuplicateBanner(
+              matchedEntry: matchedEntry,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const ValueKey('possibleDuplicateBanner')),
+          findsOneWidget);
+      expect(find.textContaining('Shell Gas Station'), findsOneWidget);
     });
   });
 

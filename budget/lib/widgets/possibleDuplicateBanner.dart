@@ -36,12 +36,16 @@ class PossibleDuplicateBanner extends StatelessWidget {
               .trim()
           : '';
       final titlePart = matchedEntry!.title ?? '';
-      if (amountPart.isNotEmpty && titlePart.isNotEmpty) {
-        matchedDetails = '$amountPart • $titlePart';
-      } else if (amountPart.isNotEmpty) {
-        matchedDetails = amountPart;
-      } else if (titlePart.isNotEmpty) {
-        matchedDetails = titlePart;
+      final detailString = amountPart.isNotEmpty && titlePart.isNotEmpty
+          ? '$amountPart • $titlePart'
+          : (amountPart.isNotEmpty ? amountPart : titlePart);
+
+      if (detailString.isNotEmpty) {
+        String similarLabel = 'similar-transaction-found'.tr();
+        if (similarLabel == 'similar-transaction-found') {
+          similarLabel = 'Similar transaction found';
+        }
+        matchedDetails = '$similarLabel: $detailString';
       } else {
         matchedDetails = fallbackDesc;
       }

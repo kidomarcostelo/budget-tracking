@@ -870,5 +870,95 @@ void main() {
       expect(res2.isUncertainMatch, isFalse);
       expect(res2.matchReason, equals('exact_notification'));
     });
+
+    test(
+        'candidate search does not allow an uncertain entry to shadow a corroborated created entry',
+        () async {
+      final t0 = DateTime(2026, 10, 22, 10, 0, 0);
+      final t1 = t0.add(const Duration(seconds: 15));
+      final t2 = t0.add(const Duration(seconds: 30));
+
+      // 1. Initial transaction: Starbucks for 150 PHP (created)
+      await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.one',
+        notificationId: '101',
+        amount: 150.0,
+        currency: 'PHP',
+        title: 'Starbucks Coffee',
+        rawContent: 'Paid PHP 150.00 at Starbucks Coffee',
+        eventTime: t0,
+      );
+
+      // 2. Conflicting transaction: McDonald's for 150 PHP (uncertain match of 101)
+      final res2 = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.two',
+        notificationId: '202',
+        amount: 150.0,
+        currency: 'PHP',
+        title: "McDonald's",
+        rawContent: "Paid PHP 150.00 at McDonald's",
+        eventTime: t1,
+      );
+      expect(res2.isUncertainMatch, isTrue);
+
+      // 3. Third transaction: Starbucks for 150 PHP arrives (corroborates Event 1!)
+      // Must NOT be shadowed by Event 2 (McDonald's)
+      final res3 = await ledger.checkAndRecordNotification(
+        packageName: 'com.google.android.apps.walletnfcrel',
+        notificationId: '303',
+        amount: 150.0,
+        currency: 'PHP',
+        title: 'Google Wallet',
+        rawContent: 'Paid PHP 150.00 at Starbucks Coffee with Visa 1234',
+        eventTime: t2,
+      );
+
+      expect(res3.isDuplicate, isTrue);
+      expect(res3.isUncertainMatch, isFalse);
+      expect(res3.matchedEntry?.title, equals('Starbucks Coffee'));
+      expect(res3.matchedEntry?.notificationId, equals('101'));
+    });
+
+    test(
+        'isGenericTitle classifies purely generic action titles correctly without false positives',
+        () {
+      expect(DedupeLedger.isGenericTitle('Purchase Alert'), isTrue);
+      expect(DedupeLedger.isGenericTitle('Debit Notification'), isTrue);
+      expect(DedupeLedger.isGenericTitle('Bank Transfer'), isTrue);
+      expect(DedupeLedger.isGenericTitle('Google Wallet'), isTrue);
+      expect(DedupeLedger.isGenericTitle('Payment'), isTrue);
+
+      // Legitimate entities containing action words must NOT be marked generic
+      expect(DedupeLedger.isGenericTitle('Credit Union'), isFalse);
+      expect(DedupeLedger.isGenericTitle('Apple Purchase'), isFalse);
+      expect(DedupeLedger.isGenericTitle('Alert Logic'), isFalse);
+      expect(DedupeLedger.isGenericTitle('Shell Gas'), isFalse);
+      expect(DedupeLedger.isGenericTitle('Starbucks Coffee'), isFalse);
+    });
+
+    test(
+        'extractMerchantFromText cleans trailing clauses and aggregator prefixes',
+        () {
+      expect(
+        DedupeLedger.extractMerchantFromText(
+            'Paid ₱250.00 at Starbucks Coffee with Visa 1234'),
+        equals('starbucks coffee'),
+      );
+      expect(
+        DedupeLedger.extractMerchantFromText(
+            'Transferred PHP 500.00 to Shell Gas via GCash'),
+        equals('shell gas'),
+      );
+      expect(
+        DedupeLedger.extractMerchantFromText(
+            'Paid PHP 150.00 at 7-Eleven on card 1234'),
+        equals('7-eleven'),
+      );
+      expect(
+        DedupeLedger.extractMerchantFromText(
+            'Sent PHP 300.00 to SQ *Blue Bottle Coffee ref# 9876'),
+        equals('blue bottle coffee'),
+      );
+    });
   });
 }
