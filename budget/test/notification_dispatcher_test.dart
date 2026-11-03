@@ -105,6 +105,8 @@ void main() {
           String msg, {
           DateTime? dateTime,
           bool willPushRoute = true,
+          bool isPossibleDuplicate = false,
+          DedupeEntryRecord? possibleDuplicateEntry,
         }) async {
           queueCount++;
           capturedMessage = msg;
@@ -159,7 +161,13 @@ void main() {
         int dispatchCount = 0;
         final handledPosted = await dispatcher.handleEvent(
           maribankPosted,
-          customQueueHandler: (msg, {dateTime, willPushRoute = true}) async {
+          customQueueHandler: (
+            msg, {
+            dateTime,
+            willPushRoute = true,
+            bool isPossibleDuplicate = false,
+            DedupeEntryRecord? possibleDuplicateEntry,
+          }) async {
             dispatchCount++;
           },
         );
@@ -169,7 +177,13 @@ void main() {
 
         final handledDismissed = await dispatcher.handleEvent(
           maribankDismissed,
-          customQueueHandler: (msg, {dateTime, willPushRoute = true}) async {
+          customQueueHandler: (
+            msg, {
+            dateTime,
+            willPushRoute = true,
+            bool isPossibleDuplicate = false,
+            DedupeEntryRecord? possibleDuplicateEntry,
+          }) async {
             dispatchCount++;
           },
         );
@@ -194,7 +208,13 @@ void main() {
         String? dispatchedMsg;
         final handled = await dispatcher.handleEvent(
           mayaPosted,
-          customQueueHandler: (msg, {dateTime, willPushRoute = true}) async {
+          customQueueHandler: (
+            msg, {
+            dateTime,
+            willPushRoute = true,
+            bool isPossibleDuplicate = false,
+            DedupeEntryRecord? possibleDuplicateEntry,
+          }) async {
             dispatchedMsg = msg;
           },
         );
@@ -387,10 +407,20 @@ void main() {
       int queueCount = 0;
       int gpayCount = 0;
 
-      dispatcher.queueHandler = (msg, {dateTime, willPushRoute = true}) async {
+      dispatcher.queueHandler = (
+        msg, {
+        dateTime,
+        willPushRoute = true,
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
         queueCount++;
       };
-      dispatcher.onGooglePayTransaction = (res) async {
+      dispatcher.onGooglePayTransaction = (
+        res, {
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
         gpayCount++;
         return true;
       };
@@ -437,10 +467,20 @@ void main() {
       int queueCount = 0;
       int gpayCount = 0;
 
-      dispatcher.queueHandler = (msg, {dateTime, willPushRoute = true}) async {
+      dispatcher.queueHandler = (
+        msg, {
+        dateTime,
+        willPushRoute = true,
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
         queueCount++;
       };
-      dispatcher.onGooglePayTransaction = (res) async {
+      dispatcher.onGooglePayTransaction = (
+        res, {
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
         gpayCount++;
         return true;
       };
@@ -477,10 +517,20 @@ void main() {
 
       int queueCount = 0;
       int gpayCount = 0;
-      dispatcher.queueHandler = (msg, {dateTime, willPushRoute = true}) async {
+      dispatcher.queueHandler = (
+        msg, {
+        dateTime,
+        willPushRoute = true,
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
         queueCount++;
       };
-      dispatcher.onGooglePayTransaction = (res) async {
+      dispatcher.onGooglePayTransaction = (
+        res, {
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
         gpayCount++;
         return true;
       };

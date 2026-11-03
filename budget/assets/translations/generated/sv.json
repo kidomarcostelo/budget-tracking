@@ -1180,5 +1180,8 @@
   "import-warning": "Importvarning",
   "import-warning-description": "Importen kan misslyckas! Se till att du har valt en giltig backupfil för Cashew [.sqlite] eller [.sql]",
   "duplicate-budget-question": "Duplicera budget?",
-  "duplicate-budget": "Duplicera budget"
+  "duplicate-budget": "Duplicera budget",
+  "possible-duplicate-detected": "Möjlig dubblett upptäckt",
+  "possible-duplicate-description": "En liknande transaktion registrerades nyligen. Granska detaljerna innan du sparar.",
+  "similar-transaction-found": "Liknande transaktion hittades"
 }

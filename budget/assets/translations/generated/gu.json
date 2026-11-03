@@ -1180,5 +1180,8 @@
   "import-warning": "આયાત ચેતવણી",
   "import-warning-description": "આયાત નિષ્ફળ થઈ શકે છે! કૃપા કરીને ખાતરી કરો કે તમે માન્ય કાજુ [.sqlite] અથવા [.sql] બેકઅપ ફાઇલ પસંદ કરી છે.",
   "duplicate-budget-question": "ડુપ્લિકેટ બજેટ?",
-  "duplicate-budget": "ડુપ્લિકેટ બજેટ"
+  "duplicate-budget": "ડુપ્લિકેટ બજેટ",
+  "possible-duplicate-detected": "સંભવિત ડુપ્લિકેટ મળી આવ્યું",
+  "possible-duplicate-description": "તાજેતરમાં સમાન વ્યવહાર નોંધવામાં આવ્યો હતો. કૃપા કરીને સાચવતા પહેલા વિગતોની સમીક્ષા કરો.",
+  "similar-transaction-found": "સમાન વ્યવહાર મળ્યો"
 }

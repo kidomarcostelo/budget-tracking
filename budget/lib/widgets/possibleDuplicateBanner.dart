@@ -19,15 +19,8 @@ class PossibleDuplicateBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final warningColor = getColor(context, 'warningOrange');
-    String titleText = 'possible-duplicate-detected'.tr();
-    if (titleText == 'possible-duplicate-detected') {
-      titleText = 'Possible duplicate detected';
-    }
-    String fallbackDesc = 'possible-duplicate-description'.tr();
-    if (fallbackDesc == 'possible-duplicate-description') {
-      fallbackDesc =
-          'A similar transaction was recorded recently. Please review details before saving.';
-    }
+    final String titleText = 'possible-duplicate-detected'.tr();
+    final String fallbackDesc = 'possible-duplicate-description'.tr();
 
     final String matchedDetails;
     if (matchedEntry != null) {
@@ -41,10 +34,7 @@ class PossibleDuplicateBanner extends StatelessWidget {
           : (amountPart.isNotEmpty ? amountPart : titlePart);
 
       if (detailString.isNotEmpty) {
-        String similarLabel = 'similar-transaction-found'.tr();
-        if (similarLabel == 'similar-transaction-found') {
-          similarLabel = 'Similar transaction found';
-        }
+        final similarLabel = 'similar-transaction-found'.tr();
         matchedDetails = '$similarLabel: $detailString';
       } else {
         matchedDetails = fallbackDesc;

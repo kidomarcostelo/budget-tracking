@@ -1180,5 +1180,8 @@
   "import-warning": "אזהרת ייבוא",
   "import-warning-description": "הייבוא ​​עלול להיכשל! אנא ודא שבחרת בקובץ גיבוי קשיו [.sqlite] או [.sql] חוקי",
   "duplicate-budget-question": "לשכפל תקציב?",
-  "duplicate-budget": "שכפול תקציב"
+  "duplicate-budget": "שכפול תקציב",
+  "possible-duplicate-detected": "זוהתה כפילות אפשרית",
+  "possible-duplicate-description": "עסקה דומה נרשמה לאחרונה. אנא בדוק את הפרטים לפני השמירה.",
+  "similar-transaction-found": "נמצאה עסקה דומה"
 }

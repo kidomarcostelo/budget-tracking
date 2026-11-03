@@ -164,5 +164,8 @@
   "lent-and-borrowed": "ණයට දුන්න සහ ණයට ගත්ත ",
   "income-and-expenses": "ආදායම සහ වියදම්",
   "spending-graph": "වියදම් ප්‍රස්ථාරය",
-  "select-budget": "අයවැය තෝරන්න"
+  "select-budget": "අයවැය තෝරන්න",
+  "possible-duplicate-detected": "හැකි අනුපිටපතක් අනාවරණය විය",
+  "possible-duplicate-description": "සමාන ගනුදෙනුවක් මෑතකදී වාර්තා විය. සුරැකීමට පෙර විස්තර සමාලෝචනය කරන්න.",
+  "similar-transaction-found": "සමාන ගනුදෙනුවක් හමු විය"
 }

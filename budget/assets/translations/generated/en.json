@@ -412,9 +412,6 @@
   "copied": "Copied",
   "created-copy": "Created Copy",
   "duplicate": "Duplicate",
-  "possible-duplicate-detected": "Possible duplicate detected",
-  "possible-duplicate-description": "A similar transaction was recorded recently. Please review details before saving.",
-  "similar-transaction-found": "Similar transaction found",
   "delete-transactions": "Delete transactions",
   "change-account": "Change Account",
   "add-to-budget": "Add to Budget",
@@ -1184,7 +1181,7 @@
   "import-warning-description": "Import may fail! Please make sure you have selected a valid Cashew [.sqlite] or [.sql] backup file",
   "duplicate-budget-question": "Duplicate Budget?",
   "duplicate-budget": "Duplicate Budget",
-  "account-owner-name": "Account Owner Name",
-  "account-owner-name-description": "Used to recognize self-transfers between your wallets during receipt capture.",
-  "set-account-owner-name": "Set Account Owner Name"
+  "possible-duplicate-detected": "Possible duplicate detected",
+  "possible-duplicate-description": "A similar transaction was recorded recently. Please review details before saving.",
+  "similar-transaction-found": "Similar transaction found"
 }

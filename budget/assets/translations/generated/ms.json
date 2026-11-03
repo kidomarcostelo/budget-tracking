@@ -1180,5 +1180,8 @@
   "import-warning": "Amaran Import",
   "import-warning-description": "Import mungkin gagal! Sila pastikan anda telah memilih fail sandaran Cashew [.sqlite] atau [.sql] yang sah",
   "duplicate-budget-question": "Belanjawan Pendua?",
-  "duplicate-budget": "Belanjawan Pendua"
+  "duplicate-budget": "Belanjawan Pendua",
+  "possible-duplicate-detected": "Kemungkinan pendua dikesan",
+  "possible-duplicate-description": "Transaksi yang serupa telah direkodkan baru-baru ini. Sila semak butiran sebelum menyimpan.",
+  "similar-transaction-found": "Transaksi serupa ditemui"
 }

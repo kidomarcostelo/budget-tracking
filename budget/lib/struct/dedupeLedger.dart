@@ -49,6 +49,7 @@ class DedupeCheckResult {
   final bool isDuplicate;
   final bool isUncertainMatch;
   final String? matchReason;
+  final List<String> matchReasons;
   final DedupeEntryRecord? matchedEntry;
   final String? matchedKey;
   final DateTime? matchedTime;
@@ -57,11 +58,13 @@ class DedupeCheckResult {
       : isDuplicate = false,
         isUncertainMatch = false,
         matchReason = null,
+        matchReasons = const [],
         matchedKey = null,
         matchedTime = null;
 
   const DedupeCheckResult.duplicate({
     required this.matchReason,
+    this.matchReasons = const [],
     this.matchedEntry,
     this.matchedKey,
     this.matchedTime,
@@ -70,11 +73,33 @@ class DedupeCheckResult {
 
   const DedupeCheckResult.uncertain({
     required this.matchReason,
+    this.matchReasons = const [],
     this.matchedEntry,
     this.matchedKey,
     this.matchedTime,
   })  : isDuplicate = false,
         isUncertainMatch = true;
+}
+
+/// Structured context holding merchant identification details for deduplication matching.
+class DedupeMerchantContext {
+  final String? title;
+  final String? rawContent;
+  final String? source;
+  final String? packageName;
+
+  const DedupeMerchantContext({
+    this.title,
+    this.rawContent,
+    this.source,
+    this.packageName,
+  });
+
+  DedupeMerchantContext.fromEntry(DedupeEntryRecord entry)
+      : title = entry.title,
+        rawContent = entry.rawContent,
+        source = entry.source,
+        packageName = entry.packageName;
 }
 
 /// In-memory and persistent ledger tracking notification and payment events to
@@ -225,10 +250,90 @@ class DedupeLedger {
     return null;
   }
 
+  /// Computes Jaro-Winkler similarity between two strings (returns 0.0 to 1.0).
+  static double jaroWinklerSimilarity(String s1, String s2) {
+    if (s1 == s2) return 1.0;
+    if (s1.isEmpty || s2.isEmpty) return 0.0;
+
+    final int len1 = s1.length;
+    final int len2 = s2.length;
+    final int matchDistance = (len1 > len2 ? len1 : len2) ~/ 2 - 1;
+
+    final List<bool> s1Matches = List<bool>.filled(len1, false);
+    final List<bool> s2Matches = List<bool>.filled(len2, false);
+
+    int matches = 0;
+    for (int i = 0; i < len1; i++) {
+      final int start = (i - matchDistance > 0) ? i - matchDistance : 0;
+      final int end =
+          (i + matchDistance + 1 < len2) ? i + matchDistance + 1 : len2;
+
+      for (int j = start; j < end; j++) {
+        if (s2Matches[j]) continue;
+        if (s1[i] != s2[j]) continue;
+        s1Matches[i] = true;
+        s2Matches[j] = true;
+        matches++;
+        break;
+      }
+    }
+
+    if (matches == 0) return 0.0;
+
+    int transpositions = 0;
+    int k = 0;
+    for (int i = 0; i < len1; i++) {
+      if (!s1Matches[i]) continue;
+      while (!s2Matches[k]) {
+        k++;
+      }
+      if (s1[i] != s2[k]) {
+        transpositions++;
+      }
+      k++;
+    }
+
+    final double jaro = (matches / len1 +
+            matches / len2 +
+            (matches - transpositions / 2) / matches) /
+        3.0;
+
+    // Winkler standard prefix bonus
+    int prefix = 0;
+    const int maxPrefix = 4;
+    for (int i = 0; i < len1 && i < len2 && i < maxPrefix; i++) {
+      if (s1[i] == s2[i]) {
+        prefix++;
+      } else {
+        break;
+      }
+    }
+
+    return jaro + prefix * 0.1 * (1.0 - jaro);
+  }
+
+  /// Extracts significant non-generic tokens from a string.
+  static Set<String> extractNonGenericTokens(String? text) {
+    if (text == null || text.trim().isEmpty) return const {};
+    final words = text
+        .trim()
+        .toLowerCase()
+        .split(RegExp(r'[\s\-_:,.]+'))
+        .where((w) => w.length >= 3)
+        .toList();
+    return words
+        .where((w) =>
+            !genericActionWords.contains(w) && !genericFillerWords.contains(w))
+        .toSet();
+  }
+
   /// Evaluates whether two events share corroborating merchant details.
-  /// Returns `true` if merchants match or content confirms the same merchant.
-  /// Returns `false` if merchants conflict, or if merchant information is ambiguous/uncertain.
+  /// Accepts structured [DedupeMerchantContext] objects or individual fields.
   static bool hasCorroboratingMerchant({
+    DedupeMerchantContext? first,
+    DedupeMerchantContext? second,
+    DedupeEntryRecord? entry1,
+    DedupeEntryRecord? entry2,
     String? title1,
     String? content1,
     String? title2,
@@ -238,10 +343,36 @@ class DedupeLedger {
     String? package1,
     String? package2,
   }) {
-    final t1 = title1?.trim().toLowerCase();
-    final t2 = title2?.trim().toLowerCase();
-    final c1 = content1?.trim().toLowerCase() ?? '';
-    final c2 = content2?.trim().toLowerCase() ?? '';
+    final ctx1 = first ??
+        (entry1 != null
+            ? DedupeMerchantContext.fromEntry(entry1)
+            : DedupeMerchantContext(
+                title: title1,
+                rawContent: content1,
+                source: source1,
+                packageName: package1,
+              ));
+    final ctx2 = second ??
+        (entry2 != null
+            ? DedupeMerchantContext.fromEntry(entry2)
+            : DedupeMerchantContext(
+                title: title2,
+                rawContent: content2,
+                source: source2,
+                packageName: package2,
+              ));
+    return hasCorroboratingContext(ctx1, ctx2);
+  }
+
+  /// Evaluates whether two structured contexts share corroborating merchant details.
+  static bool hasCorroboratingContext(
+    DedupeMerchantContext first,
+    DedupeMerchantContext second,
+  ) {
+    final t1 = first.title?.trim().toLowerCase();
+    final t2 = second.title?.trim().toLowerCase();
+    final c1 = first.rawContent?.trim().toLowerCase() ?? '';
+    final c2 = second.rawContent?.trim().toLowerCase() ?? '';
 
     // If both titles are identical non-generic strings, they corroborate
     if (t1 != null && t2 != null && t1.isNotEmpty && t1 == t2) {
@@ -249,7 +380,9 @@ class DedupeLedger {
         return true;
       }
       // If titles are generic but from identical source & package retry
-      if (source1 != null && source1 == source2 && package1 == package2) {
+      if (first.source != null &&
+          first.source == second.source &&
+          first.packageName == second.packageName) {
         return true;
       }
     }
@@ -257,8 +390,8 @@ class DedupeLedger {
     final isGen1 = isGenericTitle(t1);
     final isGen2 = isGenericTitle(t2);
 
-    final textM1 = extractMerchantFromText(content1);
-    final textM2 = extractMerchantFromText(content2);
+    final textM1 = extractMerchantFromText(first.rawContent);
+    final textM2 = extractMerchantFromText(second.rawContent);
 
     // If both contents have extracted merchant names and they corroborate
     if (textM1 != null && textM2 != null) {
@@ -267,6 +400,9 @@ class DedupeLedger {
       if (cleanText1 == cleanText2 ||
           cleanText1.contains(cleanText2) ||
           cleanText2.contains(cleanText1)) {
+        return true;
+      }
+      if (jaroWinklerSimilarity(cleanText1, cleanText2) >= 0.90) {
         return true;
       }
     }
@@ -281,7 +417,17 @@ class DedupeLedger {
       if (m1 == m2 || m1.contains(m2) || m2.contains(m1)) {
         return true;
       }
+      if (jaroWinklerSimilarity(m1, m2) >= 0.90) {
+        return true;
+      }
       if (c1.contains(m2) || c2.contains(m1)) {
+        return true;
+      }
+      final tokens1 = extractNonGenericTokens(m1);
+      final tokens2 = extractNonGenericTokens(m2);
+      if (tokens1.isNotEmpty &&
+          tokens2.isNotEmpty &&
+          tokens1.intersection(tokens2).isNotEmpty) {
         return true;
       }
       // Both have distinct non-matching merchants -> conflicting details!
@@ -300,26 +446,42 @@ class DedupeLedger {
       return true;
     }
 
-    // Common known merchant keywords check across contents
+    // Generalized token overlap across contents (no hardcoded merchant list)
     if (c1.isNotEmpty && c2.isNotEmpty) {
-      final commonKeywords = [
-        'shell gas',
-        'maribank',
-        'gotyme',
-        'maya',
-        '7-eleven',
-        'starbucks',
-        'mcdonald',
-        'jollibee',
-        'grab',
-      ];
-      for (final kw in commonKeywords) {
-        if (c1.contains(kw) && c2.contains(kw)) {
+      final cWords1 = extractNonGenericTokens(c1);
+      final cWords2 = extractNonGenericTokens(c2);
+      if (cWords1.isNotEmpty && cWords2.isNotEmpty) {
+        if (cWords1.intersection(cWords2).isNotEmpty) {
           return true;
         }
       }
     }
 
+    return false;
+  }
+
+  /// Determines whether two events have distinct conflicting merchants.
+  static bool hasConflictingMerchant(
+    DedupeMerchantContext first,
+    DedupeMerchantContext second,
+  ) {
+    final t1 = first.title?.trim().toLowerCase();
+    final t2 = second.title?.trim().toLowerCase();
+    final isGen1 = isGenericTitle(t1);
+    final isGen2 = isGenericTitle(t2);
+
+    final textM1 = extractMerchantFromText(first.rawContent);
+    final textM2 = extractMerchantFromText(second.rawContent);
+
+    final rawM1 = textM1 ?? (!isGen1 ? t1 : null);
+    final rawM2 = textM2 ?? (!isGen2 ? t2 : null);
+
+    final m1 = rawM1 != null ? cleanMerchant(rawM1) : null;
+    final m2 = rawM2 != null ? cleanMerchant(rawM2) : null;
+
+    if (m1 != null && m2 != null && m1.isNotEmpty && m2.isNotEmpty) {
+      return !hasCorroboratingContext(first, second);
+    }
     return false;
   }
 
@@ -383,9 +545,20 @@ class DedupeLedger {
   Future<void> _recordUncertainEntry(DedupeEntryRecord uncertain) async {
     uncertainEntries.add(uncertain);
     _pruneList(uncertainEntries);
-    entries.add(uncertain);
-    _pruneList(entries);
     await _tryPersist(uncertain);
+  }
+
+  /// Promotes an uncertain entry to confirmed [entries] (e.g. after user confirms/saves transaction).
+  Future<void> confirmUncertainEntry(
+    DedupeEntryRecord entry, {
+    String? createdTransactionPk,
+  }) async {
+    uncertainEntries.removeWhere((e) => e.entryPk == entry.entryPk);
+    entry.status = 'created';
+    if (createdTransactionPk != null) {
+      entry.createdTransactionPk = createdTransactionPk;
+    }
+    await _recordEntry(entry);
   }
 
   Future<void> _recordEntry(DedupeEntryRecord entry) async {
@@ -495,7 +668,6 @@ class DedupeLedger {
           suppressedEntries.add(rec);
         } else if (e.status == 'uncertain') {
           uncertainEntries.add(rec);
-          entries.add(rec);
         } else {
           entries.add(rec);
         }
@@ -549,6 +721,10 @@ class DedupeLedger {
       await _recordSuppressedEntry(suppressed);
       return DedupeCheckResult.duplicate(
         matchReason: 'exact_notification',
+        matchReasons: const [
+          'exact_notification',
+          'package_and_id_exact',
+        ],
         matchedEntry: exactMatch,
         matchedKey: exactMatch.eventKey,
         matchedTime: exactMatch.dateTimeCreated,
@@ -564,77 +740,26 @@ class DedupeLedger {
         window: window,
       );
       if (candidates.isNotEmpty) {
-        // First check if any candidate corroborates merchant details
-        DedupeEntryRecord? corroboratedMatch;
-        for (final candidate in candidates) {
-          if (hasCorroboratingMerchant(
-            title1: candidate.title,
-            content1: candidate.rawContent,
-            title2: title,
-            content2: rawContent,
-            source1: candidate.source,
-            source2: 'notification',
-            package1: candidate.packageName,
-            package2: packageName,
-          )) {
-            corroboratedMatch = candidate;
-            break;
-          }
-        }
-
-        if (corroboratedMatch != null) {
-          final suppressed = DedupeEntryRecord(
-            eventKey: generateExactNotificationKey(packageName, notificationId),
-            packageName: packageName,
-            notificationId: notificationId,
-            amount: amount,
-            amountNormalized: normAmount,
-            currency: normCurrency,
+        return await _resolvePaymentMatch(
+          candidates: candidates,
+          currentContext: DedupeMerchantContext(
             title: title,
             rawContent: rawContent,
             source: 'notification',
-            dateTimeCreated: now,
-            notificationTimestamp: eventTime,
-            status: 'suppressed',
-            matchedEntryPk: corroboratedMatch.entryPk,
-          );
-          await _recordSuppressedEntry(suppressed);
-          return DedupeCheckResult.duplicate(
-            matchReason: 'payment_window_match',
-            matchedEntry: corroboratedMatch,
-            matchedKey: corroboratedMatch.eventKey,
-            matchedTime: corroboratedMatch.dateTimeCreated,
-          );
-        } else {
-          // No candidate corroborated: ambiguous/uncertain match!
-          // Prefer referencing the most recent 'created' candidate if one exists
-          final matchedCandidate = candidates.firstWhere(
-            (c) => c.status == 'created',
-            orElse: () => candidates.first,
-          );
-          final uncertain = DedupeEntryRecord(
-            eventKey: generateExactNotificationKey(packageName, notificationId),
             packageName: packageName,
-            notificationId: notificationId,
-            amount: amount,
-            amountNormalized: normAmount,
-            currency: normCurrency,
-            title: title,
-            rawContent: rawContent,
-            source: 'notification',
-            dateTimeCreated: now,
-            notificationTimestamp: eventTime,
-            status: 'uncertain',
-            matchedEntryPk: matchedCandidate.entryPk,
-          );
-          await _recordUncertainEntry(uncertain);
-          return DedupeCheckResult.uncertain(
-            matchReason: 'uncertain_merchant',
-            matchedEntry: matchedCandidate,
-            matchedKey: matchedCandidate.eventKey,
-            matchedTime: matchedCandidate.dateTimeCreated,
-          );
-        }
+          ),
+          eventKey: generateExactNotificationKey(packageName, notificationId),
+          packageName: packageName,
+          notificationId: notificationId,
+          amount: amount,
+          normAmount: normAmount,
+          normCurrency: normCurrency,
+          title: title,
+          rawContent: rawContent,
+          source: 'notification',
+          now: now,
+          eventTime: eventTime,
+        );
       }
     }
 
@@ -681,78 +806,29 @@ class DedupeLedger {
         window: window,
       );
       if (candidates.isNotEmpty) {
-        DedupeEntryRecord? corroboratedMatch;
-        for (final candidate in candidates) {
-          if (hasCorroboratingMerchant(
-            title1: candidate.title,
-            content1: candidate.rawContent,
-            title2: title,
-            content2: null,
-            source1: candidate.source,
-            source2: source,
-            package1: candidate.packageName,
-            package2: packageName,
-          )) {
-            corroboratedMatch = candidate;
-            break;
-          }
-        }
-
-        if (corroboratedMatch != null) {
-          final suppressed = DedupeEntryRecord(
-            eventKey: generatePaymentKey(
-              amount: amount,
-              currency: normCurrency,
-            ),
-            packageName: packageName,
-            notificationId: notificationId,
-            amount: amount,
-            amountNormalized: normAmount,
-            currency: normCurrency,
+        return await _resolvePaymentMatch(
+          candidates: candidates,
+          currentContext: DedupeMerchantContext(
             title: title,
+            rawContent: null,
             source: source,
-            dateTimeCreated: now,
-            notificationTimestamp: eventTime,
-            status: 'suppressed',
-            matchedEntryPk: corroboratedMatch.entryPk,
-          );
-          await _recordSuppressedEntry(suppressed);
-          return DedupeCheckResult.duplicate(
-            matchReason: 'payment_window_match',
-            matchedEntry: corroboratedMatch,
-            matchedKey: corroboratedMatch.eventKey,
-            matchedTime: corroboratedMatch.dateTimeCreated,
-          );
-        } else {
-          final matchedCandidate = candidates.firstWhere(
-            (c) => c.status == 'created',
-            orElse: () => candidates.first,
-          );
-          final uncertain = DedupeEntryRecord(
-            eventKey: generatePaymentKey(
-              amount: amount,
-              currency: normCurrency,
-            ),
             packageName: packageName,
-            notificationId: notificationId,
+          ),
+          eventKey: generatePaymentKey(
             amount: amount,
-            amountNormalized: normAmount,
             currency: normCurrency,
-            title: title,
-            source: source,
-            dateTimeCreated: now,
-            notificationTimestamp: eventTime,
-            status: 'uncertain',
-            matchedEntryPk: matchedCandidate.entryPk,
-          );
-          await _recordUncertainEntry(uncertain);
-          return DedupeCheckResult.uncertain(
-            matchReason: 'uncertain_merchant',
-            matchedEntry: matchedCandidate,
-            matchedKey: matchedCandidate.eventKey,
-            matchedTime: matchedCandidate.dateTimeCreated,
-          );
-        }
+          ),
+          packageName: packageName,
+          notificationId: notificationId,
+          amount: amount,
+          normAmount: normAmount,
+          normCurrency: normCurrency,
+          title: title,
+          rawContent: null,
+          source: source,
+          now: now,
+          eventTime: eventTime,
+        );
       }
     }
 
@@ -775,5 +851,103 @@ class DedupeLedger {
     await _recordEntry(newEntry);
 
     return const DedupeCheckResult.unique();
+  }
+
+  /// Resolves payment candidates into either a confirmed duplicate suppression or an uncertain match.
+  Future<DedupeCheckResult> _resolvePaymentMatch({
+    required List<DedupeEntryRecord> candidates,
+    required DedupeMerchantContext currentContext,
+    required String eventKey,
+    required String? packageName,
+    required String? notificationId,
+    required double amount,
+    required String? normAmount,
+    required String? normCurrency,
+    required String? title,
+    required String? rawContent,
+    required String source,
+    required DateTime now,
+    required DateTime? eventTime,
+  }) async {
+    DedupeEntryRecord? corroboratedMatch;
+    for (final candidate in candidates) {
+      if (hasCorroboratingMerchant(
+        first: DedupeMerchantContext.fromEntry(candidate),
+        second: currentContext,
+      )) {
+        corroboratedMatch = candidate;
+        break;
+      }
+    }
+
+    if (corroboratedMatch != null) {
+      final suppressed = DedupeEntryRecord(
+        eventKey: eventKey,
+        packageName: packageName,
+        notificationId: notificationId,
+        amount: amount,
+        amountNormalized: normAmount,
+        currency: normCurrency,
+        title: title,
+        rawContent: rawContent,
+        source: source,
+        dateTimeCreated: now,
+        notificationTimestamp: eventTime,
+        status: 'suppressed',
+        matchedEntryPk: corroboratedMatch.entryPk,
+      );
+      await _recordSuppressedEntry(suppressed);
+      return DedupeCheckResult.duplicate(
+        matchReason: 'payment_window_match',
+        matchReasons: const [
+          'payment_window_match',
+          'amount_exact',
+          'currency_exact',
+          'time_within_window',
+          'merchant_corroborated',
+        ],
+        matchedEntry: corroboratedMatch,
+        matchedKey: corroboratedMatch.eventKey,
+        matchedTime: corroboratedMatch.dateTimeCreated,
+      );
+    } else {
+      final matchedCandidate = candidates.firstWhere(
+        (c) => c.status == 'created',
+        orElse: () => candidates.first,
+      );
+      final hasConflict = candidates.any((c) => hasConflictingMerchant(
+            DedupeMerchantContext.fromEntry(c),
+            currentContext,
+          ));
+      final uncertain = DedupeEntryRecord(
+        eventKey: eventKey,
+        packageName: packageName,
+        notificationId: notificationId,
+        amount: amount,
+        amountNormalized: normAmount,
+        currency: normCurrency,
+        title: title,
+        rawContent: rawContent,
+        source: source,
+        dateTimeCreated: now,
+        notificationTimestamp: eventTime,
+        status: 'uncertain',
+        matchedEntryPk: matchedCandidate.entryPk,
+      );
+      await _recordUncertainEntry(uncertain);
+      return DedupeCheckResult.uncertain(
+        matchReason: 'uncertain_merchant',
+        matchReasons: [
+          'uncertain_merchant',
+          'amount_exact',
+          'currency_exact',
+          'time_within_window',
+          if (hasConflict) 'conflicting_merchant',
+        ],
+        matchedEntry: matchedCandidate,
+        matchedKey: matchedCandidate.eventKey,
+        matchedTime: matchedCandidate.dateTimeCreated,
+      );
+    }
   }
 }

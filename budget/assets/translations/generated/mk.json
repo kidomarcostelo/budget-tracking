@@ -230,5 +230,8 @@
   "import-warning": "Предупредување за увоз",
   "import-warning-description": "Увозот може да не успее! Проверете дали сте избрале валидна резервна датотека Кашу [.sqlite] или [.sql]",
   "duplicate-budget-question": "Дупликат буџет?",
-  "duplicate-budget": "Дупликат буџет"
+  "duplicate-budget": "Дупликат буџет",
+  "possible-duplicate-detected": "Откриен е можен дупликат",
+  "possible-duplicate-description": "Неодамна беше евидентирана слична трансакција. Прегледајте ги деталите пред да зачувате.",
+  "similar-transaction-found": "Пронајдена е слична трансакција"
 }
