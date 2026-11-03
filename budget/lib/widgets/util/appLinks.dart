@@ -379,7 +379,8 @@ Future executeAppLink(BuildContext? context, Uri uri,
     case "addTransaction":
       if (context != null) {
         if (params["messageToParse"] != null &&
-            appStateSettings["notificationScanningDebug"] == true) {
+            (appStateSettings["notificationScanning"] == true ||
+                appStateSettings["notificationScanningDebug"] == true)) {
           processMessageToParse(context, params);
         } else if (params["JSON"] != null) {
           try {
@@ -411,7 +412,8 @@ Future executeAppLink(BuildContext? context, Uri uri,
     case "addTransactionRoute":
       if (context != null) {
         if (params["messageToParse"] != null &&
-            appStateSettings["notificationScanningDebug"] == true) {
+            (appStateSettings["notificationScanning"] == true ||
+                appStateSettings["notificationScanningDebug"] == true)) {
           processMessageToParse(context, params);
         } else if (params["JSON"] != null) {
           try {
