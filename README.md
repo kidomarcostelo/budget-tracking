@@ -161,6 +161,24 @@ Changes and progress about development is all heavily documented in GitHub [comm
 
 See the `Automation` section on the FAQ website for information on how to add transactions automatically: https://cashewapp.web.app/faq.html#automation
 
+### Notification Transactions (Android & Google Pay / Wallet)
+
+On Android, Cashew can capture incoming payment notifications to automatically prefill transactions for your confirmation.
+
+- **Supported Sources:**
+  - **Google Wallet & Google Pay:** Automatically detects and parses transaction alerts from Google Wallet (`com.google.android.apps.walletnfcrel`), Google Pay (`com.google.android.apps.nbu.paisa.user`), and Google Play Services (`com.google.android.gms`).
+  - **Custom Notification Templates:** User-defined regex templates for bank and financial app notifications.
+- **Permission & Privacy:**
+  - **Notification Access:** Requires the Android Notification Access permission (`Settings > Apps > Special app access > Device & app notifications`). You can enable this directly from `Settings > Notification Transactions` in Cashew.
+  - **Local-First Privacy:** All notification parsing occurs 100% locally on your device. No notification contents, titles, or transaction details are ever transmitted to the cloud or external servers.
+  - **Google Play Policy Compliance:** Google Play policies strictly restrict SMS permissions to default SMS handler apps. Android Notification Access provides a secure, privacy-preserving alternative that allows expense tracking apps to capture payment notifications without reading personal text messages.
+- **Deduplication & Review:**
+  - **Multi-Source Deduplication:** If Google Pay and your bank app both send notifications for the same payment, Cashew deduplicates them within a 5-minute window so you are only prompted once.
+  - **Uncertain Match Review:** When a potential duplicate or ambiguous match is detected, Cashew flags it with a "Possible Duplicate" banner so you can confirm or dismiss it before saving.
+- **Configuration:**
+  - Notification scanning can be toggled on or off in `Settings > Notification Transactions`.
+  - Google Wallet / Google Pay scanning can be individually toggled with the dedicated `Google Wallet & Google Pay` switch.
+
 ## Bundled Packages
 
 This repository contains, bundled in, modified versions of the discontinued packages listed below. They can be found in the folder `/budget/packages`

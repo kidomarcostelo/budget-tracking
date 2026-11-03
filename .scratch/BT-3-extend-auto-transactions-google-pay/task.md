@@ -64,15 +64,15 @@ Each slice ends in something runnable and testable. S1 to S4 depend on S0.
   - Google Pay + bank notification for the same payment
   - Apple Pay Shortcut firing twice, or App Link throttler retries
 - [x] **S4 Review route for uncertain matches.** When a match is ambiguous (two sources, no exact key match, conflicting details, or uncertain merchant), show a "possible duplicate" prompt rather than auto-creating. Align with the heuristics in [`BT-2`](../BT-2-plan-bank-email-duplicate-detection/task.md) and wayfinder #2 Triage Inbox. Do not build the full Triage UI (#4).
-- [ ] **S5 Settings, permission UX, docs.** Settings copy for the Google Pay source (toggle per source). Update the FAQ/README pointer. Explain the notification-access permission and the Play policy note from S0.
+- [x] **S5 Settings, permission UX, docs.** Settings copy for the Google Pay source (toggle per source). Update the FAQ/README pointer. Explain the notification-access permission and the Play policy note from S0.
 - [ ] **S6 Verification.** Widget tests for the prefilled page, unit tests for dedupe window and source classification, and a manual test on a device with real Google Pay notifications (redacted).
 
 ## Acceptance & verification
 
-- [x] Unit / widget tests added or updated (S1, S2, S3, S4)
+- [x] Unit / widget tests added or updated (S1, S2, S3, S4, S5)
 - [x] Static analysis passes: `cd budget && flutter analyze`
 - [x] Code formatted: `cd budget && dart format --output=none --set-exit-if-changed .`
-- [ ] Drift migration added as a new step; `schema_versions.dart` past steps untouched
+- [x] Drift migration added as a new step; `schema_versions.dart` past steps untouched
 - [ ] Manual verification on an Android device with real Google Pay notifications (redacted fixtures saved under `.scratch/bank-samples/`)
 - [ ] Posted + removed event for one payment produces exactly one Transaction
 
@@ -88,12 +88,12 @@ None currently.
 - S2 implemented: created `GooglePayParser`, classified packages and payment content, routed to prefilled `AddTransactionPage`, and added unit tests with real 7-Eleven sample in `google_pay_parser_test.dart`.
 - S3 implemented: created `DedupeLedger` service, added additive Drift migration v46 -> v47 with `DedupeEntries` table and schema dump, wired deduplication into `NotificationDispatcher` and `appLinks`, addressed code review findings in `pr-20-review.md`, and merged PR #20 into `main`.
 - S4 implemented: enhanced `DedupeCheckResult` with `isUncertainMatch` and merchant corroboration heuristics in `DedupeLedger`, created `PossibleDuplicateBanner` widget, wired review routing into `NotificationDispatcher`, `GooglePayParser`, `autoTransactionsPageEmail`, and `appLinks`, and verified with full unit/widget test suites.
+- S5 implemented: added `googlePayNotificationScanning` preference and dispatcher gating, redesigned notification settings and permission UX in `AutoTransactionsPageNotifications` (permission status indicators, settings action button, OnAppResume lifecycle refresh, local privacy and Play policy card, and localized empty states), updated translations across 48 locales in `translations.csv` and JSON files, documented Google Pay automation and permission model in `README.md`, and added widget and unit tests in `test/google_pay_settings_ux_test.dart`.
 
 ## Resume / next step
 
-1. Review PR for Slice S4 (`feat/uncertain-match-review`).
-2. Implement S5: Settings, permission UX, docs (settings copy for Google Pay source toggle, Play policy note, FAQ pointer).
-3. Implement S6: End-to-end device verification with real Google Pay notifications.
+1. Review PR for Slice S5 (`feat/google-pay-settings-ux`).
+2. Implement S6: End-to-end device verification with real Google Pay notifications.
 
 ## Links
 

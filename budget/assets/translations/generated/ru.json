@@ -1183,5 +1183,20 @@
   "duplicate-budget": "Повторяющийся бюджет",
   "possible-duplicate-detected": "Обнаружен возможный дубликат",
   "possible-duplicate-description": "Недавно была записана похожая транзакция. Пожалуйста, проверьте детали перед сохранением.",
-  "similar-transaction-found": "Найдена похожая транзакция"
+  "similar-transaction-found": "Найдена похожая транзакция",
+  "auto-transactions-title": "Автоматические транзакции",
+  "auto-transactions-notifications-description": "Транзакции могут создаваться автоматически на основе уведомлений, полученных на вашем устройстве.",
+  "notification-transactions": "Транзакции из уведомлений",
+  "notification-transactions-description": "При поступлении уведомления о транзакции Cashew перехватывает его локально на устройстве для предварительного заполнения транзакции. Создайте шаблоны или используйте поддерживаемые платежные приложения.",
+  "google-pay-transactions": "Google Кошелек и Google Pay",
+  "google-pay-transactions-description": "Автоматически распознавать транзакции из уведомлений Google Кошелька и Google Pay.",
+  "notification-permission-granted": "Доступ к уведомлениям предоставлен",
+  "notification-permission-granted-description": "Cashew отслеживает входящие уведомления о транзакциях.",
+  "notification-permission-required": "Требуется доступ к уведомлениям",
+  "notification-permission-required-description": "Cashew требуется доступ к уведомлениям для обнаружения входящих оповещений об оплате. Включите его в настройках системы.",
+  "open-notification-settings": "Открыть настройки уведомлений",
+  "notification-privacy-title": "Конфиденциальность на устройстве и разрешения",
+  "notification-privacy-description": "Все распознавание уведомлений происходит исключительно на вашем устройстве без передачи данных в облако. Согласно правилам Google Play, разрешения на доступ к SMS предоставляются только SMS-приложениям по умолчанию. Доступ к уведомлениям Android обеспечивает безопасную и конфиденциальную альтернативу для перехвата оповещений об оплате без доступа к вашим личным SMS-сообщениям.",
+  "notification-configuration-missing": "Пользовательские шаблоны не добавлены",
+  "notification-configuration-missing-description": "Добавьте шаблон, если хотите распознавать уведомления из других банковских приложений."
 }

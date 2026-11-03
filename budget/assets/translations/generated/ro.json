@@ -1183,5 +1183,20 @@
   "duplicate-budget": "Buget duplicat",
   "possible-duplicate-detected": "Posibil duplicat detectat",
   "possible-duplicate-description": "O tranzacție similară a fost înregistrată recent. Vă rugăm să examinați detaliile înainte de a salva.",
-  "similar-transaction-found": "Tranzacție similară găsită"
+  "similar-transaction-found": "Tranzacție similară găsită",
+  "auto-transactions-title": "Auto Transactions",
+  "auto-transactions-notifications-description": "Transactions can be created automatically based on notifications received on your device.",
+  "notification-transactions": "Notification Transactions",
+  "notification-transactions-description": "When a transaction notification arrives, Cashew captures it locally on-device to prefill a transaction for confirmation. Create templates or use supported payment apps.",
+  "google-pay-transactions": "Google Wallet & Google Pay",
+  "google-pay-transactions-description": "Automatically detect and parse transactions from Google Wallet and Google Pay notifications.",
+  "notification-permission-granted": "Notification Access Granted",
+  "notification-permission-granted-description": "Cashew is listening for incoming transaction notifications.",
+  "notification-permission-required": "Notification Access Required",
+  "notification-permission-required-description": "Cashew needs Notification Access to detect incoming payment alerts. Please enable it in system settings.",
+  "open-notification-settings": "Open Notification Settings",
+  "notification-privacy-title": "On-Device Privacy & Permissions",
+  "notification-privacy-description": "All notification parsing occurs entirely on your device with zero cloud data transmission. Under Google Play policies, SMS permissions are restricted to default SMS apps. Android Notification Access provides a secure, privacy-preserving alternative to capture payment alerts locally without accessing your personal text messages.",
+  "notification-configuration-missing": "No Custom Templates Added",
+  "notification-configuration-missing-description": "Add a template if you wish to parse notifications from other banking apps."
 }
