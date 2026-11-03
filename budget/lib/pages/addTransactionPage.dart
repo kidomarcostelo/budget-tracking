@@ -569,6 +569,14 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         print("Transaction just added:");
         print(transactionJustAdded);
 
+        if (widget.isPossibleDuplicate &&
+            widget.possibleDuplicateEntry != null) {
+          DedupeLedger.instance.confirmUncertainEntryForMatchedPk(
+            widget.possibleDuplicateEntry!.entryPk,
+            createdTransactionPk: transactionJustAdded.transactionPk,
+          );
+        }
+
         // Do the flash animation only if the date was changed
         if (transactionJustAdded.dateCreated !=
             widget.transaction?.dateCreated) {
