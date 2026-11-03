@@ -1183,5 +1183,20 @@
   "duplicate-budget": "Doppeltes Budget",
   "possible-duplicate-detected": "Mögliches Duplikat erkannt",
   "possible-duplicate-description": "Eine ähnliche Transaktion wurde kürzlich aufgezeichnet. Bitte überprüfen Sie die Details vor dem Speichern.",
-  "similar-transaction-found": "Ähnliche Transaktion gefunden"
+  "similar-transaction-found": "Ähnliche Transaktion gefunden",
+  "auto-transactions-title": "Automatische Transaktionen",
+  "auto-transactions-notifications-description": "Transaktionen können automatisch anhand der auf Ihrem Gerät empfangenen Benachrichtigungen erstellt werden.",
+  "notification-transactions": "Benachrichtigungs-Transaktionen",
+  "notification-transactions-description": "Wenn eine Transaktionsbenachrichtigung eingeht, erfasst Cashew diese lokal auf dem Gerät, um eine Transaktion zur Bestätigung vorab auszufüllen. Erstellen Sie Vorlagen oder verwenden Sie unterstützte Zahlungs-Apps.",
+  "google-pay-transactions": "Google Wallet & Google Pay",
+  "google-pay-transactions-description": "Transaktionen aus Google Wallet- und Google Pay-Benachrichtigungen automatisch erkennen und parsen.",
+  "notification-permission-granted": "Benachrichtigungszugriff gewährt",
+  "notification-permission-granted-description": "Cashew wartet auf eingehende Transaktionsbenachrichtigungen.",
+  "notification-permission-required": "Benachrichtigungszugriff erforderlich",
+  "notification-permission-required-description": "Cashew benötigt Benachrichtigungszugriff, um eingehende Zahlungswarnungen zu erkennen. Bitte aktivieren Sie diesen in den Systemeinstellungen.",
+  "open-notification-settings": "Benachrichtigungseinstellungen öffnen",
+  "notification-privacy-title": "Datenschutz auf dem Gerät & Berechtigungen",
+  "notification-privacy-description": "Die gesamte Analyse von Benachrichtigungen findet vollständig auf Ihrem Gerät statt – ohne Datenübertragung in die Cloud. Gemäß den Richtlinien von Google Play sind SMS-Berechtigungen auf Standard-SMS-Apps beschränkt. Der Android-Benachrichtigungszugriff bietet eine sichere, datenschutzfreundliche Alternative, um Zahlungswarnungen lokal zu erfassen, ohne auf Ihre persönlichen SMS-Nachrichten zuzugreifen.",
+  "notification-configuration-missing": "Keine benutzerdefinierten Vorlagen hinzugefügt",
+  "notification-configuration-missing-description": "Fügen Sie eine Vorlage hinzu, wenn Sie Benachrichtigungen anderer Banking-Apps parsen möchten."
 }

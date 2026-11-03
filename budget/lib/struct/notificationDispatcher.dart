@@ -359,7 +359,11 @@ class NotificationDispatcher {
     }
 
     // Parse potential payment fields for deduplication check
-    final googlePayResult = GooglePayParser.parse(event.title, event.content);
+    final isGooglePayScanningEnabled =
+        appStateSettings["googlePayNotificationScanning"] ?? true;
+    final googlePayResult = isGooglePayScanningEnabled
+        ? GooglePayParser.parse(event.title, event.content)
+        : null;
     final details = await extractPaymentDetails(
       event,
       googlePayResult: googlePayResult,
@@ -395,7 +399,7 @@ class NotificationDispatcher {
     }
 
     // Check if event is from Google Wallet / Google Pay
-    if (GooglePayParser.isGooglePayEvent(event)) {
+    if (isGooglePayScanningEnabled && GooglePayParser.isGooglePayEvent(event)) {
       // googlePayResult was parsed above for deduplication check
       if (googlePayResult != null) {
         if (onGooglePayTransaction != null) {

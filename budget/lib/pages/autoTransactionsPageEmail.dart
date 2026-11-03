@@ -22,6 +22,8 @@ import 'package:budget/widgets/statusBox.dart';
 import 'package:budget/widgets/tappable.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:budget/widgets/util/appLinks.dart';
+import 'package:budget/widgets/util/onAppResume.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -154,119 +156,254 @@ class AutoTransactionsPageNotifications extends StatefulWidget {
 
 class _AutoTransactionsPageNotificationsState
     extends State<AutoTransactionsPageNotifications> {
-  bool canReadEmails = true;
+  bool? hasNotificationPermission;
 
   @override
   void initState() {
     super.initState();
+    _checkPermission();
+  }
+
+  Future<void> _checkPermission() async {
+    try {
+      bool granted =
+          await NotificationDispatcher.instance.isPermissionGranted();
+      if (granted && appStateSettings["notificationScanning"] == true) {
+        initNotificationScanning();
+      }
+      if (mounted) {
+        setState(() {
+          hasNotificationPermission = granted;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          hasNotificationPermission = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _requestPermission() async {
+    try {
+      await NotificationListenerService.requestPermission();
+    } catch (_) {}
+    await _checkPermission();
   }
 
   @override
   Widget build(BuildContext context) {
-    return PageFramework(
-      dragDownToDismiss: true,
-      title: "Auto Transactions",
-      actions: [
-        RefreshButton(
-          timeout: Duration.zero,
-          onTap: () async {
-            loadingIndeterminateKey.currentState?.setVisibility(true);
-            setState(() {});
-            loadingIndeterminateKey.currentState?.setVisibility(false);
-          },
-        ),
-      ],
-      listWidgets: [
-        Padding(
-          padding:
-              const EdgeInsetsDirectional.only(bottom: 5, start: 20, end: 20),
-          child: TextFont(
-            text:
-                "Transactions can be created automatically based on your notifications.",
-            fontSize: 14,
-            maxLines: 10,
+    return OnAppResume(
+      onAppResume: () async {
+        await _checkPermission();
+      },
+      child: PageFramework(
+        dragDownToDismiss: true,
+        title: "auto-transactions-title".tr(),
+        actions: [
+          RefreshButton(
+            timeout: Duration.zero,
+            onTap: () async {
+              loadingIndeterminateKey.currentState?.setVisibility(true);
+              await _checkPermission();
+              setState(() {});
+              loadingIndeterminateKey.currentState?.setVisibility(false);
+            },
           ),
-        ),
-        SettingsContainerSwitch(
-          onSwitched: (value) async {
-            await updateSettings("notificationScanning", value,
-                updateGlobalState: false);
-            if (value == true) {
-              bool status = await NotificationDispatcher.instance
-                  .requestReadNotificationPermission();
-              if (status == false) {
-                await updateSettings("notificationScanning", false,
-                    updateGlobalState: false);
+        ],
+        listWidgets: [
+          Padding(
+            padding:
+                const EdgeInsetsDirectional.only(bottom: 5, start: 20, end: 20),
+            child: TextFont(
+              text: "auto-transactions-notifications-description".tr(),
+              fontSize: 14,
+              maxLines: 10,
+            ),
+          ),
+          SettingsContainerSwitch(
+            onSwitched: (value) async {
+              await updateSettings("notificationScanning", value,
+                  updateGlobalState: false);
+              if (value == true) {
+                bool status = await NotificationDispatcher.instance
+                    .requestReadNotificationPermission();
+                if (status == true) {
+                  initNotificationScanning();
+                }
               } else {
-                initNotificationScanning();
+                await NotificationDispatcher.instance.stopListening();
               }
-            } else {
-              await NotificationDispatcher.instance.stopListening();
-            }
-          },
-          title: "Notification Transactions",
-          description:
-              "When a notification is dismissed and the app is open, attempt to add a transaction given its information. Create a template so Cashew understands the format of a notification.",
-          initialValue: appStateSettings["notificationScanning"],
-        ),
-        StreamBuilder<List<ScannerTemplate>>(
-          stream: database.watchAllScannerTemplates(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              if (snapshot.data!.length <= 0) {
-                return Padding(
-                  padding: const EdgeInsetsDirectional.all(5),
-                  child: StatusBox(
-                    title: "Notification Configuration Missing",
-                    description: "Please add a configuration.",
+              await _checkPermission();
+              if (mounted) setState(() {});
+            },
+            title: "notification-transactions".tr(),
+            description: "notification-transactions-description".tr(),
+            initialValue: appStateSettings["notificationScanning"] == true,
+          ),
+          if (appStateSettings["notificationScanning"] == true)
+            SettingsContainerSwitch(
+              title: "google-pay-transactions".tr(),
+              description: "google-pay-transactions-description".tr(),
+              icon: appStateSettings["outlinedIcons"]
+                  ? Icons.wallet_outlined
+                  : Icons.wallet_rounded,
+              initialValue:
+                  appStateSettings["googlePayNotificationScanning"] ?? true,
+              onSwitched: (value) async {
+                await updateSettings("googlePayNotificationScanning", value,
+                    updateGlobalState: false);
+              },
+            ),
+          if (appStateSettings["notificationScanning"] == true &&
+              hasNotificationPermission == false)
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: 20, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  StatusBox(
+                    title: "notification-permission-required".tr(),
+                    description:
+                        "notification-permission-required-description".tr(),
                     icon: appStateSettings["outlinedIcons"]
                         ? Icons.warning_outlined
                         : Icons.warning_rounded,
                     color: Theme.of(context).colorScheme.error,
+                    onTap: _requestPermission,
                   ),
-                );
-              }
-              return Column(
-                children: [
-                  for (ScannerTemplate scannerTemplate in snapshot.data!)
-                    ScannerTemplateEntry(
-                      messagesList: recentCapturedNotifications,
-                      scannerTemplate: scannerTemplate,
-                    )
+                  SizedBox(height: 5),
+                  Button(
+                    label: "open-notification-settings".tr(),
+                    icon: appStateSettings["outlinedIcons"]
+                        ? Icons.settings_outlined
+                        : Icons.settings_rounded,
+                    onTap: _requestPermission,
+                  ),
                 ],
-              );
-            } else {
-              return Container();
-            }
-          },
-        ),
-        OpenContainerNavigation(
-          openPage: AddEmailTemplate(
-            messagesList: recentCapturedNotifications,
-          ),
-          borderRadius: 15,
-          button: (openContainer) {
-            return Row(
+              ),
+            ),
+          if (appStateSettings["notificationScanning"] == true &&
+              hasNotificationPermission == true)
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: 20, vertical: 8),
+              child: StatusBox(
+                title: "notification-permission-granted".tr(),
+                description: "notification-permission-granted-description".tr(),
+                icon: appStateSettings["outlinedIcons"]
+                    ? Icons.check_circle_outline
+                    : Icons.check_circle_rounded,
+                color: getColor(context, "incomeAmount"),
+              ),
+            ),
+          Container(
+            margin: const EdgeInsetsDirectional.symmetric(
+                horizontal: 20, vertical: 10),
+            padding: const EdgeInsetsDirectional.all(16),
+            decoration: BoxDecoration(
+              color: getColor(context, "lightDarkAccent").withOpacity(0.5),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color:
+                    getColor(context, "lightDarkAccentHeavy").withOpacity(0.5),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: AddButton(
-                    margin: EdgeInsetsDirectional.only(
-                      start: 15,
-                      end: 15,
-                      bottom: 9,
-                      top: 4,
+                Row(
+                  children: [
+                    Icon(
+                      appStateSettings["outlinedIcons"]
+                          ? Icons.shield_outlined
+                          : Icons.shield_rounded,
+                      size: 22,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                    onTap: openContainer,
-                  ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: TextFont(
+                        text: "notification-privacy-title".tr(),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                TextFont(
+                  text: "notification-privacy-description".tr(),
+                  fontSize: 13.5,
+                  maxLines: 20,
+                  textColor: getColor(context, "black").withOpacity(0.75),
                 ),
               ],
-            );
-          },
-        ),
-        EmailsList(
-          messagesList: recentCapturedNotifications,
-        ),
-      ],
+            ),
+          ),
+          StreamBuilder<List<ScannerTemplate>>(
+            stream: database.watchAllScannerTemplates(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                if (snapshot.data!.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsetsDirectional.all(5),
+                    child: StatusBox(
+                      title: "notification-configuration-missing".tr(),
+                      description:
+                          "notification-configuration-missing-description".tr(),
+                      icon: appStateSettings["outlinedIcons"]
+                          ? Icons.info_outlined
+                          : Icons.info_outline_rounded,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                  );
+                }
+                return Column(
+                  children: [
+                    for (ScannerTemplate scannerTemplate in snapshot.data!)
+                      ScannerTemplateEntry(
+                        messagesList: recentCapturedNotifications,
+                        scannerTemplate: scannerTemplate,
+                      )
+                  ],
+                );
+              } else {
+                return Container();
+              }
+            },
+          ),
+          OpenContainerNavigation(
+            openPage: AddEmailTemplate(
+              messagesList: recentCapturedNotifications,
+            ),
+            borderRadius: 15,
+            button: (openContainer) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: AddButton(
+                      margin: EdgeInsetsDirectional.only(
+                        start: 15,
+                        end: 15,
+                        bottom: 9,
+                        top: 4,
+                      ),
+                      onTap: openContainer,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          EmailsList(
+            messagesList: recentCapturedNotifications,
+          ),
+        ],
+      ),
     );
   }
 }

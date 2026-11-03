@@ -1183,5 +1183,20 @@
   "duplicate-budget": "Budget en double",
   "possible-duplicate-detected": "Doublon possible détecté",
   "possible-duplicate-description": "Une transaction similaire a été enregistrée récemment. Veuillez vérifier les détails avant d'enregistrer.",
-  "similar-transaction-found": "Transaction similaire trouvée"
+  "similar-transaction-found": "Transaction similaire trouvée",
+  "auto-transactions-title": "Transactions automatiques",
+  "auto-transactions-notifications-description": "Les transactions peuvent être créées automatiquement en fonction des notifications reçues sur votre appareil.",
+  "notification-transactions": "Transactions par notification",
+  "notification-transactions-description": "Lorsqu'une notification de transaction arrive, Cashew la capture localement sur l'appareil pour préremplir une transaction à confirmer. Créez des modèles ou utilisez les applications de paiement prises en charge.",
+  "google-pay-transactions": "Google Wallet et Google Pay",
+  "google-pay-transactions-description": "Détecter et analyser automatiquement les transactions à partir des notifications Google Wallet et Google Pay.",
+  "notification-permission-granted": "Accès aux notifications accordé",
+  "notification-permission-granted-description": "Cashew écoute les notifications de transaction entrantes.",
+  "notification-permission-required": "Accès aux notifications requis",
+  "notification-permission-required-description": "Cashew a besoin de l'accès aux notifications pour détecter les alertes de paiement entrantes. Veuillez l'activer dans les paramètres du système.",
+  "open-notification-settings": "Ouvrir les paramètres de notification",
+  "notification-privacy-title": "Confidentialité sur l'appareil et autorisations",
+  "notification-privacy-description": "Toute l'analyse des notifications s'effectue entièrement sur votre appareil, sans aucune transmission de données vers le cloud. Conformément aux règles de Google Play, les autorisations SMS sont réservées aux applications SMS par défaut. L'accès aux notifications Android offre une alternative sécurisée et respectueuse de la vie privée pour capturer localement les alertes de paiement sans accéder à vos messages texte personnels.",
+  "notification-configuration-missing": "Aucun modèle personnalisé ajouté",
+  "notification-configuration-missing-description": "Ajoutez un modèle si vous souhaitez analyser les notifications d'autres applications bancaires."
 }
