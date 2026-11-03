@@ -127,7 +127,6 @@ void main() {
           return mockPermissionGranted;
         } else if (methodCall.method == 'requestPermission') {
           requestPermissionCallCount++;
-          mockPermissionGranted = true;
           return true;
         }
         return null;
@@ -406,6 +405,110 @@ void main() {
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);
+    });
+
+    testWidgets(
+        'toggling master notificationTransactions switch ON triggers permission request and reveals sub-options',
+        (WidgetTester tester) async {
+      appStateSettings["notificationScanning"] = false;
+      appStateSettings["googlePayNotificationScanning"] = true;
+      mockPermissionGranted = false;
+      requestPermissionCallCount = 0;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const AutoTransactionsPageNotifications(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Google Wallet & Google Pay'), findsNothing);
+
+      // Find the master switch
+      final masterSwitchFinder = find.ancestor(
+        of: find.text('Notification Transactions'),
+        matching: find.byType(SettingsContainerSwitch),
+      );
+      expect(masterSwitchFinder, findsOneWidget);
+
+      await tester.tap(masterSwitchFinder);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(appStateSettings["notificationScanning"], isTrue);
+      expect(requestPermissionCallCount, equals(1));
+      expect(find.text('Google Wallet & Google Pay'), findsOneWidget);
+      expect(find.text('Notification Access Required'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    });
+
+    testWidgets(
+        're-checks permission status on app lifecycle resume (OnAppResume)',
+        (WidgetTester tester) async {
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["googlePayNotificationScanning"] = true;
+      mockPermissionGranted = false;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const AutoTransactionsPageNotifications(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Notification Access Required'), findsOneWidget);
+      expect(find.text('Notification Access Granted'), findsNothing);
+
+      // Simulate permission granted while in system settings
+      mockPermissionGranted = true;
+
+      // Simulate app pause and resume lifecycle
+      TestWidgetsFlutterBinding.instance
+          .handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      TestWidgetsFlutterBinding.instance
+          .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Notification Access Granted'), findsOneWidget);
+      expect(find.text('Notification Access Required'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    });
+  });
+
+  group('NotificationDispatcher initNotificationScanning startup safety', () {
+    test(
+        'does not call requestPermission when permission is not granted on startup',
+        () async {
+      appStateSettings["notificationScanning"] = true;
+      mockPermissionGranted = false;
+      requestPermissionCallCount = 0;
+
+      await NotificationDispatcher.instance
+          .initNotificationScanning(platformOverride: PlatformOS.isAndroid);
+
+      expect(requestPermissionCallCount, equals(0));
+      expect(NotificationDispatcher.instance.isListening, isFalse);
+    });
+
+    test('does not initialize when notificationScanning preference is false',
+        () async {
+      appStateSettings["notificationScanning"] = false;
+      mockPermissionGranted = true;
+      requestPermissionCallCount = 0;
+
+      await NotificationDispatcher.instance
+          .initNotificationScanning(platformOverride: PlatformOS.isAndroid);
+
+      expect(requestPermissionCallCount, equals(0));
+      expect(NotificationDispatcher.instance.isListening, isFalse);
     });
   });
 }

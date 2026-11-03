@@ -47,6 +47,9 @@ class NotificationDispatcher {
   StreamSubscription<ServiceNotificationEvent>? _subscription;
   final List<String> recentCapturedNotifications = [];
 
+  /// Indicates whether the dispatcher currently has an active listener subscription.
+  bool get isListening => _subscription != null;
+
   TransactionQueueHandler? queueHandler;
   GooglePayTransactionHandler? onGooglePayTransaction;
 
@@ -303,14 +306,15 @@ class NotificationDispatcher {
   }
 
   /// Initializes the single notification listener subscription if permitted and enabled.
-  Future<void> initNotificationScanning() async {
-    if (getPlatform(ignoreEmulation: true) != PlatformOS.isAndroid) return;
+  Future<void> initNotificationScanning({PlatformOS? platformOverride}) async {
+    final platform = platformOverride ?? getPlatform(ignoreEmulation: true);
+    if (platform != PlatformOS.isAndroid) return;
     await stopListening();
     if (appStateSettings["notificationScanning"] != true) return;
 
     await DedupeLedger.instance.loadFromDatabase();
 
-    bool status = await requestReadNotificationPermission();
+    bool status = await isPermissionGranted();
     if (status == true) {
       _subscription = NotificationListenerService.notificationsStream.listen(
         (event) => handleEvent(event),
