@@ -23,6 +23,7 @@ import 'package:budget/widgets/tappable.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:budget/widgets/util/onAppResume.dart';
+import 'package:budget/widgets/notificationPrivacyCard.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -77,6 +78,9 @@ Future queueTransactionFromMessage(
   bool isPossibleDuplicate = false,
   DedupeEntryRecord? possibleDuplicateEntry,
 }) async {
+  if (appStateSettings["customTemplatesNotificationScanning"] == false) {
+    return false;
+  }
   String? title;
   double? amountDouble;
   List<ScannerTemplate> scannerTemplates =
@@ -188,7 +192,7 @@ class _AutoTransactionsPageNotificationsState
 
   Future<void> _requestPermission() async {
     try {
-      await NotificationListenerService.requestPermission();
+      await NotificationDispatcher.instance.requestReadNotificationPermission();
     } catch (_) {}
     await _checkPermission();
   }
@@ -203,6 +207,20 @@ class _AutoTransactionsPageNotificationsState
         dragDownToDismiss: true,
         title: "auto-transactions-title".tr(),
         actions: [
+          IconButton(
+            padding: const EdgeInsetsDirectional.all(15),
+            tooltip: "help".tr(),
+            icon: Icon(
+              appStateSettings["outlinedIcons"]
+                  ? Icons.help_outline_outlined
+                  : Icons.help_outline_rounded,
+            ),
+            color: Theme.of(context).colorScheme.secondary,
+            onPressed: () {
+              openUrl(
+                  "https://github.com/kidomarcostelo/budget-tracking#automatic-transactions-via-notifications");
+            },
+          ),
           RefreshButton(
             timeout: Duration.zero,
             onTap: () async {
@@ -228,11 +246,8 @@ class _AutoTransactionsPageNotificationsState
               await updateSettings("notificationScanning", value,
                   updateGlobalState: false);
               if (value == true) {
-                bool status = await NotificationDispatcher.instance
+                await NotificationDispatcher.instance
                     .requestReadNotificationPermission();
-                if (status == true) {
-                  initNotificationScanning();
-                }
               } else {
                 await NotificationDispatcher.instance.stopListening();
               }
@@ -255,6 +270,23 @@ class _AutoTransactionsPageNotificationsState
               onSwitched: (value) async {
                 await updateSettings("googlePayNotificationScanning", value,
                     updateGlobalState: false);
+              },
+            ),
+          if (appStateSettings["notificationScanning"] == true)
+            SettingsContainerSwitch(
+              title: "custom-notification-templates".tr(),
+              description: "custom-notification-templates-description".tr(),
+              icon: appStateSettings["outlinedIcons"]
+                  ? Icons.extension_outlined
+                  : Icons.extension_rounded,
+              initialValue:
+                  appStateSettings["customTemplatesNotificationScanning"] ??
+                      true,
+              onSwitched: (value) async {
+                await updateSettings(
+                    "customTemplatesNotificationScanning", value,
+                    updateGlobalState: false);
+                if (mounted) setState(() {});
               },
             ),
           if (appStateSettings["notificationScanning"] == true &&
@@ -300,56 +332,16 @@ class _AutoTransactionsPageNotificationsState
                 color: getColor(context, "incomeAmount"),
               ),
             ),
-          Container(
-            margin: const EdgeInsetsDirectional.symmetric(
-                horizontal: 20, vertical: 10),
-            padding: const EdgeInsetsDirectional.all(16),
-            decoration: BoxDecoration(
-              color: getColor(context, "lightDarkAccent").withOpacity(0.5),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color:
-                    getColor(context, "lightDarkAccentHeavy").withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      appStateSettings["outlinedIcons"]
-                          ? Icons.shield_outlined
-                          : Icons.shield_rounded,
-                      size: 22,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: TextFont(
-                        text: "notification-privacy-title".tr(),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                TextFont(
-                  text: "notification-privacy-description".tr(),
-                  fontSize: 13.5,
-                  maxLines: null,
-                  textColor: getColor(context, "black").withOpacity(0.75),
-                ),
-              ],
-            ),
-          ),
+          const NotificationPrivacyCard(),
           StreamBuilder<List<ScannerTemplate>>(
             stream: database.watchAllScannerTemplates(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 if (snapshot.data!.isEmpty) {
+                  if (appStateSettings["customTemplatesNotificationScanning"] ==
+                      false) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsetsDirectional.all(5),
                     child: StatusBox(

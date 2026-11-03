@@ -582,8 +582,7 @@ class SettingsPageContent extends StatelessWidget {
               )
             : SizedBox.shrink(),
 
-        (getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid ||
-                appStateSettings["notificationScanningDebug"] == true)
+        getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid
             ? SettingsContainerOpenPage(
                 title: "notification-transactions".tr(),
                 openPage: AutoTransactionsPageNotifications(),

@@ -1198,5 +1198,7 @@
   "notification-privacy-title": "Datenschutz auf dem Gerät & Berechtigungen",
   "notification-privacy-description": "Die gesamte Analyse von Benachrichtigungen findet vollständig auf Ihrem Gerät statt – ohne Datenübertragung in die Cloud. Gemäß den Richtlinien von Google Play sind SMS-Berechtigungen auf Standard-SMS-Apps beschränkt. Der Android-Benachrichtigungszugriff bietet eine sichere, datenschutzfreundliche Alternative, um Zahlungswarnungen lokal zu erfassen, ohne auf Ihre persönlichen SMS-Nachrichten zuzugreifen.",
   "notification-configuration-missing": "Keine benutzerdefinierten Vorlagen hinzugefügt",
-  "notification-configuration-missing-description": "Fügen Sie eine Vorlage hinzu, wenn Sie Benachrichtigungen anderer Banking-Apps parsen möchten."
+  "notification-configuration-missing-description": "Fügen Sie eine Vorlage hinzu, wenn Sie Benachrichtigungen anderer Banking-Apps parsen möchten.",
+  "custom-notification-templates": "Benutzerdefinierte Benachrichtigungsvorlagen",
+  "custom-notification-templates-description": "Transaktionen mithilfe benutzerdefinierter Benachrichtigungsvorlagen automatisch erkennen und parsen."
 }
