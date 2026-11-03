@@ -211,7 +211,7 @@ class _AutoTransactionsPageNotificationsState
             padding: const EdgeInsetsDirectional.all(15),
             tooltip: "help".tr(),
             icon: Icon(
-              appStateSettings["outlinedIcons"]
+              appStateSettings["outlinedIcons"] == true
                   ? Icons.help_outline_outlined
                   : Icons.help_outline_rounded,
             ),
@@ -262,7 +262,7 @@ class _AutoTransactionsPageNotificationsState
             SettingsContainerSwitch(
               title: "google-pay-transactions".tr(),
               description: "google-pay-transactions-description".tr(),
-              icon: appStateSettings["outlinedIcons"]
+              icon: appStateSettings["outlinedIcons"] == true
                   ? Icons.wallet_outlined
                   : Icons.wallet_rounded,
               initialValue:
@@ -276,7 +276,7 @@ class _AutoTransactionsPageNotificationsState
             SettingsContainerSwitch(
               title: "custom-notification-templates".tr(),
               description: "custom-notification-templates-description".tr(),
-              icon: appStateSettings["outlinedIcons"]
+              icon: appStateSettings["outlinedIcons"] == true
                   ? Icons.extension_outlined
                   : Icons.extension_rounded,
               initialValue:
@@ -301,7 +301,7 @@ class _AutoTransactionsPageNotificationsState
                     title: "notification-permission-required".tr(),
                     description:
                         "notification-permission-required-description".tr(),
-                    icon: appStateSettings["outlinedIcons"]
+                    icon: appStateSettings["outlinedIcons"] == true
                         ? Icons.warning_outlined
                         : Icons.warning_rounded,
                     color: Theme.of(context).colorScheme.error,
@@ -310,7 +310,7 @@ class _AutoTransactionsPageNotificationsState
                   SizedBox(height: 5),
                   Button(
                     label: "open-notification-settings".tr(),
-                    icon: appStateSettings["outlinedIcons"]
+                    icon: appStateSettings["outlinedIcons"] == true
                         ? Icons.settings_outlined
                         : Icons.settings_rounded,
                     onTap: _requestPermission,
@@ -326,7 +326,7 @@ class _AutoTransactionsPageNotificationsState
               child: StatusBox(
                 title: "notification-permission-granted".tr(),
                 description: "notification-permission-granted-description".tr(),
-                icon: appStateSettings["outlinedIcons"]
+                icon: appStateSettings["outlinedIcons"] == true
                     ? Icons.check_circle_outline
                     : Icons.check_circle_rounded,
                 color: getColor(context, "incomeAmount"),
@@ -348,7 +348,7 @@ class _AutoTransactionsPageNotificationsState
                       title: "notification-configuration-missing".tr(),
                       description:
                           "notification-configuration-missing-description".tr(),
-                      icon: appStateSettings["outlinedIcons"]
+                      icon: appStateSettings["outlinedIcons"] == true
                           ? Icons.info_outlined
                           : Icons.info_outline_rounded,
                       color: Theme.of(context).colorScheme.secondary,

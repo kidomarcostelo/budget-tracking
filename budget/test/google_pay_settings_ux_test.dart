@@ -275,6 +275,118 @@ void main() {
       expect(handled, isFalse);
       expect(genericQueueCount, equals(0));
       expect(dispatcher.recentCapturedNotifications, isEmpty);
+      expect(DedupeLedger.instance.entries, isEmpty);
+      expect(await database.getAllDedupeEntries(), isEmpty);
+    });
+
+    test(
+        'drops unparseable Google Pay package notification without recording or queuing when customTemplatesNotificationScanning is false',
+        () async {
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["googlePayNotificationScanning"] = true;
+      appStateSettings["customTemplatesNotificationScanning"] = false;
+
+      final dispatcher = NotificationDispatcher.instance;
+      dispatcher.recentCapturedNotifications.clear();
+
+      int genericQueueCount = 0;
+      dispatcher.queueHandler = (
+        msg, {
+        dateTime,
+        willPushRoute = true,
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
+        genericQueueCount++;
+      };
+
+      final nonPaymentGPayEvent = createTestEvent(
+        packageName: 'com.google.android.apps.walletnfcrel',
+        title: 'Google Wallet',
+        content: 'Your boarding pass is ready',
+      );
+      final handled = await dispatcher.handleEvent(nonPaymentGPayEvent);
+
+      expect(handled, isFalse);
+      expect(genericQueueCount, equals(0));
+      expect(dispatcher.recentCapturedNotifications, isEmpty);
+      expect(DedupeLedger.instance.entries, isEmpty);
+      expect(await database.getAllDedupeEntries(), isEmpty);
+    });
+
+    test(
+        'extractPaymentDetails uses user ScannerTemplates instead of GooglePayParser for non-Google-Pay notifications',
+        () async {
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["googlePayNotificationScanning"] = true;
+      appStateSettings["customTemplatesNotificationScanning"] = true;
+
+      // Seed a user-defined ScannerTemplate for Chase
+      await database.createOrUpdateScannerTemplate(
+        ScannerTemplate(
+          scannerTemplatePk: 'template-chase',
+          templateName: 'Chase Alert',
+          contains: 'Chase Alert',
+          titleTransactionBefore: 'purchase at ',
+          titleTransactionAfter: '',
+          amountTransactionBefore: r'$',
+          amountTransactionAfter: ' ',
+          defaultCategoryFk: 'cat-1',
+          walletFk: '-1',
+          dateCreated: DateTime.now(),
+          ignore: false,
+        ),
+      );
+
+      final dispatcher = NotificationDispatcher.instance;
+      final bankEvent = createTestEvent(
+        packageName: 'com.chase.sig.android',
+        title: 'Chase Alert',
+        content: 'You made a \$42.00 purchase at Trader Joe\'s',
+      );
+
+      final details = await dispatcher.extractPaymentDetails(bankEvent);
+
+      // Verify ScannerTemplate was applied and merchant was NOT overwritten by GooglePayParser
+      expect(details.amount, equals(42.0));
+      expect(details.title, equals("Trader joe's"));
+    });
+
+    test(
+        'extractPaymentDetails ignores user ScannerTemplates when customTemplatesNotificationScanning is false',
+        () async {
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["googlePayNotificationScanning"] = true;
+      appStateSettings["customTemplatesNotificationScanning"] = false;
+
+      // Seed a user-defined ScannerTemplate for Chase
+      await database.createOrUpdateScannerTemplate(
+        ScannerTemplate(
+          scannerTemplatePk: 'template-chase',
+          templateName: 'Chase Alert',
+          contains: 'Chase Alert',
+          titleTransactionBefore: 'purchase at ',
+          titleTransactionAfter: '',
+          amountTransactionBefore: r'$',
+          amountTransactionAfter: ' ',
+          defaultCategoryFk: 'cat-1',
+          walletFk: '-1',
+          dateCreated: DateTime.now(),
+          ignore: false,
+        ),
+      );
+
+      final dispatcher = NotificationDispatcher.instance;
+      final bankEvent = createTestEvent(
+        packageName: 'com.chase.sig.android',
+        title: 'Chase Alert',
+        content: 'You made a \$42.00 purchase at Trader Joe\'s',
+      );
+
+      final details = await dispatcher.extractPaymentDetails(bankEvent);
+
+      // When custom templates are disabled, ScannerTemplates must NOT be evaluated.
+      expect(details.title, isNot(equals("Trader Joe's")));
     });
 
     test(
@@ -644,6 +756,28 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('No Custom Templates Added'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    });
+
+    testWidgets(
+        'NotificationPrivacyCard renders safely when outlinedIcons preference is null',
+        (WidgetTester tester) async {
+      appStateSettings["outlinedIcons"] = null;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const Scaffold(
+            body: NotificationPrivacyCard(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(NotificationPrivacyCard), findsOneWidget);
+      expect(find.text('On-Device Privacy & Permissions'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);
