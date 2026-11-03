@@ -1183,5 +1183,20 @@
   "duplicate-budget": "重複預算",
   "possible-duplicate-detected": "偵測到可能的重複",
   "possible-duplicate-description": "最近記錄了一筆類似的交易。請在儲存前檢查詳細資訊。",
-  "similar-transaction-found": "找到類似交易"
+  "similar-transaction-found": "找到類似交易",
+  "auto-transactions-title": "自動交易",
+  "auto-transactions-notifications-description": "可根據您裝置上收到的通知自動建立交易。",
+  "notification-transactions": "通知交易",
+  "notification-transactions-description": "當交易通知到達時，Cashew會在裝置本地擷取並預填交易以供確認。建立範本或使用受支援的付款應用程式。",
+  "google-pay-transactions": "Google 錢包與 Google Pay",
+  "google-pay-transactions-description": "自動偵測並解析來自 Google 錢包和 Google Pay 通知中的交易。",
+  "notification-permission-granted": "通知存取權限已授予",
+  "notification-permission-granted-description": "Cashew 正在監聽傳入的交易通知。",
+  "notification-permission-required": "需要通知存取權限",
+  "notification-permission-required-description": "Cashew 需要通知存取權限以偵測傳入的付款提醒。請在系統設定中啟用。",
+  "open-notification-settings": "開啟通知設定",
+  "notification-privacy-title": "裝置端隱私與權限",
+  "notification-privacy-description": "所有通知解析均完全在您的裝置本地完成，零雲端資料傳輸。根據 Google Play 政策，簡訊權限僅限預設簡訊應用程式使用。Android 通知存取權限提供了一種安全且保護隱私的替代方案，可以在不存取您的個人簡訊的情況下在本地擷取付款提醒。",
+  "notification-configuration-missing": "未新增自訂範本",
+  "notification-configuration-missing-description": "如果您希望解析來自其他銀行應用程式的通知，請新增範本。"
 }

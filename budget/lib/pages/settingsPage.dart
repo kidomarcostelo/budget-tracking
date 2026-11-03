@@ -585,7 +585,7 @@ class SettingsPageContent extends StatelessWidget {
         appStateSettings["notificationScanningDebug"] &&
                 getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid
             ? SettingsContainerOpenPage(
-                title: "Notification Transactions",
+                title: "notification-transactions".tr(),
                 openPage: AutoTransactionsPageNotifications(),
                 icon: appStateSettings["outlinedIcons"]
                     ? Icons.edit_notifications_outlined
