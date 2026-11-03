@@ -1177,5 +1177,176 @@ void main() {
       expect(res.matchReason, equals('payment_window_match'));
       expect(res.matchedEntry?.title, equals('Decathlon Sports'));
     });
+
+    test(
+        'Jaro-Winkler performs case folding and handles short single-char boundaries',
+        () {
+      // Case folding
+      expect(DedupeLedger.jaroWinklerSimilarity('STARBUCKS', 'starbucks'),
+          equals(1.0));
+      expect(DedupeLedger.jaroWinklerSimilarity('Starbucks', 'starbucks'),
+          equals(1.0));
+      expect(
+          DedupeLedger.jaroWinklerSimilarity('  Target Store ', 'target store'),
+          equals(1.0));
+
+      // Single character boundaries
+      expect(DedupeLedger.jaroWinklerSimilarity('a', 'a'), equals(1.0));
+      expect(DedupeLedger.jaroWinklerSimilarity('a', 'b'), equals(0.0));
+      expect(
+          DedupeLedger.jaroWinklerSimilarity('a', 'ab'), closeTo(0.85, 0.01));
+    });
+
+    test(
+        'generic content with banking boilerplate does not falsely corroborate unrelated expenses',
+        () async {
+      final t0 = DateTime(2026, 10, 22, 15, 0, 0);
+      final t1 = t0.add(const Duration(seconds: 25));
+
+      // Notification 1: Electricity bill payment
+      await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.app',
+        notificationId: '901',
+        amount: 500.0,
+        currency: 'PHP',
+        title: 'Payment Alert',
+        rawContent: 'Paid PHP 500.00 from your account for Electricity',
+        eventTime: t0,
+      );
+
+      // Notification 2: Internet bill payment with same amount and common banking terms
+      final res2 = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.app',
+        notificationId: '902',
+        amount: 500.0,
+        currency: 'PHP',
+        title: 'Payment Alert',
+        rawContent: 'Paid PHP 500.00 from your account for Internet',
+        eventTime: t1,
+      );
+
+      // CRITICAL: Must NOT be falsely corroborated and suppressed!
+      expect(res2.isDuplicate, isFalse);
+      expect(res2.isUncertainMatch, isTrue);
+      expect(res2.matchReasons, contains('uncertain_merchant'));
+    });
+
+    test('extractMerchantFromText handles preposition edge cases cleanly', () {
+      expect(
+        DedupeLedger.extractMerchantFromText(
+            'Transaction in progress: Paid PHP 500 at Nike Store'),
+        equals('nike store'),
+      );
+      expect(
+        DedupeLedger.extractMerchantFromText('Paid in USD 100 at Target'),
+        equals('target'),
+      );
+      expect(
+        DedupeLedger.extractMerchantFromText(
+            'Transfer of PHP 500 to account 123456'),
+        isNull,
+      );
+    });
+
+    test(
+        'confirmUncertainEntryForMatchedPk promotes entry by matched candidate pk',
+        () async {
+      final t0 = DateTime(2026, 10, 22, 16, 0, 0);
+      final t1 = t0.add(const Duration(seconds: 10));
+
+      final res1 = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.one',
+        notificationId: '1001',
+        amount: 80.0,
+        currency: 'USD',
+        title: 'Uber Eats',
+        rawContent: 'Paid \$80.00 at Uber Eats',
+        eventTime: t0,
+      );
+      expect(res1.isDuplicate, isFalse);
+
+      final res2 = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.two',
+        notificationId: '1002',
+        amount: 80.0,
+        currency: 'USD',
+        title: 'DoorDash',
+        rawContent: 'Paid \$80.00 at DoorDash',
+        eventTime: t1,
+      );
+      expect(res2.isUncertainMatch, isTrue);
+      expect(ledger.uncertainEntries.length, equals(1));
+      expect(ledger.entries.length, equals(1));
+
+      // Promote using matched candidate pk
+      final matchedPk = res2.matchedEntry!.entryPk;
+      await ledger.confirmUncertainEntryForMatchedPk(matchedPk,
+          createdTransactionPk: 'tx-doordash');
+
+      expect(ledger.uncertainEntries.isEmpty, isTrue);
+      expect(ledger.entries.length, equals(2));
+      expect(ledger.entries.last.createdTransactionPk, equals('tx-doordash'));
+    });
+
+    test(
+        'exact notification retry on uncertain entry is suppressed as duplicate',
+        () async {
+      final t0 = DateTime(2026, 10, 22, 17, 0, 0);
+      final t1 = t0.add(const Duration(seconds: 5));
+      final t2 = t0.add(const Duration(seconds: 10));
+
+      await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.one',
+        notificationId: '2001',
+        amount: 50.0,
+        currency: 'USD',
+        title: 'Bakery A',
+        rawContent: 'Paid \$50.00 at Bakery A',
+        eventTime: t0,
+      );
+
+      final res2 = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.two',
+        notificationId: '2002',
+        amount: 50.0,
+        currency: 'USD',
+        title: 'Bakery B',
+        rawContent: 'Paid \$50.00 at Bakery B',
+        eventTime: t1,
+      );
+      expect(res2.isUncertainMatch, isTrue);
+
+      // Retry of Notification 2 with same packageName and notificationId
+      final resRetry = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.two',
+        notificationId: '2002',
+        amount: 50.0,
+        currency: 'USD',
+        title: 'Bakery B Updated',
+        rawContent: 'Paid \$50.00 at Bakery B (receipt sent)',
+        eventTime: t2,
+      );
+      expect(resRetry.isDuplicate, isTrue);
+      expect(resRetry.matchReason, equals('exact_notification'));
+    });
+
+    test(
+        'hasCorroboratingMerchant accepts DedupeEntryRecord instances directly',
+        () {
+      final rec1 = DedupeEntryRecord(
+        eventKey: 'key-1',
+        title: 'Blue Bottle Coffee',
+        rawContent: 'Paid at Blue Bottle Coffee',
+      );
+      final rec2 = DedupeEntryRecord(
+        eventKey: 'key-2',
+        title: 'Blue Bottle',
+        rawContent: 'Payment to Blue Bottle',
+      );
+      expect(
+        DedupeLedger.hasCorroboratingMerchant(entry1: rec1, entry2: rec2),
+        isTrue,
+      );
+    });
   });
 }
