@@ -51,10 +51,11 @@ class DedupeCheckResult {
   final String? matchReason;
   final List<String> matchReasons;
   final DedupeEntryRecord? matchedEntry;
+  final DedupeEntryRecord? uncertainEntry;
   final String? matchedKey;
   final DateTime? matchedTime;
 
-  const DedupeCheckResult.unique({this.matchedEntry})
+  const DedupeCheckResult.unique({this.matchedEntry, this.uncertainEntry})
       : isDuplicate = false,
         isUncertainMatch = false,
         matchReason = null,
@@ -66,6 +67,7 @@ class DedupeCheckResult {
     required this.matchReason,
     this.matchReasons = const [],
     this.matchedEntry,
+    this.uncertainEntry,
     this.matchedKey,
     this.matchedTime,
   })  : isDuplicate = true,
@@ -75,6 +77,7 @@ class DedupeCheckResult {
     required this.matchReason,
     this.matchReasons = const [],
     this.matchedEntry,
+    this.uncertainEntry,
     this.matchedKey,
     this.matchedTime,
   })  : isDuplicate = false,
@@ -133,12 +136,19 @@ class DedupeLedger {
   static const Set<String> genericActionWords = {
     'purchase',
     'payment',
+    'pay',
+    'paid',
     'transfer',
+    'transferred',
     'alert',
     'sent',
+    'send',
     'received',
+    'receive',
     'debit',
+    'debited',
     'credit',
+    'credited',
     'notification',
     'transaction',
     'notice',
@@ -153,7 +163,31 @@ class DedupeLedger {
     'info',
     'message',
     'fund',
+    'funds',
     'online',
+    'account',
+    'balance',
+    'available',
+    'statement',
+    'reference',
+    'ref',
+    'bill',
+    'charge',
+    'charged',
+    'ending',
+    'authorization',
+    'auth',
+    'total',
+    'amount',
+    'store',
+    'shop',
+    'mart',
+    'market',
+    'supermarket',
+    'cafe',
+    'restaurant',
+    'bakery',
+    'boutique',
   };
 
   static const Set<String> genericFillerWords = {
@@ -173,6 +207,28 @@ class DedupeLedger {
     'via',
     'by',
     'with',
+    'and',
+    'or',
+    'is',
+    'was',
+    'has',
+    'have',
+    'been',
+  };
+
+  static const Set<String> commonCurrencyCodes = {
+    'php',
+    'usd',
+    'eur',
+    'gbp',
+    'jpy',
+    'cad',
+    'aud',
+    'sgd',
+    'inr',
+    'cny',
+    'hkd',
+    'nzd',
   };
 
   /// Checks if a title is composed purely of generic banking / notification action terms.
@@ -189,7 +245,9 @@ class DedupeLedger {
     // (e.g. "Purchase Alert", "Payment Notification", "Debit Alert")
     // If it contains ANY specific entity or merchant name (e.g. "Apple Purchase", "Credit Union", "Starbucks"), it is not generic.
     return words.every((w) =>
-        genericActionWords.contains(w) || genericFillerWords.contains(w));
+        genericActionWords.contains(w) ||
+        genericFillerWords.contains(w) ||
+        commonCurrencyCodes.contains(w));
   }
 
   /// Clears in-memory ledger entries (primarily for test isolation).
@@ -216,10 +274,29 @@ class DedupeLedger {
   /// Extracts potential merchant name from notification text after common prepositions.
   static String? extractMerchantFromText(String? text) {
     if (text == null || text.trim().isEmpty) return null;
-    final atMatch = RegExp(r'\b(?:at|to|in)\s+([^,.\n]+)', caseSensitive: false)
-        .firstMatch(text);
-    if (atMatch != null) {
-      String m = atMatch.group(1)!.trim();
+
+    // Prioritize "at <merchant>" as it specifically designates merchant/business locations.
+    Match? match =
+        RegExp(r'\bat\s+([^,.\n]+)', caseSensitive: false).firstMatch(text);
+
+    // Fallback: look for "to <payee/merchant>", skipping account/card destinations
+    if (match == null) {
+      final toMatches =
+          RegExp(r'\bto\s+([^,.\n]+)', caseSensitive: false).allMatches(text);
+      for (final m in toMatches) {
+        final candidate = m.group(1)!.trim();
+        if (!RegExp(
+                r'^(?:account|card|wallet|\*{2,4}|\d{4}|your\s+account|savings|checking)\b',
+                caseSensitive: false)
+            .hasMatch(candidate)) {
+          match = m;
+          break;
+        }
+      }
+    }
+
+    if (match != null) {
+      String m = match.group(1)!.trim();
       // Strip trailing clauses: with card, via rail, using wallet, on card/account, ref number, for description
       m = m
           .replaceAll(
@@ -234,7 +311,7 @@ class DedupeLedger {
           .trim();
       m = m
           .replaceAll(
-              RegExp(r'\s+ref(?:erence)?(?:\s*#|\s*:|\s+no)?.*$',
+              RegExp(r'\s+ref(?:erence)?(?:\s*#|\s*:|\s+no|\s*\d+)?.*$',
                   caseSensitive: false),
               '')
           .trim();
@@ -251,13 +328,17 @@ class DedupeLedger {
   }
 
   /// Computes Jaro-Winkler similarity between two strings (returns 0.0 to 1.0).
+  /// Performs case folding and trimming per BT-2 research §(c).
   static double jaroWinklerSimilarity(String s1, String s2) {
-    if (s1 == s2) return 1.0;
-    if (s1.isEmpty || s2.isEmpty) return 0.0;
+    final str1 = s1.trim().toLowerCase();
+    final str2 = s2.trim().toLowerCase();
+    if (str1 == str2) return 1.0;
+    if (str1.isEmpty || str2.isEmpty) return 0.0;
 
-    final int len1 = s1.length;
-    final int len2 = s2.length;
-    final int matchDistance = (len1 > len2 ? len1 : len2) ~/ 2 - 1;
+    final int len1 = str1.length;
+    final int len2 = str2.length;
+    final int maxLen = len1 > len2 ? len1 : len2;
+    final int matchDistance = maxLen ~/ 2 > 0 ? (maxLen ~/ 2 - 1) : 0;
 
     final List<bool> s1Matches = List<bool>.filled(len1, false);
     final List<bool> s2Matches = List<bool>.filled(len2, false);
@@ -270,7 +351,7 @@ class DedupeLedger {
 
       for (int j = start; j < end; j++) {
         if (s2Matches[j]) continue;
-        if (s1[i] != s2[j]) continue;
+        if (str1[i] != str2[j]) continue;
         s1Matches[i] = true;
         s2Matches[j] = true;
         matches++;
@@ -287,7 +368,7 @@ class DedupeLedger {
       while (!s2Matches[k]) {
         k++;
       }
-      if (s1[i] != s2[k]) {
+      if (str1[i] != str2[k]) {
         transpositions++;
       }
       k++;
@@ -298,11 +379,11 @@ class DedupeLedger {
             (matches - transpositions / 2) / matches) /
         3.0;
 
-    // Winkler standard prefix bonus
+    // Winkler standard prefix bonus (up to 4 matching initial characters)
     int prefix = 0;
     const int maxPrefix = 4;
     for (int i = 0; i < len1 && i < len2 && i < maxPrefix; i++) {
-      if (s1[i] == s2[i]) {
+      if (str1[i] == str2[i]) {
         prefix++;
       } else {
         break;
@@ -319,48 +400,30 @@ class DedupeLedger {
         .trim()
         .toLowerCase()
         .split(RegExp(r'[\s\-_:,.]+'))
-        .where((w) => w.length >= 3)
+        .where((w) => w.length >= 2)
         .toList();
     return words
         .where((w) =>
-            !genericActionWords.contains(w) && !genericFillerWords.contains(w))
+            !genericActionWords.contains(w) &&
+            !genericFillerWords.contains(w) &&
+            !commonCurrencyCodes.contains(w) &&
+            !RegExp(r'^\d+$').hasMatch(w))
         .toSet();
   }
 
   /// Evaluates whether two events share corroborating merchant details.
-  /// Accepts structured [DedupeMerchantContext] objects or individual fields.
+  /// Accepts structured [DedupeMerchantContext] or [DedupeEntryRecord] instances.
   static bool hasCorroboratingMerchant({
     DedupeMerchantContext? first,
     DedupeMerchantContext? second,
     DedupeEntryRecord? entry1,
     DedupeEntryRecord? entry2,
-    String? title1,
-    String? content1,
-    String? title2,
-    String? content2,
-    String? source1,
-    String? source2,
-    String? package1,
-    String? package2,
   }) {
     final ctx1 = first ??
-        (entry1 != null
-            ? DedupeMerchantContext.fromEntry(entry1)
-            : DedupeMerchantContext(
-                title: title1,
-                rawContent: content1,
-                source: source1,
-                packageName: package1,
-              ));
+        (entry1 != null ? DedupeMerchantContext.fromEntry(entry1) : null);
     final ctx2 = second ??
-        (entry2 != null
-            ? DedupeMerchantContext.fromEntry(entry2)
-            : DedupeMerchantContext(
-                title: title2,
-                rawContent: content2,
-                source: source2,
-                packageName: package2,
-              ));
+        (entry2 != null ? DedupeMerchantContext.fromEntry(entry2) : null);
+    if (ctx1 == null || ctx2 == null) return false;
     return hasCorroboratingContext(ctx1, ctx2);
   }
 
@@ -377,12 +440,6 @@ class DedupeLedger {
     // If both titles are identical non-generic strings, they corroborate
     if (t1 != null && t2 != null && t1.isNotEmpty && t1 == t2) {
       if (!isGenericTitle(t1)) {
-        return true;
-      }
-      // If titles are generic but from identical source & package retry
-      if (first.source != null &&
-          first.source == second.source &&
-          first.packageName == second.packageName) {
         return true;
       }
     }
@@ -446,12 +503,21 @@ class DedupeLedger {
       return true;
     }
 
-    // Generalized token overlap across contents (no hardcoded merchant list)
-    if (c1.isNotEmpty && c2.isNotEmpty) {
-      final cWords1 = extractNonGenericTokens(c1);
-      final cWords2 = extractNonGenericTokens(c2);
-      if (cWords1.isNotEmpty && cWords2.isNotEmpty) {
-        if (cWords1.intersection(cWords2).isNotEmpty) {
+    // Check if token overlap from an identified merchant matches content
+    if (m1 != null && m1.isNotEmpty) {
+      final tokens1 = extractNonGenericTokens(m1);
+      if (tokens1.isNotEmpty) {
+        final cWords2 = extractNonGenericTokens(c2);
+        if (tokens1.intersection(cWords2).isNotEmpty) {
+          return true;
+        }
+      }
+    }
+    if (m2 != null && m2.isNotEmpty) {
+      final tokens2 = extractNonGenericTokens(m2);
+      if (tokens2.isNotEmpty) {
+        final cWords1 = extractNonGenericTokens(c1);
+        if (tokens2.intersection(cWords1).isNotEmpty) {
           return true;
         }
       }
@@ -558,7 +624,37 @@ class DedupeLedger {
     if (createdTransactionPk != null) {
       entry.createdTransactionPk = createdTransactionPk;
     }
-    await _recordEntry(entry);
+    entries.add(entry);
+    _pruneList(entries);
+    try {
+      final rowsUpdated = await database.updateDedupeEntryStatus(
+        entry.entryPk,
+        'created',
+        createdTransactionPk: createdTransactionPk,
+      );
+      if (rowsUpdated == 0) {
+        await _tryPersist(entry);
+      }
+    } catch (_) {
+      // Ignored if running without Drift database
+    }
+  }
+
+  /// Promotes an uncertain entry by its matched entry primary key (used by AddTransactionPage review save).
+  Future<void> confirmUncertainEntryForMatchedPk(
+    String matchedEntryPk, {
+    String? createdTransactionPk,
+  }) async {
+    final matchIndex = uncertainEntries.lastIndexWhere(
+      (e) => e.matchedEntryPk == matchedEntryPk,
+    );
+    if (matchIndex != -1) {
+      final entry = uncertainEntries[matchIndex];
+      await confirmUncertainEntry(
+        entry,
+        createdTransactionPk: createdTransactionPk,
+      );
+    }
   }
 
   Future<void> _recordEntry(DedupeEntryRecord entry) async {
@@ -581,6 +677,15 @@ class DedupeLedger {
       return null;
     }
     for (final existing in entries.reversed) {
+      if (existing.packageName == packageName &&
+          existing.notificationId == notificationId) {
+        final diff = now.difference(existing.dateTimeCreated).abs();
+        if (diff <= window) {
+          return existing;
+        }
+      }
+    }
+    for (final existing in uncertainEntries.reversed) {
       if (existing.packageName == packageName &&
           existing.notificationId == notificationId) {
         final diff = now.difference(existing.dateTimeCreated).abs();
@@ -945,6 +1050,7 @@ class DedupeLedger {
           if (hasConflict) 'conflicting_merchant',
         ],
         matchedEntry: matchedCandidate,
+        uncertainEntry: uncertain,
         matchedKey: matchedCandidate.eventKey,
         matchedTime: matchedCandidate.dateTimeCreated,
       );
