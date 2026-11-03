@@ -1180,5 +1180,8 @@
   "import-warning": "Importálási figyelmeztetés",
   "import-warning-description": "Az importálás sikertelen lehet! Kérjük, győződjön meg arról, hogy egy érvényes Cashew [.sqlite] vagy [.sql] biztonsági mentési fájlt választott",
   "duplicate-budget-question": "Ismétlődő költségkeret?",
-  "duplicate-budget": "Ismétlődő költségvetés"
+  "duplicate-budget": "Ismétlődő költségvetés",
+  "possible-duplicate-detected": "Lehetséges duplikáció észlelve",
+  "possible-duplicate-description": "Nemrég hasonló tranzakciót rögzítettek. Mentés előtt ellenőrizze a részleteket.",
+  "similar-transaction-found": "Hasonló tranzakció található"
 }

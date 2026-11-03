@@ -1180,5 +1180,8 @@
   "import-warning": "आयात चेतावनी",
   "import-warning-description": "आयात विफल हो सकता है! कृपया सुनिश्चित करें कि आपने वैध काजू [.sqlite] या [.sql] बैकअप फ़ाइल का चयन किया है",
   "duplicate-budget-question": "डुप्लीकेट बजट?",
-  "duplicate-budget": "डुप्लीकेट बजट"
+  "duplicate-budget": "डुप्लीकेट बजट",
+  "possible-duplicate-detected": "संभावित डुप्लिकेट का पता चला",
+  "possible-duplicate-description": "हाल ही में एक समान लेन-देन दर्ज किया गया था। कृपया सहेजने से पहले विवरण की समीक्षा करें।",
+  "similar-transaction-found": "समान लेन-देन मिला"
 }

@@ -13,11 +13,48 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqlite3/open.dart';
 
+class _TestAssetLoader extends AssetLoader {
+  const _TestAssetLoader();
+  @override
+  Future<Map<String, dynamic>> load(String path, Locale locale) async {
+    return {
+      'possible-duplicate-detected': 'Possible duplicate detected',
+      'possible-duplicate-description':
+          'A similar transaction was recorded recently. Please review details before saving.',
+      'similar-transaction-found': 'Similar transaction found',
+    };
+  }
+}
+
+Widget buildTestableWidget(Widget child) {
+  return EasyLocalization(
+    supportedLocales: const [Locale('en')],
+    path: 'test',
+    assetLoader: const _TestAssetLoader(),
+    fallbackLocale: const Locale('en'),
+    startLocale: const Locale('en'),
+    child: Builder(
+      builder: (context) => MaterialApp(
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
+        home: Scaffold(
+          body: child,
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
-  setUpAll(() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
     EasyLocalization.logger.enableLevels = [];
+    await EasyLocalization.ensureInitialized();
     appStateSettings["materialYou"] = false;
     appStateSettings["selectedWalletPk"] = "test-wallet-1";
     appStateSettings["outlinedIcons"] = false;
@@ -47,17 +84,16 @@ void main() {
       bool dismissed = false;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PossibleDuplicateBanner(
-              matchedEntry: matchedEntry,
-              onDismiss: () {
-                dismissed = true;
-              },
-            ),
+        buildTestableWidget(
+          PossibleDuplicateBanner(
+            matchedEntry: matchedEntry,
+            onDismiss: () {
+              dismissed = true;
+            },
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       // Verify banner container exists
       expect(find.byKey(const ValueKey('possibleDuplicateBanner')),
@@ -83,14 +119,13 @@ void main() {
     testWidgets('renders fallback text when matchedEntry is null',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PossibleDuplicateBanner(
-              matchedEntry: null,
-            ),
+        buildTestableWidget(
+          const PossibleDuplicateBanner(
+            matchedEntry: null,
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('possibleDuplicateBanner')),
           findsOneWidget);
@@ -107,14 +142,13 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PossibleDuplicateBanner(
-              matchedEntry: matchedEntry,
-            ),
+        buildTestableWidget(
+          PossibleDuplicateBanner(
+            matchedEntry: matchedEntry,
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('possibleDuplicateBanner')),
           findsOneWidget);
@@ -132,14 +166,13 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PossibleDuplicateBanner(
-              matchedEntry: matchedEntry,
-            ),
+        buildTestableWidget(
+          PossibleDuplicateBanner(
+            matchedEntry: matchedEntry,
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('possibleDuplicateBanner')),
           findsOneWidget);

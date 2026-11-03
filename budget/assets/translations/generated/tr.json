@@ -1180,5 +1180,8 @@
   "import-warning": "İthalat Uyarısı",
   "import-warning-description": "İçe aktarma başarısız olabilir! Lütfen geçerli bir Kaju [.sqlite] veya [.sql] yedekleme dosyası seçtiğinizden emin olun.",
   "duplicate-budget-question": "Yinelenen Bütçe mi?",
-  "duplicate-budget": "Yinelenen Bütçe"
+  "duplicate-budget": "Yinelenen Bütçe",
+  "possible-duplicate-detected": "Olası kopya tespit edildi",
+  "possible-duplicate-description": "Son zamanlarda benzer bir işlem kaydedildi. Lütfen kaydetmeden önce ayrıntıları inceleyin.",
+  "similar-transaction-found": "Benzer işlem bulundu"
 }

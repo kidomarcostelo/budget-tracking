@@ -1,1 +1,5 @@
-{}
+{
+  "possible-duplicate-detected": "Kemungkinan pendua dikesan",
+  "possible-duplicate-description": "Transaksi yang serupa telah direkodkan baru-baru ini. Sila semak butiran sebelum menyimpan.",
+  "similar-transaction-found": "Transaksi serupa ditemui"
+}

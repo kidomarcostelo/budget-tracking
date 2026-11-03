@@ -1180,5 +1180,8 @@
   "import-warning": "Avertissement d'importation",
   "import-warning-description": "L'importation peut échouer ! Veuillez vous assurer d'avoir sélectionné un fichier de sauvegarde Cashew [.sqlite] ou [.sql] valide.",
   "duplicate-budget-question": "Budget en double ?",
-  "duplicate-budget": "Budget en double"
+  "duplicate-budget": "Budget en double",
+  "possible-duplicate-detected": "Doublon possible détecté",
+  "possible-duplicate-description": "Une transaction similaire a été enregistrée récemment. Veuillez vérifier les détails avant d'enregistrer.",
+  "similar-transaction-found": "Transaction similaire trouvée"
 }
