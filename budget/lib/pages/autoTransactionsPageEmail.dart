@@ -39,9 +39,10 @@ import 'addButton.dart';
 List<String> get recentCapturedNotifications =>
     NotificationDispatcher.instance.recentCapturedNotifications;
 
-Future initNotificationScanning() async {
+Future initNotificationScanning({PlatformOS? platformOverride}) async {
   NotificationDispatcher.instance.queueHandler = queueTransactionFromMessage;
-  await NotificationDispatcher.instance.initNotificationScanning();
+  await NotificationDispatcher.instance
+      .initNotificationScanning(platformOverride: platformOverride);
 }
 
 class InitializeNotificationService extends StatefulWidget {
@@ -338,7 +339,7 @@ class _AutoTransactionsPageNotificationsState
                 TextFont(
                   text: "notification-privacy-description".tr(),
                   fontSize: 13.5,
-                  maxLines: 20,
+                  maxLines: null,
                   textColor: getColor(context, "black").withOpacity(0.75),
                 ),
               ],
