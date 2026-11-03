@@ -96,7 +96,10 @@ class NotificationDispatcher {
   ) {
     try {
       int startIndex = messageString.indexOf(before) + before.length;
-      int endIndex = messageString.indexOf(after, startIndex);
+      int endIndex = after.isEmpty
+          ? messageString.length
+          : messageString.indexOf(after, startIndex);
+      if (endIndex == -1) endIndex = messageString.length;
       String amountString = messageString.substring(startIndex, endIndex);
       return double.tryParse(amountString.replaceAll(RegExp(r'[^0-9.]'), ''));
     } catch (_) {
@@ -112,7 +115,10 @@ class NotificationDispatcher {
   ) {
     try {
       int startIndex = messageString.indexOf(before) + before.length;
-      int endIndex = messageString.indexOf(after, startIndex);
+      int endIndex = after.isEmpty
+          ? messageString.length
+          : messageString.indexOf(after, startIndex);
+      if (endIndex == -1) endIndex = messageString.length;
       String title = messageString.substring(startIndex, endIndex);
       title = title.replaceAll("\n", " ");
       title = title.replaceAll("\r", " ");
@@ -211,38 +217,40 @@ class NotificationDispatcher {
     final messageString = formatNotificationMessage(event);
 
     // 2. Check user-configured ScannerTemplates from database
-    try {
-      final templates = await database.getAllScannerTemplates();
-      for (final template in templates) {
-        if (messageString.contains(template.contains)) {
-          final extractedAmount = extractAmountFromDelimiters(
-            messageString,
-            template.amountTransactionBefore,
-            template.amountTransactionAfter,
-          );
-          if (extractedAmount != null && extractedAmount > 0) {
-            amount = extractedAmount;
-            final extractedTitle = extractTitleFromDelimiters(
+    if (appStateSettings["customTemplatesNotificationScanning"] != false) {
+      try {
+        final templates = await database.getAllScannerTemplates();
+        for (final template in templates) {
+          if (messageString.contains(template.contains)) {
+            final extractedAmount = extractAmountFromDelimiters(
               messageString,
-              template.titleTransactionBefore,
-              template.titleTransactionAfter,
+              template.amountTransactionBefore,
+              template.amountTransactionAfter,
             );
-            if (extractedTitle != null && extractedTitle.isNotEmpty) {
-              title = extractedTitle;
-            }
-            if (template.walletFk != "-1" && template.walletFk != "0") {
-              final wallet =
-                  await database.getWalletInstanceOrNull(template.walletFk);
-              if (wallet?.currency != null && wallet!.currency!.isNotEmpty) {
-                currency = normalizeCurrency(wallet.currency);
+            if (extractedAmount != null && extractedAmount > 0) {
+              amount = extractedAmount;
+              final extractedTitle = extractTitleFromDelimiters(
+                messageString,
+                template.titleTransactionBefore,
+                template.titleTransactionAfter,
+              );
+              if (extractedTitle != null && extractedTitle.isNotEmpty) {
+                title = extractedTitle;
               }
+              if (template.walletFk != "-1" && template.walletFk != "0") {
+                final wallet =
+                    await database.getWalletInstanceOrNull(template.walletFk);
+                if (wallet?.currency != null && wallet!.currency!.isNotEmpty) {
+                  currency = normalizeCurrency(wallet.currency);
+                }
+              }
+              break;
             }
-            break;
           }
         }
+      } catch (_) {
+        // Ignored if database is not initialized (e.g. unit tests)
       }
-    } catch (_) {
-      // Ignored if database is not initialized (e.g. unit tests)
     }
 
     // 3. Regex fallback on notification text (content and title)
@@ -381,18 +389,20 @@ class NotificationDispatcher {
     final isCustomTemplatesScanningEnabled =
         appStateSettings["customTemplatesNotificationScanning"] ?? true;
 
-    // When custom templates scanning is disabled and the event is not from Google Pay,
-    // immediately return early if no custom queue handler was supplied.
-    if (!isGPayPackage &&
-        !isCustomTemplatesScanningEnabled &&
+    // Parse potential payment fields for Google Pay if from a recognized package
+    final googlePayResult = (isGPayPackage && isGooglePayScanningEnabled)
+        ? GooglePayParser.parse(event.title, event.content)
+        : null;
+
+    // When custom templates scanning is disabled and this notification is not a
+    // parsed Google Pay payment transaction, drop it early if no custom queue handler
+    // was supplied (preventing unparseable notifications and non-Google-Pay events
+    // from polluting the dedupe ledger).
+    if (!isCustomTemplatesScanningEnabled &&
+        googlePayResult == null &&
         customQueueHandler == null) {
       return false;
     }
-
-    // Parse potential payment fields for deduplication check
-    final googlePayResult = isGooglePayScanningEnabled
-        ? GooglePayParser.parse(event.title, event.content)
-        : null;
     final details = await extractPaymentDetails(
       event,
       googlePayResult: googlePayResult,
