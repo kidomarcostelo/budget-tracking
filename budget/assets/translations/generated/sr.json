@@ -1180,5 +1180,8 @@
   "import-warning": "Упозорење о увозу",
   "import-warning-description": "Увоз можда неће успети! Уверите се да сте изабрали важећу датотеку резервне копије Цасхев [.склите] или [.скл]",
   "duplicate-budget-question": "Дупликат буџета?",
-  "duplicate-budget": "Дупликат буџета"
+  "duplicate-budget": "Дупликат буџета",
+  "possible-duplicate-detected": "Откривен могући дупликат",
+  "possible-duplicate-description": "Недавно је забележена слична трансакција. Прегледајте детаље пре чувања.",
+  "similar-transaction-found": "Пронађена слична трансакција"
 }

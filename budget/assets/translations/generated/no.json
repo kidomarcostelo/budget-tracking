@@ -1180,5 +1180,8 @@
   "import-warning": "Import Advarsel",
   "import-warning-description": "Importen kan mislykkes! Sørg for at du har valgt en gyldig Cashew [.sqlite] eller [.sql] sikkerhetskopifil",
   "duplicate-budget-question": "Duplisert budsjett?",
-  "duplicate-budget": "Duplikatbudsjett"
+  "duplicate-budget": "Duplikatbudsjett",
+  "possible-duplicate-detected": "Mulig duplikat oppdaget",
+  "possible-duplicate-description": "En lignende transaksjon ble registrert nylig. Se over detaljene før du lagrer.",
+  "similar-transaction-found": "Lignende transaksjon funnet"
 }

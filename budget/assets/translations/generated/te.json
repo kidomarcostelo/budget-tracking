@@ -1180,5 +1180,8 @@
   "import-warning": "దిగుమతి హెచ్చరిక",
   "import-warning-description": "దిగుమతి విఫలం కావచ్చు! దయచేసి మీరు చెల్లుబాటు అయ్యే జీడిపప్పు [.sqlite] లేదా [.sql] బ్యాకప్ ఫైల్‌ని ఎంచుకున్నారని నిర్ధారించుకోండి.",
   "duplicate-budget-question": "డూప్లికేట్ బడ్జెట్?",
-  "duplicate-budget": "డూప్లికేట్ బడ్జెట్"
+  "duplicate-budget": "డూప్లికేట్ బడ్జెట్",
+  "possible-duplicate-detected": "సాధ్యమైన నకిలీ కనుగొనబడింది",
+  "possible-duplicate-description": "ఇటీవల ఇలాంటి లావాదేవీ రికార్డ్ చేయబడింది. దయచేసి సేవ్ చేసే ముందు వివరాలను సమీక్షించండి.",
+  "similar-transaction-found": "సారూప్య లావాదేవీ కనుగొనబడింది"
 }

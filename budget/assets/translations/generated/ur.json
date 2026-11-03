@@ -1180,5 +1180,8 @@
   "import-warning": "انتباہ درآمد کریں۔",
   "import-warning-description": "درآمد ناکام ہو سکتا ہے! براہ کرم یقینی بنائیں کہ آپ نے ایک درست کاجو [.sqlite] یا [.sql] بیک اپ فائل کا انتخاب کیا ہے۔",
   "duplicate-budget-question": "ڈپلیکیٹ بجٹ؟",
-  "duplicate-budget": "ڈپلیکیٹ بجٹ"
+  "duplicate-budget": "ڈپلیکیٹ بجٹ",
+  "possible-duplicate-detected": "ممکنہ نقل کا پتہ چلا",
+  "possible-duplicate-description": "حال ہی میں اسی طرح کا لین دین ریکارڈ کیا گیا تھا۔ براہ کرم محفوظ کرنے سے پہلے تفصیلات کا جائزہ لیں۔",
+  "similar-transaction-found": "اسی طرح کا لین دین مل گیا۔"
 }

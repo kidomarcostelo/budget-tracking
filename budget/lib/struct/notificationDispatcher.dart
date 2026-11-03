@@ -12,6 +12,14 @@ typedef TransactionQueueHandler = Future<dynamic> Function(
   String messageString, {
   bool willPushRoute,
   DateTime? dateTime,
+  bool isPossibleDuplicate,
+  DedupeEntryRecord? possibleDuplicateEntry,
+});
+
+typedef GooglePayTransactionHandler = Future<bool> Function(
+  GooglePayTransactionResult result, {
+  bool isPossibleDuplicate,
+  DedupeEntryRecord? possibleDuplicateEntry,
 });
 
 /// Extracted payment parameters for deduplication ledger recording.
@@ -40,7 +48,7 @@ class NotificationDispatcher {
   final List<String> recentCapturedNotifications = [];
 
   TransactionQueueHandler? queueHandler;
-  Future<bool> Function(GooglePayTransactionResult)? onGooglePayTransaction;
+  GooglePayTransactionHandler? onGooglePayTransaction;
 
   static final RegExp _currencyPrefixRegex = RegExp(
     r'(?:(?<![a-zA-Z])([₱$€£¥₹]|P)\s*|\b(PHP|USD|EUR|GBP|JPY|CAD|AUD|SGD|INR|php|usd|eur|gbp|jpy|cad|aud|sgd|inr)\s*)'
@@ -378,19 +386,11 @@ class NotificationDispatcher {
 
     // If custom queue handler was supplied (e.g. in tests), prioritize it
     if (customQueueHandler != null) {
-      try {
-        await (customQueueHandler as dynamic)(
-          messageString,
-          isPossibleDuplicate: dedupeResult.isUncertainMatch,
-          possibleDuplicateEntry: dedupeResult.matchedEntry,
-        );
-      } catch (e) {
-        if (e is NoSuchMethodError) {
-          await customQueueHandler(messageString);
-        } else {
-          rethrow;
-        }
-      }
+      await customQueueHandler(
+        messageString,
+        isPossibleDuplicate: dedupeResult.isUncertainMatch,
+        possibleDuplicateEntry: dedupeResult.matchedEntry,
+      );
       return true;
     }
 
@@ -399,19 +399,11 @@ class NotificationDispatcher {
       // googlePayResult was parsed above for deduplication check
       if (googlePayResult != null) {
         if (onGooglePayTransaction != null) {
-          try {
-            await (onGooglePayTransaction as dynamic)(
-              googlePayResult,
-              isPossibleDuplicate: dedupeResult.isUncertainMatch,
-              possibleDuplicateEntry: dedupeResult.matchedEntry,
-            );
-          } catch (e) {
-            if (e is NoSuchMethodError) {
-              await onGooglePayTransaction!(googlePayResult);
-            } else {
-              rethrow;
-            }
-          }
+          await onGooglePayTransaction!(
+            googlePayResult,
+            isPossibleDuplicate: dedupeResult.isUncertainMatch,
+            possibleDuplicateEntry: dedupeResult.matchedEntry,
+          );
           return true;
         }
         await GooglePayParser.processGooglePayTransaction(
@@ -425,19 +417,11 @@ class NotificationDispatcher {
 
     TransactionQueueHandler? handler = queueHandler;
     if (handler != null) {
-      try {
-        await (handler as dynamic)(
-          messageString,
-          isPossibleDuplicate: dedupeResult.isUncertainMatch,
-          possibleDuplicateEntry: dedupeResult.matchedEntry,
-        );
-      } catch (e) {
-        if (e is NoSuchMethodError) {
-          await handler(messageString);
-        } else {
-          rethrow;
-        }
-      }
+      await handler(
+        messageString,
+        isPossibleDuplicate: dedupeResult.isUncertainMatch,
+        possibleDuplicateEntry: dedupeResult.matchedEntry,
+      );
     }
 
     return true;

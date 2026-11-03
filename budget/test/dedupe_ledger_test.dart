@@ -365,6 +365,8 @@ void main() {
         String msg, {
         DateTime? dateTime,
         bool willPushRoute = true,
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
       }) async {
         queueCount++;
       }
@@ -405,7 +407,11 @@ void main() {
       );
 
       int gpayDispatchCount = 0;
-      dispatcher.onGooglePayTransaction = (result) async {
+      dispatcher.onGooglePayTransaction = (
+        result, {
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
         gpayDispatchCount++;
         return true;
       };
@@ -959,6 +965,217 @@ void main() {
             'Sent PHP 300.00 to SQ *Blue Bottle Coffee ref# 9876'),
         equals('blue bottle coffee'),
       );
+    });
+
+    test(
+        'unconfirmed uncertain entry is not added to entries and does not falsely suppress subsequent events until confirmed',
+        () async {
+      final t0 = DateTime(2026, 10, 22, 10, 0, 0);
+      final t1 = t0.add(const Duration(seconds: 15));
+      final t2 = t0.add(const Duration(seconds: 30));
+      final t3 = t0.add(const Duration(seconds: 45));
+
+      // 1. Initial event: Starbucks for 150 PHP -> created in entries
+      final res1 = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.one',
+        notificationId: '101',
+        amount: 150.0,
+        currency: 'PHP',
+        title: 'Starbucks Coffee',
+        rawContent: 'Paid PHP 150.00 at Starbucks Coffee',
+        eventTime: t0,
+      );
+      expect(res1.isDuplicate, isFalse);
+      expect(res1.isUncertainMatch, isFalse);
+      expect(ledger.entries.length, equals(1));
+      expect(ledger.uncertainEntries.isEmpty, isTrue);
+
+      // 2. Conflicting event: McDonald's for 150 PHP -> uncertain match
+      final res2 = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.two',
+        notificationId: '202',
+        amount: 150.0,
+        currency: 'PHP',
+        title: "McDonald's",
+        rawContent: "Paid PHP 150.00 at McDonald's",
+        eventTime: t1,
+      );
+      expect(res2.isUncertainMatch, isTrue);
+      expect(ledger.uncertainEntries.length, equals(1));
+      // CRITICAL: uncertain entry must NOT pollute active entries!
+      expect(ledger.entries.length, equals(1));
+      expect(ledger.entries.first.title, equals('Starbucks Coffee'));
+
+      // 3. Second McDonald's notification arrives:
+      // Because Event 2 was NEVER confirmed, Event 3 must NOT be falsely marked duplicate!
+      final res3 = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.three',
+        notificationId: '303',
+        amount: 150.0,
+        currency: 'PHP',
+        title: "McDonald's",
+        rawContent: "Paid PHP 150.00 at McDonald's",
+        eventTime: t2,
+      );
+      // It is evaluated against active entries (only Starbucks), so it remains uncertain, NOT suppressed duplicate!
+      expect(res3.isDuplicate, isFalse);
+      expect(res3.isUncertainMatch, isTrue);
+
+      // 4. User confirms Event 2: promote to created entries
+      final uncertainRec = ledger.uncertainEntries.first;
+      await ledger.confirmUncertainEntry(uncertainRec,
+          createdTransactionPk: 'tx-202');
+      expect(ledger.entries.length, equals(2));
+      expect(ledger.entries.last.title, equals("McDonald's"));
+      expect(ledger.entries.last.status, equals('created'));
+      expect(ledger.entries.last.createdTransactionPk, equals('tx-202'));
+
+      // 5. Subsequent McDonald's event arrives: now that Event 2 is confirmed, it is recognized as duplicate!
+      final res4 = await ledger.checkAndRecordNotification(
+        packageName: 'com.google.android.apps.walletnfcrel',
+        notificationId: '404',
+        amount: 150.0,
+        currency: 'PHP',
+        title: 'Google Wallet',
+        rawContent: "Paid PHP 150.00 at McDonald's with Mastercard 1234",
+        eventTime: t3,
+      );
+      expect(res4.isDuplicate, isTrue);
+      expect(res4.matchedEntry?.title, equals("McDonald's"));
+    });
+
+    test('structured matchReasons are populated on DedupeCheckResult',
+        () async {
+      final t0 = DateTime(2026, 10, 22, 10, 0, 0);
+      final t1 = t0.add(const Duration(seconds: 15));
+      final t2 = t0.add(const Duration(seconds: 30));
+
+      // 1. Unique entry
+      final uniqueRes = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.app',
+        notificationId: '501',
+        amount: 200.0,
+        currency: 'USD',
+        title: 'Target Store',
+        rawContent: 'Paid \$200.00 at Target Store',
+        eventTime: t0,
+      );
+      expect(uniqueRes.matchReasons, isEmpty);
+
+      // 2. Exact notification retry -> package_and_id_exact
+      final exactRes = await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.app',
+        notificationId: '501',
+        amount: 200.0,
+        currency: 'USD',
+        title: 'Target Store',
+        rawContent: 'Paid \$200.00 at Target Store',
+        eventTime: t1,
+      );
+      expect(exactRes.isDuplicate, isTrue);
+      expect(exactRes.matchReasons,
+          containsAll(['exact_notification', 'package_and_id_exact']));
+
+      // 3. Payment window match with corroborating merchant
+      final dupRes = await ledger.checkAndRecordPayment(
+        amount: 200.0,
+        currency: 'USD',
+        title: 'Target Store',
+        source: 'app_link',
+        eventTime: t2,
+      );
+      expect(dupRes.isDuplicate, isTrue);
+      expect(
+        dupRes.matchReasons,
+        containsAll([
+          'payment_window_match',
+          'amount_exact',
+          'currency_exact',
+          'time_within_window',
+          'merchant_corroborated',
+        ]),
+      );
+
+      // 4. Uncertain match with conflicting merchant
+      final conflictRes = await ledger.checkAndRecordNotification(
+        packageName: 'com.other.app',
+        notificationId: '601',
+        amount: 200.0,
+        currency: 'USD',
+        title: 'Walmart Supercenter',
+        rawContent: 'Paid \$200.00 at Walmart Supercenter',
+        eventTime: t2,
+      );
+      expect(conflictRes.isUncertainMatch, isTrue);
+      expect(
+        conflictRes.matchReasons,
+        containsAll([
+          'uncertain_merchant',
+          'amount_exact',
+          'currency_exact',
+          'time_within_window',
+          'conflicting_merchant',
+        ]),
+      );
+    });
+
+    test(
+        'Jaro-Winkler metric correctly measures string similarity and corroborates merchant variants',
+        () {
+      // Identical strings
+      expect(DedupeLedger.jaroWinklerSimilarity('starbucks', 'starbucks'),
+          equals(1.0));
+      expect(DedupeLedger.jaroWinklerSimilarity('', ''), equals(1.0));
+      expect(DedupeLedger.jaroWinklerSimilarity('abc', ''), equals(0.0));
+
+      // Slight typo / spelling variant: high similarity >= 0.90
+      final sim = DedupeLedger.jaroWinklerSimilarity(
+          'starbucks coffee', 'starbucks coffe');
+      expect(sim, greaterThanOrEqualTo(0.90));
+
+      // Dissimilar strings
+      final diffSim =
+          DedupeLedger.jaroWinklerSimilarity('starbucks', 'mcdonalds');
+      expect(diffSim, lessThan(0.60));
+
+      // Corroboration via Jaro-Winkler across structured contexts
+      final ctx1 = DedupeMerchantContext(title: 'Zara Fashion Boutique');
+      final ctx2 = DedupeMerchantContext(title: 'Zara Fashion');
+      expect(DedupeLedger.hasCorroboratingMerchant(first: ctx1, second: ctx2),
+          isTrue);
+    });
+
+    test(
+        'generalized merchant extraction works on arbitrary global merchants without hardcoded whitelists',
+        () async {
+      final t0 = DateTime(2026, 10, 22, 14, 0, 0);
+      final t1 = t0.add(const Duration(seconds: 20));
+
+      // Event 1: Unlisted international merchant "Decathlon Sports"
+      await ledger.checkAndRecordNotification(
+        packageName: 'com.bank.eu',
+        notificationId: '801',
+        amount: 75.50,
+        currency: 'EUR',
+        title: 'Decathlon Sports',
+        rawContent: 'Paid EUR 75.50 at Decathlon Sports with Visa',
+        eventTime: t0,
+      );
+
+      // Event 2: Corroborating notification from Google Wallet for same merchant
+      final res = await ledger.checkAndRecordNotification(
+        packageName: 'com.google.android.apps.walletnfcrel',
+        notificationId: '802',
+        amount: 75.50,
+        currency: 'EUR',
+        title: 'Google Wallet',
+        rawContent: 'Paid EUR 75.50 at Decathlon Sports using card 4321',
+        eventTime: t1,
+      );
+
+      expect(res.isDuplicate, isTrue);
+      expect(res.matchReason, equals('payment_window_match'));
+      expect(res.matchedEntry?.title, equals('Decathlon Sports'));
     });
   });
 }

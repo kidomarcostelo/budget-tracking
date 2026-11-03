@@ -1180,5 +1180,8 @@
   "import-warning": "Попередження про імпорт",
   "import-warning-description": "Імпорт може не вдатися! Переконайтеся, що ви вибрали дійсний файл резервної копії Cashew [.sqlite] або [.sql]",
   "duplicate-budget-question": "Дубльований бюджет?",
-  "duplicate-budget": "Дубльований бюджет"
+  "duplicate-budget": "Дубльований бюджет",
+  "possible-duplicate-detected": "Виявлено можливий дублікат",
+  "possible-duplicate-description": "Нещодавно було записано схожу транзакцію. Будь ласка, перевірте деталі перед збереженням.",
+  "similar-transaction-found": "Знайдено схожу транзакцію"
 }

@@ -1180,5 +1180,8 @@
   "import-warning": "수입 경고",
   "import-warning-description": "가져오기가 실패할 수 있습니다! 유효한 캐슈 [.sqlite] 또는 [.sql] 백업 파일을 선택했는지 확인하십시오.",
   "duplicate-budget-question": "예산이 중복되나요?",
-  "duplicate-budget": "중복 예산"
+  "duplicate-budget": "중복 예산",
+  "possible-duplicate-detected": "중복 가능성이 감지되었습니다",
+  "possible-duplicate-description": "최근에 유사한 거래가 기록되었습니다. 저장하기 전에 세부정보를 검토하세요.",
+  "similar-transaction-found": "유사한 거래가 발견되었습니다"
 }

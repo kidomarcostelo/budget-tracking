@@ -208,14 +208,23 @@ void main() {
         );
 
         GooglePayTransactionResult? capturedResult;
-        dispatcher.onGooglePayTransaction = (result) async {
+        dispatcher.onGooglePayTransaction = (
+          result, {
+          bool isPossibleDuplicate = false,
+          DedupeEntryRecord? possibleDuplicateEntry,
+        }) async {
           capturedResult = result;
           return true;
         };
 
         bool standardQueueCalled = false;
-        dispatcher.queueHandler =
-            (msg, {dateTime, willPushRoute = true}) async {
+        dispatcher.queueHandler = (
+          msg, {
+          dateTime,
+          willPushRoute = true,
+          bool isPossibleDuplicate = false,
+          DedupeEntryRecord? possibleDuplicateEntry,
+        }) async {
           standardQueueCalled = true;
         };
 
@@ -240,14 +249,23 @@ void main() {
         );
 
         bool gPayCalled = false;
-        dispatcher.onGooglePayTransaction = (result) async {
+        dispatcher.onGooglePayTransaction = (
+          result, {
+          bool isPossibleDuplicate = false,
+          DedupeEntryRecord? possibleDuplicateEntry,
+        }) async {
           gPayCalled = true;
           return true;
         };
 
         String? standardQueueMsg;
-        dispatcher.queueHandler =
-            (msg, {dateTime, willPushRoute = true}) async {
+        dispatcher.queueHandler = (
+          msg, {
+          dateTime,
+          willPushRoute = true,
+          bool isPossibleDuplicate = false,
+          DedupeEntryRecord? possibleDuplicateEntry,
+        }) async {
           standardQueueMsg = msg;
         };
 

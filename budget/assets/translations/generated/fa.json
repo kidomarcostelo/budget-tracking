@@ -1180,5 +1180,8 @@
   "import-warning": "هشدار واردات",
   "import-warning-description": "واردات ممکن است شکست بخورد! لطفاً مطمئن شوید که یک فایل پشتیبان معتبر بادام هندی [.sqlite] یا [.sql] را انتخاب کرده اید",
   "duplicate-budget-question": "بودجه تکراری؟",
-  "duplicate-budget": "بودجه تکراری"
+  "duplicate-budget": "بودجه تکراری",
+  "possible-duplicate-detected": "تکرار احتمالی شناسایی شد",
+  "possible-duplicate-description": "اخیراً تراکنش مشابهی ثبت شده است. لطفاً قبل از ذخیره، جزئیات را مرور کنید.",
+  "similar-transaction-found": "تراکنش مشابه پیدا شد"
 }

@@ -1180,5 +1180,8 @@
   "import-warning": "Ostrzeżenie dotyczące importu",
   "import-warning-description": "Import może się nie powieść! Upewnij się, że wybrałeś odpowiedni rodzaj kopii zapasowej Cashew [.sqlite] lub [.sql]",
   "duplicate-budget-question": "Zduplikowany budżet?",
-  "duplicate-budget": "Duplikat budżetu"
+  "duplicate-budget": "Duplikat budżetu",
+  "possible-duplicate-detected": "Wykryto możliwy duplikat",
+  "possible-duplicate-description": "Niedawno zarejestrowano podobną transakcję. Sprawdź szczegóły przed zapisaniem.",
+  "similar-transaction-found": "Znaleziono podobną transakcję"
 }

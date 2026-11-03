@@ -1180,5 +1180,8 @@
   "import-warning": "আমদানি সতর্কতা",
   "import-warning-description": "আমদানি ব্যর্থ হতে পারে! আপনি একটি বৈধ কাজু [.sqlite] বা [.sql] ব্যাকআপ ফাইল নির্বাচন করেছেন তা নিশ্চিত করুন",
   "duplicate-budget-question": "ডুপ্লিকেট বাজেট?",
-  "duplicate-budget": "ডুপ্লিকেট বাজেট"
+  "duplicate-budget": "ডুপ্লিকেট বাজেট",
+  "possible-duplicate-detected": "সম্ভাব্য ডুপ্লিকেট সনাক্ত করা হয়েছে",
+  "possible-duplicate-description": "সম্প্রতি একটি অনুরূপ লেনদেন রেকর্ড করা হয়েছে. সংরক্ষণ করার আগে বিস্তারিত পর্যালোচনা করুন.",
+  "similar-transaction-found": "অনুরূপ লেনদেন পাওয়া গেছে"
 }
