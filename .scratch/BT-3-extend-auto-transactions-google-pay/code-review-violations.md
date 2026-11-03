@@ -1,137 +1,102 @@
-# Code Review & Violations Report: Commit `ad78cc0e`
+# Code Review Report: PR #24 (Slice S5)
 
-**Target Commit:** [`ad78cc0e`](https://github.com/kidomarcostelo/budget-tracking/commit/ad78cc0ebbd5e10bed7674fca5e5022483fd8b2f) (`feat(notifications): centralize listener dispatcher and ignore removal events`)  
-**Pull Request:** [#18](https://github.com/kidomarcostelo/budget-tracking/pull/18) (`feat/notification-single-dispatcher`)  
-**Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Local task: [`BT-3`](task.md))  
-
----
-
-## 1. Hard Quality Bar & Compiler Violations (`CONSTRAINTS.md`)
-
-These violations broke GitHub Actions CI on PR #18 and represent non-negotiable quality gate breaches.
-
-### 1.1 Unresolved Identifier / Missing Import in [`notificationDispatcher.dart`](../../budget/lib/struct/notificationDispatcher.dart)
-- **Rule Breached:** [`CONSTRAINTS.md`](../../CONSTRAINTS.md) § 1 (*"Zero Tolerance on Analysis Errors/Warnings: flutter analyze in budget/ must exit with return code 0"*) and § 5 (*"Verification Checklist"*).
-- **Location:** `budget/lib/struct/notificationDispatcher.dart:54:9`
-- **Error in CI:**
-  ```text
-  lib/struct/notificationDispatcher.dart:54:9: Error: The getter 'appStateSettings' isn't defined for the class 'NotificationDispatcher'.
-  - 'NotificationDispatcher' is from 'package:budget/struct/notificationDispatcher.dart' ('lib/struct/notificationDispatcher.dart').
-      if (appStateSettings["notificationScanning"] != true) return;
-          ^^^^^^^^^^^^^^^^
-  Target kernel_snapshot failed: Exception
-  FAILURE: Build failed with an exception. (compileFlutterBuildDebug)
-  ```
-- **Cause:** `appStateSettings` is declared in `package:budget/struct/settings.dart`, but `notificationDispatcher.dart` omits the import.
-
-### 1.2 Formatting Non-Compliance in [`notification_dispatcher_test.dart`](../../budget/test/notification_dispatcher_test.dart)
-- **Rule Breached:** [`CONSTRAINTS.md`](../../CONSTRAINTS.md) § 1 (*"Format Integrity: All Dart code must conform to dart format. Check with dart format --output=none --set-exit-if-changed . inside budget/"*).
-- **Location:** `budget/test/notification_dispatcher_test.dart`
-- **Error in CI:**
-  ```text
-  Run dart format --output=none --set-exit-if-changed . || (dart format . && git diff && exit 1)
-  Changed test/notification_dispatcher_test.dart
-  Formatted 258 files (1 changed) in 2.87 seconds.
-  Process completed with exit code 1.
-  ```
-- **Cause:** Several long test description strings and assertion expressions exceeded standard line length limits and were not formatted using `dart format` prior to pushing.
+**Target Branch:** `feat/google-pay-settings-ux` against `main`  
+**Pull Request:** [#24](https://github.com/kidomarcostelo/budget-tracking/pull/24) (`feat(settings): add Google Pay notification settings, permission UX, and docs (Slice S5)`)  
+**Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Task: [`BT-3`](task.md))  
+**Commits Reviewed:**
+- `87c67d18` fix(settings): surface Notification Transactions on Android and harden startup and lifecycle UX
+- `3d90fc8b` feat(settings): add Google Pay notification settings, permission UX, and docs (Slice S5)
+- `b2c5b0f1` docs(reviews): record final code review report for PR 23  
+**Review Timestamp:** 2026-11-03T18:06:30+08:00  
 
 ---
 
-## 2. Documented Standards Violations (`AGENTS.md`)
+## Standards
 
-### 2.1 Unlocalized User-Facing String in [`autoTransactionsPageEmail.dart`](../../budget/lib/pages/autoTransactionsPageEmail.dart)
-- **Standard:** [`AGENTS.md`](../../AGENTS.md) → **Code Conventions & Patterns** → **Localization** (*"All user-facing text must use localized strings via app_localizations or existing localization delegates."*)
-- **Location:** `budget/lib/pages/autoTransactionsPageEmail.dart:214-216`
-- **Hunk:**
-  ```dart
-  description:
-      "When a notification is received and the app is open, attempt to add a transaction given its information. Create a template so Cashew understands the format of a notification.",
-  ```
-- **Violation:** The description was updated directly as a hardcoded English string literal. In addition to being unlocalized, this edit belongs to slice S5 rather than S1.
+### (a) Documented Standards Violations
 
----
-
-## 3. Baseline Code Smells (Judgement Calls)
-
-### 3.1 Middle Man — Obsolete Forwarding Shims in [`autoTransactionsPageEmail.dart`](../../budget/lib/pages/autoTransactionsPageEmail.dart)
-- **Smell Type:** **Middle Man**
-- **Location:** `budget/lib/pages/autoTransactionsPageEmail.dart:43-54, 150-152`
-- **Hunk:**
-  ```dart
-  Future<bool> requestReadNotificationPermission() async {
-    return await NotificationDispatcher.instance
-        .requestReadNotificationPermission();
-  }
-
-  onNotification(ServiceNotificationEvent event) async {
-    await NotificationDispatcher.instance.handleEvent(
-      event,
-      customQueueHandler: queueTransactionFromMessage,
-    );
-  }
-  ...
-  String getNotificationMessage(ServiceNotificationEvent event) {
-    return NotificationDispatcher.formatNotificationMessage(event);
-  }
-  ```
-- **Analysis:** `onNotification` and `getNotificationMessage` have zero callers in the codebase. `requestReadNotificationPermission` merely delegates directly to `NotificationDispatcher.instance`. Callers should invoke the dispatcher directly and dead shims should be deleted.
-
-### 3.2 Speculative Generality in [`notificationDispatcher.dart`](../../budget/lib/struct/notificationDispatcher.dart)
-- **Smell Type:** **Speculative Generality**
-- **Location:** `budget/lib/struct/notificationDispatcher.dart:26, 29-35`
-- **Hunk:**
-  ```dart
-  bool get isListening => _subscription != null;
-
-  /// Checks if notification listener access has been granted by the user.
-  Future<bool> isPermissionGranted() async {
-    try {
-      return await NotificationListenerService.isPermissionGranted();
-    } catch (e) {
-      return false;
-    }
-  }
-  ```
-- **Analysis:** Neither `isListening` nor `isPermissionGranted()` is consumed by any production code, widget, or unit test.
-
-### 3.3 Duplicated Code in [`notificationDispatcher.dart`](../../budget/lib/struct/notificationDispatcher.dart)
-- **Smell Type:** **Duplicated Code**
-- **Location:** `budget/lib/struct/notificationDispatcher.dart:38-48`
-- **Analysis:** `requestReadNotificationPermission` repeats the `try/catch` wrapping and invokes `NotificationListenerService.isPermissionGranted()` directly rather than reusing its own sibling method `isPermissionGranted()`.
+- **`CONSTRAINTS.md`:** **PASS**. Zero `flutter analyze` errors or warnings, code formatting strictly conforms to `dart format`, zero `// ignore:` directives introduced, and no destructive database changes.
+- **`GLOSSARY.md`:** **PASS**. Domain vocabulary (`Transaction`, `Wallet`, `Category`, `Budget`) respected in all new strings, docs, and code.
+- **`AGENTS.md` (Widget Decomposition):** **Judgement Call / Soft Violation**.
+  - **Rule:** *"Extract complex UI into reusable widgets under `budget/lib/widgets/`. Avoid monolithic build methods where possible."*
+  - **Location:** `budget/lib/pages/autoTransactionsPageEmail.dart:303-347`
+  - **Observation:** A 45-line inline styled `Container` for the "On-Device Privacy & Permissions" card is placed directly within `AutoTransactionsPageNotifications.build()`. Extracting this into a dedicated component (e.g. `NotificationPrivacyCard`) under `budget/lib/widgets/` keeps page build methods focused and cohesive.
 
 ---
 
-## 4. Spec Conformance & Scope Discrepancies (`task.md`)
+### (b) Baseline Smells (Judgement Calls)
 
-### 4.1 Missing Real Bank Fixture Integration in Tests
-- **Spec Reference:** [`.scratch/BT-3-extend-auto-transactions-google-pay/task.md`](task.md#L60) (line 60)
-- **Requirement:** *"Add unit tests with redacted fixtures from `.scratch/bank-samples/`."*
-- **Discrepancy:** The unit test suite `notification_dispatcher_test.dart` tests event handling exclusively with small inline synthetic map objects. The actual fixture files in `.scratch/bank-samples/` were not loaded or integrated into the test assertions.
+1. **Duplicated Code / Redundant Execution**
+   - **`autoTransactionsPageEmail.dart:230-240`**:
+     ```dart
+     if (status == true) {
+       initNotificationScanning();
+     }
+     ...
+     await _checkPermission();
+     ```
+     When the toggle is enabled, `onSwitched` calls `initNotificationScanning()` after acquiring permission, and immediately proceeds to `await _checkPermission()`, which conditionally calls `initNotificationScanning()` again (`L172-174`). This triggers duplicate ledger reloads and listener subscription resets back-to-back.
+   - **`appLinks.dart:382-384, 414-416`**:
+     ```dart
+     params["messageToParse"] != null &&
+         (appStateSettings["notificationScanning"] == true ||
+             appStateSettings["notificationScanningDebug"] == true)
+     ```
+     The compound setting predicate is duplicated identically in both `addTransaction` and `addTransactionRoute` handling blocks.
 
-### 4.2 Out-of-Scope Settings UI Copy Modification
-- **Spec Reference:** [`.scratch/BT-3-extend-auto-transactions-google-pay/task.md`](task.md#L60) (line 60 & 67)
-- **Requirement:** S1 specifies *"Keep current behavior for existing templates"*, while S5 specifically tracks *"Settings copy for the Google Pay source (toggle per source)"*.
-- **Discrepancy:** Altering the settings description text in `autoTransactionsPageEmail.dart` represents premature scope creep that also broke the localization constraint.
+2. **Inconsistent Abstraction / Middle Man Bypass**
+   - **`autoTransactionsPageEmail.dart:189-194`**:
+     ```dart
+     Future<void> _requestPermission() async {
+       try {
+         await NotificationListenerService.requestPermission();
+       } catch (_) {}
+       await _checkPermission();
+     }
+     ```
+     `_requestPermission()` bypasses `NotificationDispatcher.instance.requestReadNotificationPermission()`, which encapsulates platform checks (`PlatformOS.isAndroid`) and uniform error handling used elsewhere in the file.
 
 ---
 
-## 5. Remediation Plan
+## Spec
 
-To get PR #18 into a green and mergeable state:
+### (a) Requirements Missing or Partial
 
-1. **Fix Compiler Error:**
-   Add `import 'package:budget/struct/settings.dart';` to `budget/lib/struct/notificationDispatcher.dart`.
-2. **Revert Premature Settings Copy / Restore Localization:**
-   In `budget/lib/pages/autoTransactionsPageEmail.dart`, revert the unlocalized description string to the original `autoTransactionsDescription` localized key.
-3. **Clean Up Dead Shims:**
-   Remove uncalled `onNotification` and `getNotificationMessage` functions from `autoTransactionsPageEmail.dart`.
-4. **Format Test Files:**
-   Run `dart format budget/test/notification_dispatcher_test.dart` to satisfy the format check.
-5. **Execute Verification Checklist:**
-   ```bash
-   cd budget
-   dart format --output=none --set-exit-if-changed .
-   flutter analyze
-   flutter test
-   ```
+1. **No Independent Toggle for Custom Templates**
+   - **Spec:** `"S5 Settings (per-source toggle)"` (GitHub Issue #7).
+   - **Finding:** While Google Pay has a dedicated toggle (`googlePayNotificationScanning`), custom regex templates lack an individual toggle. When the master switch `notificationScanning` is active, custom templates cannot be disabled while keeping Google Pay enabled.
+
+2. **In-App FAQ Pointer Omitted**
+   - **Spec:** `"Update the FAQ/README pointer."` (`task.md:67`); `"docs (FAQ/README pointer)"` (Issue #7).
+   - **Finding:** While `README.md` documents Notification Transactions under an external FAQ URL, no corresponding FAQ link or help button was surfaced inside `AutoTransactionsPageNotifications` in the app UI.
+
+---
+
+### (b) Behaviour in Diff Not Asked For (Scope Creep)
+
+1. **App Links URL Dispatch Modification**
+   - **Spec:** `"Out of scope: iOS... Gmail ingestion (#2/#3), the Triage UI (#4/#5), and new bank-email parsing"` (`task.md:20-21`).
+   - **Finding:** `budget/lib/widgets/util/appLinks.dart:382-383, 415-416` modifies external URL intent routing (`executeAppLink`) so that `notificationScanning` enables `messageToParse`. Modifying general app links falls outside Slice S5 settings and permission UX.
+
+2. **Non-Android Exposure of Notification Settings**
+   - **Spec:** `"Constraints: Android only."` (Issue #7; `task.md:30`).
+   - **Finding:** In `settingsPage.dart:585-586`, changing the condition to `(isAndroid || notificationScanningDebug == true)` surfaces the Android-only Notification Transactions settings entry on non-Android platforms (iOS, macOS, desktop, web) when the debug preference is toggled.
+
+3. **Unrelated PR #23 Review Documentation**
+   - **Spec:** `"S5 Settings, permission UX, docs."` (`task.md:67`).
+   - **Finding:** Commit `b2c5b0f1` modifies `.scratch/code-reviews/pr-23-review.md`, bundling review documentation for an earlier PR into PR #24.
+
+---
+
+### (c) Requirements Implemented Wrongly
+
+1. **Disabled Google Pay Pollutes Dedupe Ledger and Falls Through to Templates**
+   - **Spec:** `"Settings copy for the Google Pay source (toggle per source)."` (`task.md:67`); `"Gated by existing notificationScanning preference"` (Issue #7).
+   - **Finding:** In `notificationDispatcher.dart:366-425`, when `googlePayNotificationScanning` is `false`, Google Pay events are not dropped early. Setting `googlePayResult = null` causes `DedupeLedger.instance.checkAndRecordNotification` to persist degraded entries with `null` amount and currency to SQLite. The event also gets added to `recentCapturedNotifications` and falls through to `queueHandler` (regex templates). When disabled, Google Pay events should be ignored early rather than recorded or evaluated against other templates.
+
+---
+
+## Summary
+
+- **Standards:** 3 findings (1 soft standard violation for widget decomposition; 2 baseline smells: redundant double initialization on switch toggle, and abstraction bypass). **Worst issue:** Redundant initialization execution on switch toggle.
+- **Spec:** 6 findings (2 partial/missing, 3 scope creep, 1 incorrect implementation). **Worst issue:** Disabled Google Pay events persist degraded null-amount entries to the SQLite dedupe ledger and fall through to regex template matching.

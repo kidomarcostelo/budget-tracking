@@ -1198,5 +1198,7 @@
   "notification-privacy-title": "设备端隐私与权限",
   "notification-privacy-description": "所有通知解析均完全在您的设备本地完成，零云端数据传输。根据 Google Play 政策，短信权限仅限默认短信应用使用。Android 通知访问权限提供了一种安全且保护隐私的替代方案，可以在不访问您的个人短信的情况下在本地捕获付款提醒。",
   "notification-configuration-missing": "未添加自定义模板",
-  "notification-configuration-missing-description": "如果您希望解析来自其他银行应用的通知，请添加模板。"
+  "notification-configuration-missing-description": "如果您希望解析来自其他银行应用的通知，请添加模板。",
+  "custom-notification-templates": "自定义通知模板",
+  "custom-notification-templates-description": "使用自定义通知模板自动检测并解析交易。"
 }

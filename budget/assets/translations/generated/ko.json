@@ -1198,5 +1198,7 @@
   "notification-privacy-title": "기기 내 개인정보 보호 및 권한",
   "notification-privacy-description": "모든 알림 분석은 클라우드 데이터 전송 없이 기기 내에서 전적으로 이루어집니다. Google Play 정책에 따라 SMS 권한은 기본 SMS 앱으로 제한됩니다. Android 알림 액세스는 개인 문자 메시지에 접근하지 않고도 결제 알림을 로컬에서 캡처할 수 있는 안전하고 개인정보를 보호하는 대안입니다.",
   "notification-configuration-missing": "추가된 맞춤 템플릿 없음",
-  "notification-configuration-missing-description": "다른 뱅킹 앱의 알림을 분석하려면 템플릿을 추가하세요."
+  "notification-configuration-missing-description": "다른 뱅킹 앱의 알림을 분석하려면 템플릿을 추가하세요.",
+  "custom-notification-templates": "맞춤 알림 템플릿",
+  "custom-notification-templates-description": "맞춤 알림 템플릿을 사용하여 거래를 자동으로 감지하고 파싱합니다."
 }

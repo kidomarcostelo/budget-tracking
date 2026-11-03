@@ -349,6 +349,11 @@ class NotificationDispatcher {
     return output;
   }
 
+  /// Checks if the package belongs to Google Wallet or Google Pay ecosystem.
+  bool isGooglePayPackage(String? packageName) {
+    return GooglePayParser.isRecognizedPackage(packageName);
+  }
+
   /// Processes an incoming [ServiceNotificationEvent].
   ///
   /// Returns `true` if the event was an active notification and dispatched for
@@ -362,9 +367,29 @@ class NotificationDispatcher {
       return false;
     }
 
-    // Parse potential payment fields for deduplication check
+    final isGPayPackage = isGooglePayPackage(event.packageName);
     final isGooglePayScanningEnabled =
         appStateSettings["googlePayNotificationScanning"] ?? true;
+
+    // Critical Spec: When an event is from a Google Pay package and Google Pay
+    // scanning is disabled, immediately return early without polluting the
+    // deduplication ledger or falling through to generic templates.
+    if (isGPayPackage && !isGooglePayScanningEnabled) {
+      return false;
+    }
+
+    final isCustomTemplatesScanningEnabled =
+        appStateSettings["customTemplatesNotificationScanning"] ?? true;
+
+    // When custom templates scanning is disabled and the event is not from Google Pay,
+    // immediately return early if no custom queue handler was supplied.
+    if (!isGPayPackage &&
+        !isCustomTemplatesScanningEnabled &&
+        customQueueHandler == null) {
+      return false;
+    }
+
+    // Parse potential payment fields for deduplication check
     final googlePayResult = isGooglePayScanningEnabled
         ? GooglePayParser.parse(event.title, event.content)
         : null;
@@ -421,6 +446,10 @@ class NotificationDispatcher {
         );
         return true;
       }
+    }
+
+    if (!isCustomTemplatesScanningEnabled) {
+      return false;
     }
 
     TransactionQueueHandler? handler = queueHandler;
