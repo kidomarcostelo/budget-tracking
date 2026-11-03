@@ -27,7 +27,7 @@ class NotificationPrivacyCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                appStateSettings["outlinedIcons"]
+                appStateSettings["outlinedIcons"] == true
                     ? Icons.shield_outlined
                     : Icons.shield_rounded,
                 size: 22,
