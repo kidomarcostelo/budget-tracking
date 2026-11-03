@@ -1180,5 +1180,8 @@
   "import-warning": "Cảnh báo nhập khẩu",
   "import-warning-description": "Quá trình nhập có thể thất bại! Vui lòng đảm bảo rằng bạn đã chọn tệp sao lưu Cashew [.sqlite] hoặc [.sql] hợp lệ",
   "duplicate-budget-question": "Nhân đôi ngân sách?",
-  "duplicate-budget": "Nhân đôi ngân sách"
+  "duplicate-budget": "Nhân đôi ngân sách",
+  "possible-duplicate-detected": "Phát hiện có thể bị trùng lặp",
+  "possible-duplicate-description": "Một giao dịch tương tự đã được ghi lại gần đây. Vui lòng xem lại chi tiết trước khi lưu.",
+  "similar-transaction-found": "Tìm thấy giao dịch tương tự"
 }

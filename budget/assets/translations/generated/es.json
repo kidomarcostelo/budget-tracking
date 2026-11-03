@@ -1180,5 +1180,8 @@
   "import-warning": "Advertencia de importación",
   "import-warning-description": "¡La importación puede fallar! Asegúrese de haber seleccionado un archivo de copia de seguridad de anacardo [.sqlite] o [.sql] válido",
   "duplicate-budget-question": "¿Presupuesto duplicado?",
-  "duplicate-budget": "Presupuesto duplicado"
+  "duplicate-budget": "Presupuesto duplicado",
+  "possible-duplicate-detected": "Posible duplicado detectado",
+  "possible-duplicate-description": "Se registró una transacción similar recientemente. Revise los detalles antes de guardar.",
+  "similar-transaction-found": "Transacción similar encontrada"
 }

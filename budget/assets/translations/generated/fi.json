@@ -1180,5 +1180,8 @@
   "import-warning": "Tuo varoitus",
   "import-warning-description": "Tuonti voi epäonnistua! Varmista, että olet valinnut kelvollisen Cashew-[.sqlite]- tai [.sql]-varmuuskopiotiedoston",
   "duplicate-budget-question": "Päällekkäinen budjetti?",
-  "duplicate-budget": "Päällekkäinen budjetti"
+  "duplicate-budget": "Päällekkäinen budjetti",
+  "possible-duplicate-detected": "Mahdollinen kaksoiskappale havaittu",
+  "possible-duplicate-description": "Äskettäin kirjattiin samanlainen tapahtuma. Tarkista tiedot ennen tallentamista.",
+  "similar-transaction-found": "Samanlainen tapahtuma löytyi"
 }

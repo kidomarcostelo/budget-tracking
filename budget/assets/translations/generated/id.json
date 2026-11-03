@@ -1180,5 +1180,8 @@
   "import-warning": "Peringatan Impor",
   "import-warning-description": "Impor mungkin gagal! Pastikan Anda telah memilih file cadangan Mete [.sqlite] atau [.sql] yang valid",
   "duplicate-budget-question": "Anggaran Duplikat?",
-  "duplicate-budget": "Anggaran Duplikat"
+  "duplicate-budget": "Anggaran Duplikat",
+  "possible-duplicate-detected": "Kemungkinan duplikat terdeteksi",
+  "possible-duplicate-description": "Transaksi serupa baru saja dicatat. Harap tinjau detailnya sebelum menyimpan.",
+  "similar-transaction-found": "Transaksi serupa ditemukan"
 }

@@ -1180,5 +1180,8 @@
   "import-warning": "คำเตือนการนำเข้า",
   "import-warning-description": "การนำเข้าอาจล้มเหลว! โปรดตรวจสอบให้แน่ใจว่าคุณได้เลือกไฟล์สำรองข้อมูล Cashew [.sqlite] หรือ [.sql] ที่ถูกต้อง",
   "duplicate-budget-question": "งบประมาณซ้ำซ้อน?",
-  "duplicate-budget": "งบประมาณซ้ำซ้อน"
+  "duplicate-budget": "งบประมาณซ้ำซ้อน",
+  "possible-duplicate-detected": "ตรวจพบรายการที่อาจซ้ำกัน",
+  "possible-duplicate-description": "เพิ่งมีการบันทึกธุรกรรมที่คล้ายกันเมื่อเร็วๆ นี้ โปรดตรวจสอบรายละเอียดก่อนบันทึก",
+  "similar-transaction-found": "พบธุรกรรมที่คล้ายกัน"
 }
