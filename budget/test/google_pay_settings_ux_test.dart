@@ -10,6 +10,7 @@ import 'package:budget/struct/googlePayParser.dart';
 import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/button.dart';
+import 'package:budget/widgets/notificationPrivacyCard.dart';
 import 'package:budget/widgets/settingsContainers.dart';
 import 'package:budget/widgets/statusBox.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -50,6 +51,11 @@ class _TestAssetLoader extends AssetLoader {
       'notification-configuration-missing': 'No Custom Templates Added',
       'notification-configuration-missing-description':
           'Add a template if you wish to parse notifications from other banking apps.',
+      'custom-notification-templates': 'Custom Notification Templates',
+      'custom-notification-templates-description':
+          'Automatically detect and parse transactions using custom notification templates.',
+      'help': 'Help',
+      'faq': 'FAQ',
     };
   }
 }
@@ -197,7 +203,7 @@ void main() {
     });
 
     test(
-        'bypasses Google Pay handler and falls through to generic queueHandler when googlePayNotificationScanning is false',
+        'immediately returns false and drops event without recording or queuing when googlePayNotificationScanning is false',
         () async {
       appStateSettings["notificationScanning"] = true;
       appStateSettings["googlePayNotificationScanning"] = false;
@@ -206,7 +212,7 @@ void main() {
       dispatcher.recentCapturedNotifications.clear();
 
       GooglePayTransactionResult? receivedGPayResult;
-      String? receivedGenericMessage;
+      int genericQueueCount = 0;
 
       dispatcher.onGooglePayTransaction = (
         res, {
@@ -224,17 +230,87 @@ void main() {
         bool isPossibleDuplicate = false,
         DedupeEntryRecord? possibleDuplicateEntry,
       }) async {
-        receivedGenericMessage = msg;
+        genericQueueCount++;
       };
 
       final event = createTestEvent();
       final handled = await dispatcher.handleEvent(event);
 
-      expect(handled, isTrue);
+      expect(handled, isFalse);
       expect(receivedGPayResult, isNull);
-      expect(receivedGenericMessage, isNotNull);
-      expect(receivedGenericMessage,
-          contains('Package name: com.google.android.apps.walletnfcrel'));
+      expect(genericQueueCount, equals(0));
+      expect(dispatcher.recentCapturedNotifications, isEmpty);
+      expect(DedupeLedger.instance.entries, isEmpty);
+      expect(await database.getAllDedupeEntries(), isEmpty);
+    });
+
+    test(
+        'drops non-Google-Pay notification when customTemplatesNotificationScanning is false',
+        () async {
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["googlePayNotificationScanning"] = true;
+      appStateSettings["customTemplatesNotificationScanning"] = false;
+
+      final dispatcher = NotificationDispatcher.instance;
+      dispatcher.recentCapturedNotifications.clear();
+
+      int genericQueueCount = 0;
+      dispatcher.queueHandler = (
+        msg, {
+        dateTime,
+        willPushRoute = true,
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
+        genericQueueCount++;
+      };
+
+      final bankEvent = createTestEvent(
+        packageName: 'com.chase.sig.android',
+        title: 'Chase Alert',
+        content: 'You made a \$42.00 purchase at Trader Joe\'s',
+      );
+      final handled = await dispatcher.handleEvent(bankEvent);
+
+      expect(handled, isFalse);
+      expect(genericQueueCount, equals(0));
+      expect(dispatcher.recentCapturedNotifications, isEmpty);
+    });
+
+    test(
+        'processes non-Google-Pay notification when customTemplatesNotificationScanning is true',
+        () async {
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["googlePayNotificationScanning"] = true;
+      appStateSettings["customTemplatesNotificationScanning"] = true;
+
+      final dispatcher = NotificationDispatcher.instance;
+      dispatcher.recentCapturedNotifications.clear();
+
+      int genericQueueCount = 0;
+      String? genericMsg;
+      dispatcher.queueHandler = (
+        msg, {
+        dateTime,
+        willPushRoute = true,
+        bool isPossibleDuplicate = false,
+        DedupeEntryRecord? possibleDuplicateEntry,
+      }) async {
+        genericQueueCount++;
+        genericMsg = msg;
+      };
+
+      final bankEvent = createTestEvent(
+        packageName: 'com.chase.sig.android',
+        title: 'Chase Alert',
+        content: 'You made a \$42.00 purchase at Trader Joe\'s',
+      );
+      final handled = await dispatcher.handleEvent(bankEvent);
+
+      expect(handled, isTrue);
+      expect(genericQueueCount, equals(1));
+      expect(genericMsg, contains('Package name: com.chase.sig.android'));
+      expect(dispatcher.recentCapturedNotifications.length, equals(1));
     });
   });
 
@@ -477,6 +553,97 @@ void main() {
 
       expect(find.text('Notification Access Granted'), findsOneWidget);
       expect(find.text('Notification Access Required'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    });
+
+    testWidgets(
+        'renders NotificationPrivacyCard and FAQ help button in actions',
+        (WidgetTester tester) async {
+      appStateSettings["notificationScanning"] = true;
+      mockPermissionGranted = true;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const AutoTransactionsPageNotifications(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(NotificationPrivacyCard), findsOneWidget);
+      expect(find.byTooltip('Help'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    });
+
+    testWidgets(
+        'toggling Custom Notification Templates switch updates preference',
+        (WidgetTester tester) async {
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["customTemplatesNotificationScanning"] = true;
+      mockPermissionGranted = true;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const AutoTransactionsPageNotifications(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final customTemplatesSwitch = find.ancestor(
+        of: find.text('Custom Notification Templates'),
+        matching: find.byType(SettingsContainerSwitch),
+      );
+      expect(customTemplatesSwitch, findsOneWidget);
+
+      await tester.tap(customTemplatesSwitch);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(appStateSettings["customTemplatesNotificationScanning"], isFalse);
+
+      await tester.tap(customTemplatesSwitch);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(appStateSettings["customTemplatesNotificationScanning"], isTrue);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    });
+
+    testWidgets(
+        'does not display "No Custom Templates Added" error when customTemplatesNotificationScanning is false',
+        (WidgetTester tester) async {
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["customTemplatesNotificationScanning"] = false;
+      mockPermissionGranted = true;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const AutoTransactionsPageNotifications(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('No Custom Templates Added'), findsNothing);
+
+      // Re-enable and verify error is shown when templates list is empty
+      appStateSettings["customTemplatesNotificationScanning"] = true;
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const AutoTransactionsPageNotifications(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('No Custom Templates Added'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);

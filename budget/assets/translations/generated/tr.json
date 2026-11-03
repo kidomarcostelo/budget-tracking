@@ -1198,5 +1198,7 @@
   "notification-privacy-title": "On-Device Privacy & Permissions",
   "notification-privacy-description": "All notification parsing occurs entirely on your device with zero cloud data transmission. Under Google Play policies, SMS permissions are restricted to default SMS apps. Android Notification Access provides a secure, privacy-preserving alternative to capture payment alerts locally without accessing your personal text messages.",
   "notification-configuration-missing": "No Custom Templates Added",
-  "notification-configuration-missing-description": "Add a template if you wish to parse notifications from other banking apps."
+  "notification-configuration-missing-description": "Add a template if you wish to parse notifications from other banking apps.",
+  "custom-notification-templates": "Özel Bildirim Şablonları",
+  "custom-notification-templates-description": "Özel bildirim şablonlarını kullanarak işlemleri otomatik olarak tespit edin ve ayrıştırın."
 }

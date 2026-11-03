@@ -1198,5 +1198,7 @@
   "notification-privacy-title": "Privacy sul dispositivo e autorizzazioni",
   "notification-privacy-description": "Tutta l'analisi delle notifiche avviene interamente sul tuo dispositivo, con zero trasmissione di dati nel cloud. In base alle norme di Google Play, le autorizzazioni SMS sono riservate alle app SMS predefinite. L'accesso alle notifiche di Android offre un'alternativa sicura e rispettosa della privacy per rilevare localmente gli avvisi di pagamento senza accedere ai tuoi messaggi di testo personali.",
   "notification-configuration-missing": "Nessun modello personalizzato aggiunto",
-  "notification-configuration-missing-description": "Aggiungi un modello se desideri analizzare le notifiche di altre app bancarie."
+  "notification-configuration-missing-description": "Aggiungi un modello se desideri analizzare le notifiche di altre app bancarie.",
+  "custom-notification-templates": "Modelli di notifica personalizzati",
+  "custom-notification-templates-description": "Rileva e analizza automaticamente le transazioni utilizzando modelli di notifica personalizzati."
 }

@@ -1198,5 +1198,7 @@
   "notification-privacy-title": "端末上のプライバシーと権限",
   "notification-privacy-description": "通知の解析はすべて端末上で行われ、クラウドへのデータ送信は一切ありません。Google Playのポリシーにより、SMSの権限はデフォルトのSMSアプリに制限されています。Androidの通知アクセスは、個人のSMSメッセージにアクセスすることなく支払いアラートをローカルで取得するための、安全でプライバシーに配慮した代替手段です。",
   "notification-configuration-missing": "カスタムテンプレートが追加されていません",
-  "notification-configuration-missing-description": "他のバンキングアプリの通知を解析したい場合はテンプレートを追加してください。"
+  "notification-configuration-missing-description": "他のバンキングアプリの通知を解析したい場合はテンプレートを追加してください。",
+  "custom-notification-templates": "カスタム通知テンプレート",
+  "custom-notification-templates-description": "カスタム通知テンプレートを使用して取引を自動的に検出して解析します。"
 }
