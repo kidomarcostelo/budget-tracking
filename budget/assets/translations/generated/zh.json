@@ -1183,5 +1183,20 @@
   "duplicate-budget": "重复预算",
   "possible-duplicate-detected": "检测到可能的重复",
   "possible-duplicate-description": "最近记录了一笔类似的交易。请在保存前检查详细信息。",
-  "similar-transaction-found": "找到类似交易"
+  "similar-transaction-found": "找到类似交易",
+  "auto-transactions-title": "自动交易",
+  "auto-transactions-notifications-description": "可根据您设备上收到的通知自动创建交易。",
+  "notification-transactions": "通知交易",
+  "notification-transactions-description": "当交易通知到达时，Cashew会在设备本地捕获并预填交易以供确认。创建模板或使用受支持的支付应用。",
+  "google-pay-transactions": "Google 钱包与 Google Pay",
+  "google-pay-transactions-description": "自动检测并解析来自 Google 钱包和 Google Pay 通知中的交易。",
+  "notification-permission-granted": "通知访问权限已授予",
+  "notification-permission-granted-description": "Cashew 正在监听传入的交易通知。",
+  "notification-permission-required": "需要通知访问权限",
+  "notification-permission-required-description": "Cashew 需要通知访问权限以检测传入的付款提醒。请在系统设置中启用。",
+  "open-notification-settings": "打开通知设置",
+  "notification-privacy-title": "设备端隐私与权限",
+  "notification-privacy-description": "所有通知解析均完全在您的设备本地完成，零云端数据传输。根据 Google Play 政策，短信权限仅限默认短信应用使用。Android 通知访问权限提供了一种安全且保护隐私的替代方案，可以在不访问您的个人短信的情况下在本地捕获付款提醒。",
+  "notification-configuration-missing": "未添加自定义模板",
+  "notification-configuration-missing-description": "如果您希望解析来自其他银行应用的通知，请添加模板。"
 }

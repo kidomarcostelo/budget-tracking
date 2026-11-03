@@ -1183,5 +1183,20 @@
   "duplicate-budget": "Presupuesto duplicado",
   "possible-duplicate-detected": "Posible duplicado detectado",
   "possible-duplicate-description": "Se registró una transacción similar recientemente. Revise los detalles antes de guardar.",
-  "similar-transaction-found": "Transacción similar encontrada"
+  "similar-transaction-found": "Transacción similar encontrada",
+  "auto-transactions-title": "Transacciones automáticas",
+  "auto-transactions-notifications-description": "Las transacciones se pueden crear automáticamente según las notificaciones recibidas en su dispositivo.",
+  "notification-transactions": "Transacciones por notificación",
+  "notification-transactions-description": "Cuando llega una notificación de transacción, Cashew la captura localmente en el dispositivo para rellenar previamente una transacción para su confirmación. Cree plantillas o use aplicaciones de pago compatibles.",
+  "google-pay-transactions": "Google Wallet y Google Pay",
+  "google-pay-transactions-description": "Detectar y analizar automáticamente transacciones a partir de notificaciones de Google Wallet y Google Pay.",
+  "notification-permission-granted": "Acceso a notificaciones concedido",
+  "notification-permission-granted-description": "Cashew está escuchando las notificaciones de transacciones entrantes.",
+  "notification-permission-required": "Acceso a notificaciones requerido",
+  "notification-permission-required-description": "Cashew necesita acceso a las notificaciones para detectar alertas de pago entrantes. Actívelo en la configuración del sistema.",
+  "open-notification-settings": "Abrir configuración de notificaciones",
+  "notification-privacy-title": "Privacidad en el dispositivo y permisos",
+  "notification-privacy-description": "Todo el análisis de notificaciones se realiza completamente en su dispositivo, sin transmisión de datos a la nube. Según las políticas de Google Play, los permisos de SMS están restringidos a las aplicaciones de SMS predeterminadas. El acceso a notificaciones de Android ofrece una alternativa segura y que preserva la privacidad para capturar alertas de pago localmente sin acceder a sus mensajes de texto personales.",
+  "notification-configuration-missing": "No se agregaron plantillas personalizadas",
+  "notification-configuration-missing-description": "Agregue una plantilla si desea analizar notificaciones de otras aplicaciones bancarias."
 }

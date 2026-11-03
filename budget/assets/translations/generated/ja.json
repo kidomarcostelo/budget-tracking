@@ -1183,5 +1183,20 @@
   "duplicate-budget": "予算の重複",
   "possible-duplicate-detected": "重複の可能性が検出されました",
   "possible-duplicate-description": "最近類似の取引が記録されました。保存する前に詳細を確認してください。",
-  "similar-transaction-found": "類似の取引が見つかりました"
+  "similar-transaction-found": "類似の取引が見つかりました",
+  "auto-transactions-title": "自動取引",
+  "auto-transactions-notifications-description": "端末で受信した通知に基づいて取引を自動的に作成できます。",
+  "notification-transactions": "通知トランザクション",
+  "notification-transactions-description": "取引通知が届くと、Cashewは端末上でローカルにキャプチャし、確認用の取引を事前入力します。テンプレートを作成するか、サポートされている決済アプリを使用してください。",
+  "google-pay-transactions": "Google ウォレット & Google Pay",
+  "google-pay-transactions-description": "Google ウォレットおよび Google Pay の通知から取引を自動的に検出して解析します。",
+  "notification-permission-granted": "通知へのアクセスが許可されました",
+  "notification-permission-granted-description": "Cashewは着信取引通知をリッスンしています。",
+  "notification-permission-required": "通知へのアクセスが必要です",
+  "notification-permission-required-description": "Cashewが支払い通知を検出するには通知アクセスが必要です。システム設定で有効にしてください。",
+  "open-notification-settings": "通知設定を開く",
+  "notification-privacy-title": "端末上のプライバシーと権限",
+  "notification-privacy-description": "通知の解析はすべて端末上で行われ、クラウドへのデータ送信は一切ありません。Google Playのポリシーにより、SMSの権限はデフォルトのSMSアプリに制限されています。Androidの通知アクセスは、個人のSMSメッセージにアクセスすることなく支払いアラートをローカルで取得するための、安全でプライバシーに配慮した代替手段です。",
+  "notification-configuration-missing": "カスタムテンプレートが追加されていません",
+  "notification-configuration-missing-description": "他のバンキングアプリの通知を解析したい場合はテンプレートを追加してください。"
 }

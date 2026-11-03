@@ -1183,5 +1183,20 @@
   "duplicate-budget": "Orçamento duplicado",
   "possible-duplicate-detected": "Possível duplicado detectado",
   "possible-duplicate-description": "Uma transação semelhante foi registrada recentemente. Reveja os detalhes antes de salvar.",
-  "similar-transaction-found": "Transação semelhante encontrada"
+  "similar-transaction-found": "Transação semelhante encontrada",
+  "auto-transactions-title": "Transações automáticas",
+  "auto-transactions-notifications-description": "As transações podem ser criadas automaticamente com base nas notificações recebidas no seu dispositivo.",
+  "notification-transactions": "Transações por notificação",
+  "notification-transactions-description": "Quando chega uma notificação de transação, o Cashew a captura localmente no dispositivo para pré-preencher uma transação para confirmação. Crie modelos ou use aplicativos de pagamento suportados.",
+  "google-pay-transactions": "Google Wallet e Google Pay",
+  "google-pay-transactions-description": "Detectar e analisar automaticamente transações a partir de notificações do Google Wallet e Google Pay.",
+  "notification-permission-granted": "Acesso a notificações concedido",
+  "notification-permission-granted-description": "O Cashew está monitorando as notificações de transação recebidas.",
+  "notification-permission-required": "Acesso a notificações necessário",
+  "notification-permission-required-description": "O Cashew precisa de acesso a notificações para detectar alertas de pagamento recebidos. Ative-o nas configurações do sistema.",
+  "open-notification-settings": "Abrir configurações de notificação",
+  "notification-privacy-title": "Privacidade no dispositivo e permissões",
+  "notification-privacy-description": "Toda a análise de notificações ocorre inteiramente no seu dispositivo, com zero transmissão de dados para a nuvem. De acordo com as políticas do Google Play, as permissões de SMS são restritas aos aplicativos de SMS padrão. O acesso a notificações do Android oferece uma alternativa segura e que preserva a privacidade para capturar alertas de pagamento localmente sem acessar suas mensagens de texto pessoais.",
+  "notification-configuration-missing": "Nenhum modelo personalizado adicionado",
+  "notification-configuration-missing-description": "Adicione um modelo se desejar analisar notificações de outros aplicativos bancários."
 }
