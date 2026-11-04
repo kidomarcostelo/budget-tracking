@@ -607,4 +607,92 @@ void main() {
       expect(capturedMatchedEntry!.amountNormalized, equals('250.00'));
     });
   });
+
+  group('NotificationDispatcher Google Pay sweep edge cases (Slice S6)', () {
+    late NotificationDispatcher dispatcher;
+
+    setUp(() {
+      DedupeLedger.instance.clear();
+      dispatcher = NotificationDispatcher.instance;
+      dispatcher.recentCapturedNotifications.clear();
+      dispatcher.queueHandler = null;
+      dispatcher.onGooglePayTransaction = null;
+    });
+
+    test(
+        'Google Pay posted followed by removed dismissal ignores removed event',
+        () async {
+      final postedEvent = createTestEvent(
+        id: 501,
+        packageName: 'com.google.android.apps.walletnfcrel',
+        title: '7-Eleveb-ST4594',
+        content: 'P123.00 with UnionBank Rewards Platinum **3353',
+        hasRemoved: false,
+      );
+
+      final removedEvent = createTestEvent(
+        id: 501,
+        packageName: 'com.google.android.apps.walletnfcrel',
+        title: '7-Eleveb-ST4594',
+        content: 'P123.00 with UnionBank Rewards Platinum **3353',
+        hasRemoved: true,
+      );
+
+      int gpayCount = 0;
+      dispatcher.onGooglePayTransaction = (
+        res, {
+        isPossibleDuplicate = false,
+        possibleDuplicateEntry,
+      }) async {
+        gpayCount++;
+        return true;
+      };
+
+      final handledPosted = await dispatcher.handleEvent(postedEvent);
+      expect(handledPosted, isTrue);
+      expect(gpayCount, equals(1));
+
+      final handledRemoved = await dispatcher.handleEvent(removedEvent);
+      expect(handledRemoved, isFalse);
+      expect(gpayCount, equals(1));
+    });
+
+    test(
+        'Multi-package source classification routes all recognized packages to Google Pay handler',
+        () async {
+      final packages = [
+        'com.google.android.apps.walletnfcrel',
+        'com.google.android.apps.nbu.paisa.user',
+        'com.google.android.gms',
+      ];
+
+      for (int i = 0; i < packages.length; i++) {
+        final pkg = packages[i];
+        DedupeLedger.instance.clear();
+        int gpayCount = 0;
+        dispatcher.onGooglePayTransaction = (
+          res, {
+          isPossibleDuplicate = false,
+          possibleDuplicateEntry,
+        }) async {
+          gpayCount++;
+          return true;
+        };
+
+        final event = createTestEvent(
+          id: 600 + i,
+          packageName: pkg,
+          title: 'Google Wallet',
+          content: 'Paid ₱250.00 at Mercury Drug',
+          hasRemoved: false,
+        );
+
+        final handled = await dispatcher.handleEvent(event);
+        expect(handled, isTrue,
+            reason: 'Expected $pkg to be handled as Google Pay');
+        expect(gpayCount, equals(1),
+            reason: 'Expected $pkg to invoke onGooglePayTransaction');
+      }
+    });
+  });
 }
