@@ -29,6 +29,16 @@ class GooglePayTransactionResult {
     required this.rawTitle,
     required this.rawContent,
   });
+
+  /// Formatted card hint for transaction notes (e.g. "UnionBank Rewards Platinum •••• 3353").
+  String? get cardHint {
+    if (cardName != null && cardLast4 != null) {
+      return '$cardName •••• $cardLast4';
+    }
+    if (cardName != null) return cardName;
+    if (cardLast4 != null) return '•••• $cardLast4';
+    return null;
+  }
 }
 
 /// Parser for Android Google Wallet and Google Pay payment notifications.
@@ -211,6 +221,7 @@ class GooglePayParser {
   }) async {
     final wallet = walletOverride ?? await resolveWallet(result);
     final category = categoryOverride ?? await resolveCategory(result);
+    final note = result.cardHint;
 
     if (willPushRoute || isPossibleDuplicate) {
       pushRoute(
@@ -220,6 +231,7 @@ class GooglePayParser {
           routesToPopAfterDelete: RoutesToPopAfterDelete.None,
           selectedAmount: result.amount,
           selectedTitle: result.merchant,
+          selectedNotes: note,
           selectedCategory: category,
           startInitialAddTransactionSequence: false,
           selectedWallet: wallet,
@@ -232,6 +244,7 @@ class GooglePayParser {
       if (navigatorKey.currentContext != null) {
         processAddTransactionFromParams(navigatorKey.currentContext!, {
           'title': result.merchant,
+          'note': note,
           'categoryPk': category?.categoryPk,
           'walletPk': wallet?.walletPk,
           'amount': result.amount.toString(),
