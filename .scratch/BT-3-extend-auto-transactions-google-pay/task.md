@@ -93,7 +93,7 @@ None currently.
 
 ## Resume / next step
 
-All slices S0 through S6 complete. Ready for isolated code review of PR #23 / Slice S6.
+All slices S0 through S6 complete. Ready for isolated code review of PR #26 / Slice S6.
 
 ## Links
 

@@ -351,6 +351,178 @@ void main() {
     );
 
     testWidgets(
+      'Sliding window boundary: identical notification after 5-min sliding window is accepted and opens page',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildTestableApp(allWallets: allWallets));
+        await tester.pumpAndSettle();
+
+        final t0 = DateTime(2026, 10, 22, 10, 0, 0);
+        final firstEvent = createTestEvent(
+          id: 110,
+          packageName: 'com.google.android.apps.walletnfcrel',
+          title: '7-Eleveb-ST4594',
+          content: 'P123.00 with UnionBank Rewards Platinum **3353',
+          hasRemoved: false,
+          timestamp: t0.millisecondsSinceEpoch,
+        );
+
+        final handled1 = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance.handleEvent(firstEvent);
+        });
+        expect(handled1, isTrue);
+        await tester.pumpAndSettle();
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+
+        // Identical notification arriving 5 minutes and 1 second later (outside window)
+        final secondEvent = createTestEvent(
+          id: 111,
+          packageName: 'com.google.android.apps.walletnfcrel',
+          title: '7-Eleveb-ST4594',
+          content: 'P123.00 with UnionBank Rewards Platinum **3353',
+          hasRemoved: false,
+          timestamp: t0
+              .add(const Duration(minutes: 5, seconds: 1))
+              .millisecondsSinceEpoch,
+        );
+
+        final handled2 = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance.handleEvent(secondEvent);
+        });
+        expect(handled2, isTrue);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump(const Duration(milliseconds: 500));
+
+        // Second AddTransactionPage opened successfully (top of stack)
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+        expect(find.byType(AddTransactionPage, skipOffstage: false),
+            findsNWidgets(2));
+        expect(DedupeLedger.instance.entries.length, equals(2));
+
+        // Settle animation timers
+        await tester.pump(const Duration(milliseconds: 1200));
+
+        // Popping the second route reveals the first AddTransactionPage underneath
+        if (navigatorKey.currentState?.canPop() == true) {
+          navigatorKey.currentState?.pop();
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+
+        // Popping the first route returns to Home Screen
+        if (navigatorKey.currentState?.canPop() == true) {
+          navigatorKey.currentState?.pop();
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(AddTransactionPage), findsNothing);
+        expect(find.text('Home Screen'), findsOneWidget);
+
+        await tester.pump(Duration.zero);
+      },
+    );
+
+    testWidgets(
+      'Posted -> Removed -> Subsequent Posted sequence maintains deduplication integrity',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildTestableApp(allWallets: allWallets));
+        await tester.pumpAndSettle();
+
+        final t0 = DateTime(2026, 10, 22, 10, 0, 0);
+
+        // 1. Initial posted event arrives
+        final posted1 = createTestEvent(
+          id: 112,
+          packageName: 'com.google.android.apps.walletnfcrel',
+          title: '7-Eleveb-ST4594',
+          content: 'P123.00 with UnionBank Rewards Platinum **3353',
+          hasRemoved: false,
+          timestamp: t0.millisecondsSinceEpoch,
+        );
+        final handled1 = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance.handleEvent(posted1);
+        });
+        expect(handled1, isTrue);
+        await tester.pumpAndSettle();
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+
+        // 2. User dismisses notification 10 seconds later
+        final removed = createTestEvent(
+          id: 112,
+          packageName: 'com.google.android.apps.walletnfcrel',
+          title: '7-Eleveb-ST4594',
+          content: 'P123.00 with UnionBank Rewards Platinum **3353',
+          hasRemoved: true,
+          timestamp: t0.add(const Duration(seconds: 10)).millisecondsSinceEpoch,
+        );
+        final handledRemoved = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance.handleEvent(removed);
+        });
+        expect(handledRemoved, isFalse);
+        await tester.pumpAndSettle();
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+
+        // 3. Duplicate notification arrives 2 minutes later -> suppressed
+        final duplicate = createTestEvent(
+          id: 112,
+          packageName: 'com.google.android.apps.walletnfcrel',
+          title: '7-Eleveb-ST4594',
+          content: 'P123.00 with UnionBank Rewards Platinum **3353',
+          hasRemoved: false,
+          timestamp: t0.add(const Duration(minutes: 2)).millisecondsSinceEpoch,
+        );
+        final handledDuplicate = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance.handleEvent(duplicate);
+        });
+        expect(handledDuplicate, isFalse);
+        await tester.pumpAndSettle();
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+
+        // 4. Same payment arrives after sliding window (6 minutes later) -> accepted
+        final afterWindow = createTestEvent(
+          id: 113,
+          packageName: 'com.google.android.apps.walletnfcrel',
+          title: '7-Eleveb-ST4594',
+          content: 'P123.00 with UnionBank Rewards Platinum **3353',
+          hasRemoved: false,
+          timestamp: t0.add(const Duration(minutes: 6)).millisecondsSinceEpoch,
+        );
+        final handledAfterWindow = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance.handleEvent(afterWindow);
+        });
+        expect(handledAfterWindow, isTrue);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump(const Duration(milliseconds: 500));
+
+        // Second AddTransactionPage opened on top of navigation stack
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+        expect(find.byType(AddTransactionPage, skipOffstage: false),
+            findsNWidgets(2));
+        expect(DedupeLedger.instance.entries.length, equals(2));
+
+        // Settle animation timers
+        await tester.pump(const Duration(milliseconds: 1200));
+
+        // Popping the second route reveals the first AddTransactionPage underneath
+        if (navigatorKey.currentState?.canPop() == true) {
+          navigatorKey.currentState?.pop();
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+
+        // Popping the first route returns to Home Screen
+        if (navigatorKey.currentState?.canPop() == true) {
+          navigatorKey.currentState?.pop();
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(AddTransactionPage), findsNothing);
+        expect(find.text('Home Screen'), findsOneWidget);
+
+        await tester.pump(Duration.zero);
+      },
+    );
+
+    testWidgets(
       'Uncertain match review flow: ambiguous notification renders AddTransactionPage with PossibleDuplicateBanner',
       (WidgetTester tester) async {
         await tester.pumpWidget(buildTestableApp(allWallets: allWallets));
@@ -419,6 +591,79 @@ void main() {
           await tester.pumpAndSettle();
         }
         await tester.pump(Duration.zero);
+      },
+    );
+
+    testWidgets(
+      'Multi-package source classification: Google Pay India and Play Services route interactively, unrecognized package does not',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildTestableApp(allWallets: allWallets));
+        await tester.pumpAndSettle();
+
+        // 1. Google Pay India (paisa) package
+        final paisaEvent = createTestEvent(
+          id: 203,
+          packageName: 'com.google.android.apps.nbu.paisa.user',
+          title: 'Google Wallet',
+          content: 'Paid ₱250.00 at Mercury Drug',
+          hasRemoved: false,
+        );
+        final handledPaisa = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance.handleEvent(paisaEvent);
+        });
+        expect(handledPaisa, isTrue);
+        await tester.pumpAndSettle();
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+        expect(find.text('Mercury Drug'), findsOneWidget);
+
+        // Clean up route
+        await tester.pump(const Duration(milliseconds: 1200));
+        if (navigatorKey.currentState?.canPop() == true) {
+          navigatorKey.currentState?.pop();
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(AddTransactionPage), findsNothing);
+
+        // 2. Google Play Services (gms) package
+        final gmsEvent = createTestEvent(
+          id: 204,
+          packageName: 'com.google.android.gms',
+          title: "Trader Joe's",
+          content: '\$42.75 with Chase Freedom •••• 9876',
+          hasRemoved: false,
+        );
+        final handledGms = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance.handleEvent(gmsEvent);
+        });
+        expect(handledGms, isTrue);
+        await tester.pumpAndSettle();
+        expect(find.byType(AddTransactionPage), findsOneWidget);
+        expect(find.text("Trader Joe's"), findsOneWidget);
+
+        // Clean up route
+        await tester.pump(const Duration(milliseconds: 1200));
+        if (navigatorKey.currentState?.canPop() == true) {
+          navigatorKey.currentState?.pop();
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(AddTransactionPage), findsNothing);
+
+        // 3. Unrecognized package with custom templates disabled
+        appStateSettings['customTemplatesNotificationScanning'] = false;
+        final unrecognizedEvent = createTestEvent(
+          id: 205,
+          packageName: 'com.unrecognized.app',
+          title: '7-Eleveb-ST4594',
+          content: 'P123.00 with UnionBank Rewards Platinum **3353',
+          hasRemoved: false,
+        );
+        final handledUnrecognized = await tester.runAsync(() async {
+          return await NotificationDispatcher.instance
+              .handleEvent(unrecognizedEvent);
+        });
+        expect(handledUnrecognized, isFalse);
+        await tester.pumpAndSettle();
+        expect(find.byType(AddTransactionPage), findsNothing);
       },
     );
 

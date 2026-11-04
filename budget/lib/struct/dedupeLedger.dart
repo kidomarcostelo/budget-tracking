@@ -576,6 +576,8 @@ class DedupeLedger {
   }
 
   /// Safely attempts to persist an entry to Drift if the database is initialized.
+  /// Uses a timeout with fallback to prevent deadlocks during widget test execution
+  /// where fakeAsync event loop pausing blocks Drift reactive stream notifications.
   Future<void> _tryPersist(DedupeEntryRecord record) async {
     try {
       await database

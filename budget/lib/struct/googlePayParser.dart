@@ -32,11 +32,16 @@ class GooglePayTransactionResult {
 
   /// Formatted card hint for transaction notes (e.g. "UnionBank Rewards Platinum •••• 3353").
   String? get cardHint {
-    if (cardName != null && cardLast4 != null) {
-      return '$cardName •••• $cardLast4';
+    final cleanName = cardName?.trim();
+    final cleanLast4 = cardLast4?.trim();
+    final hasName = cleanName != null && cleanName.isNotEmpty;
+    final hasLast4 = cleanLast4 != null && cleanLast4.isNotEmpty;
+
+    if (hasName && hasLast4) {
+      return '$cleanName •••• $cleanLast4';
     }
-    if (cardName != null) return cardName;
-    if (cardLast4 != null) return '•••• $cardLast4';
+    if (hasName) return cleanName;
+    if (hasLast4) return '•••• $cleanLast4';
     return null;
   }
 }
@@ -168,30 +173,42 @@ class GooglePayParser {
   static Future<TransactionWallet?> resolveWallet(
     GooglePayTransactionResult result,
   ) async {
-    // 1. Match card last 4 digits against wallet account numbers
-    if (result.cardLast4 != null && result.cardLast4!.isNotEmpty) {
-      final wallet = await database.getRelatingWallet(result.cardLast4!);
-      if (wallet != null) return wallet;
-    }
+    try {
+      // 1. Match card last 4 digits against wallet account numbers
+      if (result.cardLast4 != null && result.cardLast4!.isNotEmpty) {
+        final wallet = await database
+            .getRelatingWallet(result.cardLast4!)
+            .timeout(const Duration(milliseconds: 200));
+        if (wallet != null) return wallet;
+      }
 
-    // 2. Match card name against wallet names (e.g. "UnionBank")
-    if (result.cardName != null && result.cardName!.isNotEmpty) {
-      final wallet = await database.getRelatingWallet(result.cardName!);
-      if (wallet != null) return wallet;
+      // 2. Match card name against wallet names (e.g. "UnionBank")
+      if (result.cardName != null && result.cardName!.isNotEmpty) {
+        final wallet = await database
+            .getRelatingWallet(result.cardName!)
+            .timeout(const Duration(milliseconds: 200));
+        if (wallet != null) return wallet;
 
-      final tokens = result.cardName!.split(RegExp(r'\s+'));
-      for (final token in tokens) {
-        if (token.length >= 4) {
-          final tokenWallet = await database.getRelatingWallet(token);
-          if (tokenWallet != null) return tokenWallet;
+        final tokens = result.cardName!.split(RegExp(r'\s+'));
+        for (final token in tokens) {
+          if (token.length >= 4) {
+            final tokenWallet = await database
+                .getRelatingWallet(token)
+                .timeout(const Duration(milliseconds: 200));
+            if (tokenWallet != null) return tokenWallet;
+          }
         }
       }
-    }
 
-    // 3. Fall back to user's selected/default wallet
-    final selectedPk = appStateSettings['selectedWalletPk'];
-    if (selectedPk != null && selectedPk != '-1') {
-      return await database.getWalletInstanceOrNull(selectedPk.toString());
+      // 3. Fall back to user's selected/default wallet
+      final selectedPk = appStateSettings['selectedWalletPk'];
+      if (selectedPk != null && selectedPk != '-1') {
+        return await database
+            .getWalletInstanceOrNull(selectedPk.toString())
+            .timeout(const Duration(milliseconds: 200));
+      }
+    } catch (_) {
+      return null;
     }
 
     return null;
@@ -201,12 +218,18 @@ class GooglePayParser {
   static Future<TransactionCategory?> resolveCategory(
     GooglePayTransactionResult result,
   ) async {
-    final foundTitle = (await database.getSimilarAssociatedTitles(
-      title: result.merchant,
-      limit: 1,
-    ))
-        .firstOrNull;
-    return foundTitle?.category;
+    try {
+      final foundTitle = (await database
+              .getSimilarAssociatedTitles(
+                title: result.merchant,
+                limit: 1,
+              )
+              .timeout(const Duration(milliseconds: 200)))
+          .firstOrNull;
+      return foundTitle?.category;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Dispatches the parsed Google Pay transaction into Cashew's UI flow.
