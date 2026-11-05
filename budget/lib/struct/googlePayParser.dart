@@ -176,25 +176,19 @@ class GooglePayParser {
     try {
       // 1. Match card last 4 digits against wallet account numbers
       if (result.cardLast4 != null && result.cardLast4!.isNotEmpty) {
-        final wallet = await database
-            .getRelatingWallet(result.cardLast4!)
-            .timeout(const Duration(milliseconds: 200));
+        final wallet = await database.getRelatingWallet(result.cardLast4!);
         if (wallet != null) return wallet;
       }
 
       // 2. Match card name against wallet names (e.g. "UnionBank")
       if (result.cardName != null && result.cardName!.isNotEmpty) {
-        final wallet = await database
-            .getRelatingWallet(result.cardName!)
-            .timeout(const Duration(milliseconds: 200));
+        final wallet = await database.getRelatingWallet(result.cardName!);
         if (wallet != null) return wallet;
 
         final tokens = result.cardName!.split(RegExp(r'\s+'));
         for (final token in tokens) {
           if (token.length >= 4) {
-            final tokenWallet = await database
-                .getRelatingWallet(token)
-                .timeout(const Duration(milliseconds: 200));
+            final tokenWallet = await database.getRelatingWallet(token);
             if (tokenWallet != null) return tokenWallet;
           }
         }
@@ -203,9 +197,7 @@ class GooglePayParser {
       // 3. Fall back to user's selected/default wallet
       final selectedPk = appStateSettings['selectedWalletPk'];
       if (selectedPk != null && selectedPk != '-1') {
-        return await database
-            .getWalletInstanceOrNull(selectedPk.toString())
-            .timeout(const Duration(milliseconds: 200));
+        return await database.getWalletInstanceOrNull(selectedPk.toString());
       }
     } catch (_) {
       return null;
@@ -219,12 +211,10 @@ class GooglePayParser {
     GooglePayTransactionResult result,
   ) async {
     try {
-      final foundTitle = (await database
-              .getSimilarAssociatedTitles(
-                title: result.merchant,
-                limit: 1,
-              )
-              .timeout(const Duration(milliseconds: 200)))
+      final foundTitle = (await database.getSimilarAssociatedTitles(
+        title: result.merchant,
+        limit: 1,
+      ))
           .firstOrNull;
       return foundTitle?.category;
     } catch (_) {

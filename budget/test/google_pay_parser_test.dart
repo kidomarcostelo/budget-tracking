@@ -3,33 +3,7 @@ import 'package:budget/struct/googlePayParser.dart';
 import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:notification_listener_service/notification_event.dart';
-
-ServiceNotificationEvent createTestEvent({
-  int id = 1,
-  String packageName = 'com.google.android.apps.walletnfcrel',
-  String title = 'Notification Title',
-  String content = 'Notification Content',
-  bool hasRemoved = false,
-  bool canReply = false,
-  bool haveExtraPicture = false,
-  bool onGoing = false,
-  int timestamp = 0,
-}) {
-  return ServiceNotificationEvent(
-    id: id,
-    packageName: packageName,
-    title: title,
-    content: content,
-    hasRemoved: hasRemoved,
-    canReply: canReply,
-    haveExtraPicture: haveExtraPicture,
-    onGoing: onGoing,
-    timestamp: timestamp,
-    appIcon: null,
-    extrasPicture: null,
-    largeIcon: null,
-  );
-}
+import 'test_helpers/test_notification_event.dart';
 
 void main() {
   group('GooglePayParser.parse real device and standard samples', () {

@@ -576,31 +576,27 @@ class DedupeLedger {
   }
 
   /// Safely attempts to persist an entry to Drift if the database is initialized.
-  /// Uses a timeout with fallback to prevent deadlocks during widget test execution
-  /// where fakeAsync event loop pausing blocks Drift reactive stream notifications.
   Future<void> _tryPersist(DedupeEntryRecord record) async {
     try {
-      await database
-          .insertDedupeEntry(
-            DedupeEntriesCompanion(
-              entryPk: Value(record.entryPk),
-              eventKey: Value(record.eventKey),
-              packageName: Value(record.packageName),
-              notificationId: Value(record.notificationId),
-              amount: Value(record.amount),
-              amountNormalized: Value(record.amountNormalized),
-              currency: Value(record.currency),
-              title: Value(record.title),
-              rawContent: Value(record.rawContent),
-              source: Value(record.source),
-              dateTimeCreated: Value(record.dateTimeCreated),
-              notificationTimestamp: Value(record.notificationTimestamp),
-              status: Value(record.status),
-              createdTransactionPk: Value(record.createdTransactionPk),
-              matchedEntryPk: Value(record.matchedEntryPk),
-            ),
-          )
-          .timeout(const Duration(milliseconds: 200), onTimeout: () => -1);
+      await database.insertDedupeEntry(
+        DedupeEntriesCompanion(
+          entryPk: Value(record.entryPk),
+          eventKey: Value(record.eventKey),
+          packageName: Value(record.packageName),
+          notificationId: Value(record.notificationId),
+          amount: Value(record.amount),
+          amountNormalized: Value(record.amountNormalized),
+          currency: Value(record.currency),
+          title: Value(record.title),
+          rawContent: Value(record.rawContent),
+          source: Value(record.source),
+          dateTimeCreated: Value(record.dateTimeCreated),
+          notificationTimestamp: Value(record.notificationTimestamp),
+          status: Value(record.status),
+          createdTransactionPk: Value(record.createdTransactionPk),
+          matchedEntryPk: Value(record.matchedEntryPk),
+        ),
+      );
     } catch (e) {
       // In tests or headless isolate where database might not be initialized, fail gracefully
     }

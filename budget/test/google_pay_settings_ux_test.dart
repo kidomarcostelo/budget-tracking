@@ -22,6 +22,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqlite3/open.dart';
+import 'test_helpers/test_notification_event.dart';
 
 class _TestAssetLoader extends AssetLoader {
   const _TestAssetLoader();
@@ -76,30 +77,6 @@ Widget buildTestableWidget(Widget child) {
         home: child,
       ),
     ),
-  );
-}
-
-ServiceNotificationEvent createTestEvent({
-  int id = 1,
-  String packageName = 'com.google.android.apps.walletnfcrel',
-  String title = 'Google Wallet',
-  String content = 'Paid PHP 250.00 at 7-Eleven with MariBank',
-  bool hasRemoved = false,
-  int timestamp = 0,
-}) {
-  return ServiceNotificationEvent(
-    id: id,
-    packageName: packageName,
-    title: title,
-    content: content,
-    hasRemoved: hasRemoved,
-    canReply: false,
-    haveExtraPicture: false,
-    onGoing: false,
-    timestamp: timestamp,
-    appIcon: null,
-    extrasPicture: null,
-    largeIcon: null,
   );
 }
 
