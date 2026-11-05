@@ -1,13 +1,12 @@
-# Code Review Report: PR #24 (Slice S5)
+# Code Review Report: PR #26 (Slice S6 Verification)
 
-**Target Branch:** `feat/google-pay-settings-ux` against `main`  
-**Pull Request:** [#24](https://github.com/kidomarcostelo/budget-tracking/pull/24) (`feat(settings): add Google Pay notification settings, permission UX, and docs (Slice S5)`)  
+**Target Branch:** `feat/google-pay-verification` against `main`  
+**Pull Request:** [#26](https://github.com/kidomarcostelo/budget-tracking/pull/26) (`feat(notifications): Google Pay end-to-end verification and device testing guide (Slice S6)`)  
 **Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Task: [`BT-3`](task.md))  
 **Commits Reviewed:**
-- `87c67d18` fix(settings): surface Notification Transactions on Android and harden startup and lifecycle UX
-- `3d90fc8b` feat(settings): add Google Pay notification settings, permission UX, and docs (Slice S5)
-- `b2c5b0f1` docs(reviews): record final code review report for PR 23  
-**Review Timestamp:** 2026-11-03T18:06:30+08:00  
+- `5bc718ef` fix(notifications): harden flow tests, resolve timeouts, and correct device verification commands
+- `370bf4e8` feat(notifications): add Google Pay end-to-end flow tests and verification guide (Slice S6)  
+**Review Timestamp:** 2026-11-05T15:22:30+08:00  
 
 ---
 
@@ -15,46 +14,38 @@
 
 ### (a) Documented Standards Violations
 
-- **`CONSTRAINTS.md`:** **PASS**. Zero `flutter analyze` errors or warnings, code formatting strictly conforms to `dart format`, zero `// ignore:` directives introduced, and no destructive database changes.
-- **`GLOSSARY.md`:** **PASS**. Domain vocabulary (`Transaction`, `Wallet`, `Category`, `Budget`) respected in all new strings, docs, and code.
-- **`AGENTS.md` (Widget Decomposition):** **Judgement Call / Soft Violation**.
-  - **Rule:** *"Extract complex UI into reusable widgets under `budget/lib/widgets/`. Avoid monolithic build methods where possible."*
-  - **Location:** `budget/lib/pages/autoTransactionsPageEmail.dart:303-347`
-  - **Observation:** A 45-line inline styled `Container` for the "On-Device Privacy & Permissions" card is placed directly within `AutoTransactionsPageNotifications.build()`. Extracting this into a dedicated component (e.g. `NotificationPrivacyCard`) under `budget/lib/widgets/` keeps page build methods focused and cohesive.
+1. **`CONSTRAINTS.md` §3 (Test Suite Integrity — *"Fix the root cause in the implementation or test setup"*):**
+   - **Locations:** `budget/lib/struct/dedupeLedger.dart:576-606` & `budget/lib/struct/googlePayParser.dart:173-232`
+   - **Violation:** Arbitrary `200ms` timeouts (`.timeout(const Duration(milliseconds: 200))`) with silent catch/fallback blocks (`onTimeout: () => -1`) were added directly to production SQLite persistence (`_tryPersist`) and query resolution (`resolveWallet`, `resolveCategory`) specifically to work around `fakeAsync` event-loop stalls in widget tests. Modifying production database operations to appease test runner limitations violates §3 and risks silent database write and resolution drops under real device I/O load. Root-cause test execution (e.g., using `tester.runAsync` or explicit test doubles) should be used instead.
+
+2. **`docs/architecture.md` §4 (Android Environments & Package Isolation):**
+   - **Location:** `.scratch/bank-samples/google-pay/device-verification-guide.md:18-99`
+   - **Violation:** ADB commands hardcode the release package `com.budget.tracker_app`. Per §4, local development/verification runs against `com.budget.tracker_app.debug`. The guide lacks guidance or commands for testing against the debug package.
 
 ---
 
 ### (b) Baseline Smells (Judgement Calls)
 
-1. **Duplicated Code / Redundant Execution**
-   - **`autoTransactionsPageEmail.dart:230-240`**:
+1. **Duplicated Code (Route Popping Boilerplate in Tests):**
+   - **Location:** `budget/test/google_pay_flow_widget_test.dart:235-241`
+   - The route popping logic is repeated across 9 individual widget tests:
      ```dart
-     if (status == true) {
-       initNotificationScanning();
+     await tester.pump(const Duration(milliseconds: 1200));
+     if (navigatorKey.currentState?.canPop() == true) {
+       navigatorKey.currentState?.pop();
+       await tester.pumpAndSettle();
      }
-     ...
-     await _checkPermission();
+     await tester.pump(Duration.zero);
      ```
-     When the toggle is enabled, `onSwitched` calls `initNotificationScanning()` after acquiring permission, and immediately proceeds to `await _checkPermission()`, which conditionally calls `initNotificationScanning()` again (`L172-174`). This triggers duplicate ledger reloads and listener subscription resets back-to-back.
-   - **`appLinks.dart:382-384, 414-416`**:
-     ```dart
-     params["messageToParse"] != null &&
-         (appStateSettings["notificationScanning"] == true ||
-             appStateSettings["notificationScanningDebug"] == true)
-     ```
-     The compound setting predicate is duplicated identically in both `addTransaction` and `addTransactionRoute` handling blocks.
+   - *Recommendation:* Extract into a shared helper function (e.g., `popToHome(tester)`).
 
-2. **Inconsistent Abstraction / Middle Man Bypass**
-   - **`autoTransactionsPageEmail.dart:189-194`**:
-     ```dart
-     Future<void> _requestPermission() async {
-       try {
-         await NotificationListenerService.requestPermission();
-       } catch (_) {}
-       await _checkPermission();
-     }
-     ```
-     `_requestPermission()` bypasses `NotificationDispatcher.instance.requestReadNotificationPermission()`, which encapsulates platform checks (`PlatformOS.isAndroid`) and uniform error handling used elsewhere in the file.
+2. **Duplicated Code (Inline Timeout Call-Sites):**
+   - **Location:** `budget/lib/struct/googlePayParser.dart:178-230`
+   - Repeated inlining of `.timeout(const Duration(milliseconds: 200))` across 4 separate query call-sites in `resolveWallet` and `resolveCategory`.
+
+3. **Duplicated Code (Test Fixture Factory):**
+   - **Locations:** `budget/test/google_pay_flow_widget_test.dart:45-66` & `budget/test/notification_dispatcher_test.dart`
+   - Identical `createTestEvent` helper is duplicated across test files. Extract to a shared test utility.
 
 ---
 
@@ -62,41 +53,37 @@
 
 ### (a) Requirements Missing or Partial
 
-1. **No Independent Toggle for Custom Templates**
-   - **Spec:** `"S5 Settings (per-source toggle)"` (GitHub Issue #7).
-   - **Finding:** While Google Pay has a dedicated toggle (`googlePayNotificationScanning`), custom regex templates lack an individual toggle. When the master switch `notificationScanning` is active, custom templates cannot be disabled while keeping Google Pay enabled.
-
-2. **In-App FAQ Pointer Omitted**
-   - **Spec:** `"Update the FAQ/README pointer."` (`task.md:67`); `"docs (FAQ/README pointer)"` (Issue #7).
-   - **Finding:** While `README.md` documents Notification Transactions under an external FAQ URL, no corresponding FAQ link or help button was surfaced inside `AutoTransactionsPageNotifications` in the app UI.
+1. **Manual Device Verification Unexecuted:**
+   - **Spec Quote:** *"Manual test on a device with real Google Pay notifications (redacted)."* (`task.md:68`, Issue #7)
+   - **Finding:** While marked complete (`- [x]`) in `task.md`, physical device verification was not performed. The newly created `device-verification-guide.md:119-126` contains an unexecuted checklist with all 6 verification steps left unchecked (`[ ]`), with no actual device execution logs captured.
 
 ---
 
 ### (b) Behaviour in Diff Not Asked For (Scope Creep)
 
-1. **App Links URL Dispatch Modification**
-   - **Spec:** `"Out of scope: iOS... Gmail ingestion (#2/#3), the Triage UI (#4/#5), and new bank-email parsing"` (`task.md:20-21`).
-   - **Finding:** `budget/lib/widgets/util/appLinks.dart:382-383, 415-416` modifies external URL intent routing (`executeAppLink`) so that `notificationScanning` enables `messageToParse`. Modifying general app links falls outside Slice S5 settings and permission UX.
+1. **Card Hint Note Formatting & Transaction Prefilling:**
+   - **Spec Quote:** *"S6 Verification. Widget tests for the prefilled page, unit tests for dedupe window and source classification..."* (`task.md:68`)
+   - **Finding:** PR #26 introduces production feature code: `GooglePayTransactionResult.cardHint` in `googlePayParser.dart:33-46` and wires it into `AddTransactionPage(selectedNotes: note)` (`googlePayParser.dart:257`) and headless payloads. S6 was scoped strictly to verification.
 
-2. **Non-Android Exposure of Notification Settings**
-   - **Spec:** `"Constraints: Android only."` (Issue #7; `task.md:30`).
-   - **Finding:** In `settingsPage.dart:585-586`, changing the condition to `(isAndroid || notificationScanningDebug == true)` surfaces the Android-only Notification Transactions settings entry on non-Android platforms (iOS, macOS, desktop, web) when the debug preference is toggled.
-
-3. **Unrelated PR #23 Review Documentation**
-   - **Spec:** `"S5 Settings, permission UX, docs."` (`task.md:67`).
-   - **Finding:** Commit `b2c5b0f1` modifies `.scratch/code-reviews/pr-23-review.md`, bundling review documentation for an earlier PR into PR #24.
+2. **Production Database Timeouts Added for Widget Test Harness:**
+   - **Spec Quote:** *"S6 Verification: widget/unit tests, flutter analyze, dart format..."* (Issue #7)
+   - **Finding:** Production methods in `dedupeLedger.dart:581-606` (`_tryPersist`) and `googlePayParser.dart:173-232` (`resolveWallet`, `resolveCategory`) were modified to add 200ms timeouts solely to bypass `fakeAsync` event-loop stalling during widget tests.
 
 ---
 
 ### (c) Requirements Implemented Wrongly
 
-1. **Disabled Google Pay Pollutes Dedupe Ledger and Falls Through to Templates**
-   - **Spec:** `"Settings copy for the Google Pay source (toggle per source)."` (`task.md:67`); `"Gated by existing notificationScanning preference"` (Issue #7).
-   - **Finding:** In `notificationDispatcher.dart:366-425`, when `googlePayNotificationScanning` is `false`, Google Pay events are not dropped early. Setting `googlePayResult = null` causes `DedupeLedger.instance.checkAndRecordNotification` to persist degraded entries with `null` amount and currency to SQLite. The event also gets added to `recentCapturedNotifications` and falls through to `queueHandler` (regex templates). When disabled, Google Pay events should be ignored early rather than recorded or evaluated against other templates.
+1. **ADB Broadcast Simulation Blocked on Android 14+ (API 34+):**
+   - **Spec Quote:** *"Manual test on a device with real Google Pay notifications (redacted)."* (`task.md:68`)
+   - **Finding:** `device-verification-guide.md:32-47` recommends `adb shell am broadcast -a slayer.notification.listener.service.intent ...`. As documented in `research.md` (Q7), `notification_listener_service: 1.0.0` registers its receiver with `RECEIVER_NOT_EXPORTED` on API 34+. ADB shell broadcasts (UID 2000) are blocked by Android security controls on API 34+, making the recommended simulation command non-functional on modern Android versions.
+
+2. **Hardcoded 200ms Database Timeouts Cause Silent Data Dropping:**
+   - **Spec Quote:** *"Store in a new Drift table (additive migration)."* (`task.md:62`)
+   - **Finding:** `.timeout(const Duration(milliseconds: 200), onTimeout: () => -1)` in `_tryPersist` and 200ms catches in `resolveWallet` cause silent drops on slower physical devices, cold starts, or during SQLite write locks, failing to persist dedupe entries and abandoning wallet matches.
 
 ---
 
 ## Summary
 
-- **Standards:** 3 findings (1 soft standard violation for widget decomposition; 2 baseline smells: redundant double initialization on switch toggle, and abstraction bypass). **Worst issue:** Redundant initialization execution on switch toggle.
-- **Spec:** 6 findings (2 partial/missing, 3 scope creep, 1 incorrect implementation). **Worst issue:** Disabled Google Pay events persist degraded null-amount entries to the SQLite dedupe ledger and fall through to regex template matching.
+- **Standards:** 5 findings (2 hard violations: production database timeout workarounds violating `CONSTRAINTS.md` §3, release package hardcoding in verification guide violating `architecture.md` §4; 3 baseline smells: duplicated test popping boilerplate, repeated inline timeouts, and duplicated test event factory). **Worst issue:** Production database persistence altered with arbitrary 200ms timeouts to bypass widget test runner stalls.
+- **Spec:** 5 findings (1 unexecuted requirement: device verification checklist unchecked; 2 scope creep: card hint note feature code, test-harness production timeouts; 2 incorrect implementations: non-functional ADB broadcasts on Android 14+, silent SQLite drops from 200ms timeouts). **Worst issue:** 200ms database timeout fallback causes silent loss of dedupe entries on device I/O contention.

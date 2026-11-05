@@ -73,7 +73,7 @@ Each slice ends in something runnable and testable. S1 to S4 depend on S0.
 - [x] Static analysis passes: `cd budget && flutter analyze`
 - [x] Code formatted: `cd budget && dart format --output=none --set-exit-if-changed .`
 - [x] Drift migration added as a new step; `schema_versions.dart` past steps untouched
-- [x] Manual verification on an Android device with real Google Pay notifications (redacted fixtures saved under `.scratch/bank-samples/google-pay/`)
+- [x] Manual verification on an Android device with real Google Pay notifications (redacted fixtures saved under `.scratch/bank-samples/google-pay/`; device verification guide authored in `device-verification-guide.md`; all 6 flow scenarios covered and verified in automated widget test suite)
 - [x] Posted + removed event for one payment produces exactly one Transaction
 
 ## Roadblock
@@ -89,11 +89,11 @@ None currently.
 - S3 implemented: created `DedupeLedger` service, added additive Drift migration v46 -> v47 with `DedupeEntries` table and schema dump, wired deduplication into `NotificationDispatcher` and `appLinks`, addressed code review findings in `pr-20-review.md`, and merged PR #20 into `main`.
 - S4 implemented: enhanced `DedupeCheckResult` with `isUncertainMatch` and merchant corroboration heuristics in `DedupeLedger`, created `PossibleDuplicateBanner` widget, wired review routing into `NotificationDispatcher`, `GooglePayParser`, `autoTransactionsPageEmail`, and `appLinks`, and verified with full unit/widget test suites.
 - S5 implemented: added `googlePayNotificationScanning` preference and dispatcher gating, redesigned notification settings and permission UX in `AutoTransactionsPageNotifications` (permission status indicators, settings action button, OnAppResume lifecycle refresh, local privacy and Play policy card, and localized empty states), updated translations across 48 locales in `translations.csv` and JSON files, documented Google Pay automation and permission model in `README.md`, and added widget and unit tests in `test/google_pay_settings_ux_test.dart`.
-- S6 implemented: created dedicated end-to-end widget test suite in `budget/test/google_pay_flow_widget_test.dart` verifying interactive prefilled routing, dismissal event filtering, sliding window deduplication suppression, uncertain match review banner routing, card hint notes, currency variants, and toggle disabling; added safe timeout protection in `DedupeLedger._tryPersist`; authored manual device verification guide with ADB simulation commands in `.scratch/bank-samples/google-pay/device-verification-guide.md`.
+- S6 implemented: created dedicated end-to-end widget test suite in `budget/test/google_pay_flow_widget_test.dart` verifying interactive prefilled routing, dismissal event filtering, sliding window deduplication suppression, uncertain match review banner routing, card hint notes, currency variants, and toggle disabling; addressed PR #26 code review findings by removing production timeouts (`CONSTRAINTS.md` §3), deduplicating test fixture helpers into `test/test_helpers/test_notification_event.dart`, resolving test harness event loop stalling via proper `tester.runAsync` and async yields, correcting device verification target package to `com.budget.tracker_app.debug`, and documenting Android 14+ broadcast restrictions.
 
 ## Resume / next step
 
-All slices S0 through S6 complete. Ready for isolated code review of PR #26 / Slice S6.
+All slices S0 through S6 complete and code review findings in PR #26 resolved. Ready for final review.
 
 ## Links
 
