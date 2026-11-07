@@ -5,7 +5,7 @@ Each task is a folder `.scratch/BT-N-<slug>/` with its `task.md` (copied from `.
 - IDs are stable and never renumbered. Rows are ordered by ID, which is creation order.
 - To add a task: take `Next ID`, create `.scratch/BT-<N>-<slug>/task.md`, add a row below, and bump `Next ID`.
 
-Next ID: 11
+Next ID: 13
 
 | ID | Title | Issue | Folder |
 |----|-------|-------|--------|
@@ -19,3 +19,5 @@ Next ID: 11
 | BT-8 | Colocate Test Suites with Library Subsystem Structure | [#14](https://github.com/kidomarcostelo/budget-tracking/issues/14) | [BT-8-colocate-tests](BT-8-colocate-tests/task.md) |
 | BT-9 | Route recognized self-transfers directly to Transfer balance flow | [#17](https://github.com/kidomarcostelo/budget-tracking/issues/17) | [BT-9-self-transfer-routing-fix](BT-9-self-transfer-routing-fix/task.md) |
 | BT-10 | Isolate Android debug build with applicationIdSuffix and distinct app label | [#21](https://github.com/kidomarcostelo/budget-tracking/issues/21) | [BT-10-debug-app-isolation](BT-10-debug-app-isolation/task.md) |
+| BT-11 | Align preview demo data with user banks (UnionBank, MariBank, GoTyme, Maya) | [#27](https://github.com/kidomarcostelo/budget-tracking/issues/27) | [BT-11-align-preview-demo-data-banks](BT-11-align-preview-demo-data-banks/task.md) |
+| BT-12 | Fix addTransactionRoute deep link prefilled fields and sequence blocking | [#28](https://github.com/kidomarcostelo/budget-tracking/issues/28) | [BT-12-fix-add-transaction-route-deep-link](BT-12-fix-add-transaction-route-deep-link/task.md) |
