@@ -81,19 +81,25 @@ void main() {
   });
 
   group('Parameter Alias & Parsing Helpers Unit Tests', () {
-    test('resolves title and name aliases, falling back if primary is empty', () {
+    test('resolves title and name aliases, falling back if primary is empty',
+        () {
       expect(getTitleFromParams({'title': 'Coffee'}), equals('Coffee'));
       expect(getTitleFromParams({'name': 'Coffee'}), equals('Coffee'));
-      expect(getTitleFromParams({'title': '', 'name': 'Coffee'}), equals('Coffee'));
-      expect(getTitleFromParams({'title': '   ', 'name': 'Coffee'}), equals('Coffee'));
+      expect(getTitleFromParams({'title': '', 'name': 'Coffee'}),
+          equals('Coffee'));
+      expect(getTitleFromParams({'title': '   ', 'name': 'Coffee'}),
+          equals('Coffee'));
       expect(getTitleFromParams({}), isNull);
     });
 
-    test('resolves note and notes aliases, falling back if primary is empty', () {
+    test('resolves note and notes aliases, falling back if primary is empty',
+        () {
       expect(getNotesFromParams({'note': 'Ref #123'}), equals('Ref #123'));
       expect(getNotesFromParams({'notes': 'Ref #123'}), equals('Ref #123'));
-      expect(getNotesFromParams({'note': '', 'notes': 'Ref #123'}), equals('Ref #123'));
-      expect(getNotesFromParams({'note': '   ', 'notes': 'Ref #123'}), equals('Ref #123'));
+      expect(getNotesFromParams({'note': '', 'notes': 'Ref #123'}),
+          equals('Ref #123'));
+      expect(getNotesFromParams({'note': '   ', 'notes': 'Ref #123'}),
+          equals('Ref #123'));
       expect(getNotesFromParams({}), isNull);
     });
 
