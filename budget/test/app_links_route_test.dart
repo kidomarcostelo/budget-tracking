@@ -6,7 +6,7 @@ import 'package:budget/struct/defaultPreferences.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/util/appLinks.dart';
-import 'package:drift/drift.dart' show driftRuntimeOptions;
+import 'package:drift/drift.dart' show driftRuntimeOptions, Value;
 import 'package:drift/native.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -150,30 +150,32 @@ void main() {
       // Seed a wallet and a category
       await testDb.into(testDb.wallets).insert(
             WalletsCompanion.insert(
-              walletPk: 'wallet-unionbank',
+              walletPk: const Value('wallet-unionbank'),
               name: 'UnionBank',
-              colour: '0xFF0000',
-              dateCreated: DateTime.now(),
+              colour: const Value('0xFF0000'),
+              dateCreated: Value(DateTime.now()),
+              order: 0,
               currency: const Value('PHP'),
             ),
           );
 
       await testDb.into(testDb.categories).insert(
             CategoriesCompanion.insert(
-              categoryPk: 'cat-dining',
+              categoryPk: const Value('cat-dining'),
               name: 'Dining',
-              colour: '0xFF0000',
-              iconName: 'fastfood',
-              dateCreated: DateTime.now(),
+              colour: const Value('0xFF0000'),
+              iconName: const Value('fastfood'),
+              dateCreated: Value(DateTime.now()),
+              order: 0,
               income: const Value(false),
             ),
           );
 
       final walletsList = await testDb.getAllWallets();
-      allWallets = AllWallets();
-      for (final w in walletsList) {
-        allWallets.indexedByPk[w.walletPk] = w;
-      }
+      final Map<String, TransactionWallet> indexedByPk = {
+        for (final w in walletsList) w.walletPk: w,
+      };
+      allWallets = AllWallets(list: walletsList, indexedByPk: indexedByPk);
     });
 
     tearDown(() async {
