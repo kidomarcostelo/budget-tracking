@@ -80,6 +80,32 @@ void main() {
     });
   });
 
+  group('Parameter Alias & Parsing Helpers Unit Tests', () {
+    test('resolves title and name aliases, falling back if primary is empty', () {
+      expect(getTitleFromParams({'title': 'Coffee'}), equals('Coffee'));
+      expect(getTitleFromParams({'name': 'Coffee'}), equals('Coffee'));
+      expect(getTitleFromParams({'title': '', 'name': 'Coffee'}), equals('Coffee'));
+      expect(getTitleFromParams({'title': '   ', 'name': 'Coffee'}), equals('Coffee'));
+      expect(getTitleFromParams({}), isNull);
+    });
+
+    test('resolves note and notes aliases, falling back if primary is empty', () {
+      expect(getNotesFromParams({'note': 'Ref #123'}), equals('Ref #123'));
+      expect(getNotesFromParams({'notes': 'Ref #123'}), equals('Ref #123'));
+      expect(getNotesFromParams({'note': '', 'notes': 'Ref #123'}), equals('Ref #123'));
+      expect(getNotesFromParams({'note': '   ', 'notes': 'Ref #123'}), equals('Ref #123'));
+      expect(getNotesFromParams({}), isNull);
+    });
+
+    test('parses income and type parameters', () {
+      expect(getIncomeFromParams({'income': 'true'}), isTrue);
+      expect(getIncomeFromParams({'income': '1'}), isTrue);
+      expect(getIncomeFromParams({'type': 'income'}), isTrue);
+      expect(getIncomeFromParams({'type': 'expense'}), isFalse);
+      expect(getIncomeFromParams({}), isNull);
+    });
+  });
+
   group('getAmountFromParams Unit Tests', () {
     test('parses decimal amount correctly', () {
       expect(getAmountFromParams({'amount': '340.00'}), equals(340.0));
@@ -92,7 +118,7 @@ void main() {
     test('parses formatted amount with currency and commas', () {
       expect(getAmountFromParams({'amount': '₱340.00'}), equals(340.0));
       expect(getAmountFromParams({'amount': '1,250.50'}), equals(1250.5));
-      expect(getAmountFromParams({'amount': ' $45.99 '}), equals(45.99));
+      expect(getAmountFromParams({'amount': r' $45.99 '}), equals(45.99));
     });
 
     test('returns 0 for missing or invalid amount', () {
