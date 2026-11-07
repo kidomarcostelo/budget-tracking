@@ -9,7 +9,43 @@ on:
       - '.github/workflows/build-apk.yml'
 
 jobs:
-  build_apk:
+  build_release_apk:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        working-directory: budget
+        run: flutter pub get
+
+      - name: Build Release APK
+        working-directory: budget
+        run: flutter build apk --release
+
+      - name: Upload Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cashew-release-apk
+          path: budget/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+  build_debug_apk:
     name: Build Debug APK
     runs-on: ubuntu-latest
 
@@ -38,7 +74,7 @@ jobs:
         working-directory: budget
         run: flutter build apk --debug
 
-      - name: Upload APK Artifact
+      - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: cashew-debug-apk
