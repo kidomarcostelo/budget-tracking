@@ -327,6 +327,36 @@ Future processAddTransactionRouteFromParams(
   if (dedupeResult != null && dedupeResult.isDuplicate) {
     return null;
   }
+
+  bool? selectedIncome;
+  if (params.containsKey("income")) {
+    selectedIncome = params["income"]?.toLowerCase() == "true" ||
+        params["income"] == "1";
+  } else if (params.containsKey("type")) {
+    if (params["type"]?.toLowerCase() == "income") {
+      selectedIncome = true;
+    } else if (params["type"]?.toLowerCase() == "expense") {
+      selectedIncome = false;
+    }
+  }
+
+  bool startInitialSequence = true;
+  if (params.containsKey("startInitialAddTransactionSequence")) {
+    startInitialSequence =
+        params["startInitialAddTransactionSequence"]?.toLowerCase() == "true";
+  } else {
+    final bool hasPrefilledData = (params["title"] != null &&
+            params["title"]!.trim().isNotEmpty) ||
+        (params["name"] != null && params["name"]!.trim().isNotEmpty) ||
+        amount != 0 ||
+        mainAndSubCategory.main != null ||
+        mainAndSubCategory.sub != null ||
+        wallet != null ||
+        (params["note"] != null && params["note"]!.trim().isNotEmpty) ||
+        (params["notes"] != null && params["notes"]!.trim().isNotEmpty);
+    startInitialSequence = !hasPrefilledData;
+  }
+
   // Add a delay so the keyboard can focus
   await Future.delayed(Duration(milliseconds: 50), () async {
     await pushRoute(
@@ -338,8 +368,11 @@ Future processAddTransactionRouteFromParams(
         selectedSubCategory: mainAndSubCategory.sub,
         selectedWallet: wallet,
         selectedDate: dateCreated,
-        selectedTitle: params["title"],
-        selectedNotes: params["notes"],
+        selectedTitle: params["title"] ?? params["name"],
+        selectedNotes: params["note"] ?? params["notes"],
+        selectedIncome: selectedIncome,
+        useCategorySelectedIncome: selectedIncome == null,
+        startInitialAddTransactionSequence: startInitialSequence,
         isPossibleDuplicate: dedupeResult?.isUncertainMatch ?? false,
         possibleDuplicateEntry: dedupeResult?.matchedEntry,
       ),
@@ -501,7 +534,13 @@ Future executeAppLink(BuildContext? context, Uri uri,
 // }
 
 double getAmountFromParams(Map<String, String?> params) {
-  return double.tryParse(params["amount"] ?? "0") ?? 0;
+  String? raw = params["amount"];
+  if (raw == null || raw.trim().isEmpty) return 0;
+  raw = raw.trim();
+  double? parsed = double.tryParse(raw);
+  if (parsed != null) return parsed;
+  String sanitized = raw.replaceAll(RegExp(r'[^0-9.-]'), '');
+  return double.tryParse(sanitized) ?? 0;
 }
 
 DateTime? getDateTimeFromParams(
@@ -603,9 +642,12 @@ Future<MainAndSubcategory> getMainAndSubcategoryFromParams(
       onlySubCategories: false,
     );
   }
-  if (mainAndSubcategory.main == null && params["title"] != null) {
+  final String? titleForCategory = params["title"] ?? params["name"];
+  if (mainAndSubcategory.main == null &&
+      titleForCategory != null &&
+      titleForCategory.isNotEmpty) {
     TransactionAssociatedTitleWithCategory? foundTitle = (await database
-            .getSimilarAssociatedTitles(title: params["title"] ?? "", limit: 1))
+            .getSimilarAssociatedTitles(title: titleForCategory, limit: 1))
         .firstOrNull;
     mainAndSubcategory.main = foundTitle?.category;
   }
