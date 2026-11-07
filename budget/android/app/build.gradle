@@ -79,7 +79,11 @@ android {
             manifestPlaceholders = [appName: "Cashew Dev"]
         }
         release {
-            signingConfig signingConfigs.release
+            if (keystoreProperties['storeFile'] != null && file(keystoreProperties['storeFile']).exists()) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
         }
     }
 }
