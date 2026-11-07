@@ -534,8 +534,7 @@ String? getNotesFromParams(Map<String, String?> params) {
 
 bool? getIncomeFromParams(Map<String, String?> params) {
   if (params.containsKey("income")) {
-    return params["income"]?.toLowerCase() == "true" ||
-        params["income"] == "1";
+    return params["income"]?.toLowerCase() == "true" || params["income"] == "1";
   } else if (params.containsKey("type")) {
     if (params["type"]?.toLowerCase() == "income") {
       return true;
