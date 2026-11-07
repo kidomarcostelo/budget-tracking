@@ -192,8 +192,8 @@ Future<Transaction?> processAddTransactionFromParams(
     return null;
   }
 
-  String title = params["title"] ?? params["name"] ?? "";
-  String note = params["note"] ?? params["notes"] ?? "";
+  String title = getTitleFromParams(params) ?? "";
+  String note = getNotesFromParams(params) ?? "";
 
   // If ambiguous match detected, route to review with possible duplicate banner instead of auto-creating
   if (dedupeResult != null && dedupeResult.isUncertainMatch) {
@@ -328,34 +328,17 @@ Future processAddTransactionRouteFromParams(
     return null;
   }
 
-  bool? selectedIncome;
-  if (params.containsKey("income")) {
-    selectedIncome = params["income"]?.toLowerCase() == "true" ||
-        params["income"] == "1";
-  } else if (params.containsKey("type")) {
-    if (params["type"]?.toLowerCase() == "income") {
-      selectedIncome = true;
-    } else if (params["type"]?.toLowerCase() == "expense") {
-      selectedIncome = false;
-    }
-  }
+  final String? title = getTitleFromParams(params);
+  final String? note = getNotesFromParams(params);
+  final bool? selectedIncome = getIncomeFromParams(params);
 
-  bool startInitialSequence = true;
-  if (params.containsKey("startInitialAddTransactionSequence")) {
-    startInitialSequence =
-        params["startInitialAddTransactionSequence"]?.toLowerCase() == "true";
-  } else {
-    final bool hasPrefilledData = (params["title"] != null &&
-            params["title"]!.trim().isNotEmpty) ||
-        (params["name"] != null && params["name"]!.trim().isNotEmpty) ||
-        amount != 0 ||
-        mainAndSubCategory.main != null ||
-        mainAndSubCategory.sub != null ||
-        wallet != null ||
-        (params["note"] != null && params["note"]!.trim().isNotEmpty) ||
-        (params["notes"] != null && params["notes"]!.trim().isNotEmpty);
-    startInitialSequence = !hasPrefilledData;
-  }
+  final bool hasPrefilledData = title != null ||
+      note != null ||
+      amount != 0 ||
+      mainAndSubCategory.main != null ||
+      mainAndSubCategory.sub != null ||
+      wallet != null;
+  final bool startInitialSequence = !hasPrefilledData;
 
   // Add a delay so the keyboard can focus
   await Future.delayed(Duration(milliseconds: 50), () async {
@@ -368,10 +351,10 @@ Future processAddTransactionRouteFromParams(
         selectedSubCategory: mainAndSubCategory.sub,
         selectedWallet: wallet,
         selectedDate: dateCreated,
-        selectedTitle: params["title"] ?? params["name"],
-        selectedNotes: params["note"] ?? params["notes"],
+        selectedTitle: title,
+        selectedNotes: note,
         selectedIncome: selectedIncome,
-        useCategorySelectedIncome: selectedIncome == null,
+        useCategorySelectedIncome: true,
         startInitialAddTransactionSequence: startInitialSequence,
         isPossibleDuplicate: dedupeResult?.isUncertainMatch ?? false,
         possibleDuplicateEntry: dedupeResult?.matchedEntry,
@@ -533,6 +516,36 @@ Future executeAppLink(BuildContext? context, Uri uri,
 //   }
 // }
 
+String? getTitleFromParams(Map<String, String?> params) {
+  final title = params["title"]?.trim();
+  if (title != null && title.isNotEmpty) return title;
+  final name = params["name"]?.trim();
+  if (name != null && name.isNotEmpty) return name;
+  return null;
+}
+
+String? getNotesFromParams(Map<String, String?> params) {
+  final note = params["note"]?.trim();
+  if (note != null && note.isNotEmpty) return note;
+  final notes = params["notes"]?.trim();
+  if (notes != null && notes.isNotEmpty) return notes;
+  return null;
+}
+
+bool? getIncomeFromParams(Map<String, String?> params) {
+  if (params.containsKey("income")) {
+    return params["income"]?.toLowerCase() == "true" ||
+        params["income"] == "1";
+  } else if (params.containsKey("type")) {
+    if (params["type"]?.toLowerCase() == "income") {
+      return true;
+    } else if (params["type"]?.toLowerCase() == "expense") {
+      return false;
+    }
+  }
+  return null;
+}
+
 double getAmountFromParams(Map<String, String?> params) {
   String? raw = params["amount"];
   if (raw == null || raw.trim().isEmpty) return 0;
@@ -642,7 +655,7 @@ Future<MainAndSubcategory> getMainAndSubcategoryFromParams(
       onlySubCategories: false,
     );
   }
-  final String? titleForCategory = params["title"] ?? params["name"];
+  final String? titleForCategory = getTitleFromParams(params);
   if (mainAndSubcategory.main == null &&
       titleForCategory != null &&
       titleForCategory.isNotEmpty) {

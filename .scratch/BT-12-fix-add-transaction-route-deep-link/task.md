@@ -40,7 +40,11 @@
   - Parse amount with sanitization for symbols/commas in `getAmountFromParams`.
   - Support `name` parameter in title-based category association in `getMainAndSubcategoryFromParams`.
 - [x] Add unit / widget test in `budget/test/app_links_route_test.dart` verifying `processAddTransactionRouteFromParams` constructs `AddTransactionPage` with prefilled values and sequence disabled.
-- [ ] Commit, push branch, and open PR with `gh pr create`.
+- [x] Commit, push branch, and open PR with `gh pr create` (PR #29).
+- [x] Address code review findings:
+  - Fix string interpolation syntax error on raw amount in `app_links_route_test.dart`.
+  - Extract parameter resolution helpers (`getTitleFromParams`, `getNotesFromParams`, `getIncomeFromParams`) to resolve smells and empty string shadowing.
+  - Pass `useCategorySelectedIncome: true` unconditionally.
 
 ---
 
