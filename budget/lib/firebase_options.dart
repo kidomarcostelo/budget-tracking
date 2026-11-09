@@ -56,11 +56,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDNVDtwGJUHBZohwB2RDeUco-5hAGfx2bA',
-    appId: '1:267621253497:android:e7a2967eaf8dd072842fa8',
-    messagingSenderId: '267621253497',
-    projectId: 'budget-app-flutter',
-    storageBucket: 'budget-app-flutter.appspot.com',
+    apiKey: 'AIzaSyA9TA3epznndq2ZCf_IM-kfP-63OcirVcg',
+    appId: '1:498900798287:android:ce2a41b90c9412c0a3133a',
+    messagingSenderId: '498900798287',
+    projectId: 'cashew-backup-kcostelo',
+    storageBucket: 'cashew-backup-kcostelo.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

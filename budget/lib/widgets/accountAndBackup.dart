@@ -73,6 +73,45 @@ class GoogleAuthClient extends http.BaseClient {
 signIn.GoogleSignIn? googleSignIn;
 signIn.GoogleSignInAccount? googleUser;
 
+String resolveSignInErrorMessage(Object error) {
+  if (error is PlatformException) {
+    final message = error.message ?? '';
+    final code = error.code;
+    if (message.contains('DEVELOPER_ERROR') ||
+        message.contains('ApiException: 10')) {
+      return 'sign-in-config-error'.tr();
+    }
+    if (code == 'sign_in_canceled') {
+      return 'sign-in-cancelled'.tr();
+    }
+    if (message.contains('ApiException: 12500')) {
+      return 'sign-in-play-services-error'.tr();
+    }
+  }
+
+  final errStr = error.toString();
+  if (errStr.contains('Login cancelled') ||
+      errStr.contains('User cancelled') ||
+      errStr == 'Login failed') {
+    return 'sign-in-cancelled'.tr();
+  }
+  if (errStr.contains('ApiException: 10') ||
+      errStr.contains('DEVELOPER_ERROR')) {
+    return 'sign-in-config-error'.tr();
+  }
+  if (errStr.contains('ApiException: 12500')) {
+    return 'sign-in-play-services-error'.tr();
+  }
+  if (errStr.contains('SocketException') ||
+      errStr.contains('TimeoutException') ||
+      errStr.contains('Failed host lookup') ||
+      errStr.contains('NetworkException') ||
+      errStr.contains('network_error')) {
+    return 'sign-in-error-description'.tr();
+  }
+  return 'sign-in-error'.tr();
+}
+
 Future<bool> signInGoogle(
     {BuildContext? context,
     bool? waitForCompletion,
@@ -184,13 +223,19 @@ Future<bool> signInGoogle(
   } catch (e) {
     print(e);
     if (waitForCompletion == true && context != null) popRoute(context);
+    final isCancelled = (e.toString() == "Login failed" ||
+        (e is PlatformException && e.code == "sign_in_canceled"));
     openSnackbar(
       SnackbarMessage(
-        title: "sign-in-error".tr(),
-        description: "sign-in-error-description".tr(),
-        icon: appStateSettings["outlinedIcons"]
-            ? Icons.error_outlined
-            : Icons.error_rounded,
+        title: isCancelled ? "sign-in-cancelled".tr() : "sign-in-error".tr(),
+        description: isCancelled ? "" : resolveSignInErrorMessage(e),
+        icon: isCancelled
+            ? (appStateSettings["outlinedIcons"]
+                ? Icons.info_outlined
+                : Icons.info_rounded)
+            : (appStateSettings["outlinedIcons"]
+                ? Icons.error_outlined
+                : Icons.error_rounded),
         timeout: Duration(milliseconds: 3400),
         onTap: () => signInGoogle(
           context: context,
