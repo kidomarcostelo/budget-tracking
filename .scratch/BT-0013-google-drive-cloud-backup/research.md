@@ -1,6 +1,6 @@
 # Google Sign-In and Google Drive Cloud Backup for Custom & Fork Builds: Feasibility and Architecture Research
 
-**Document Reference:** `.scratch/BT-13-google-drive-cloud-backup/research.md`  
+**Document Reference:** `.scratch/BT-0013-google-drive-cloud-backup/research.md`  
 **Date:** 2026-11-09  
 **Status:** Completed  
 **Author / Role:** Antigravity AI Assistant
@@ -138,7 +138,7 @@ Inspection of `.scratch/apk/release/app-release.apk` (built Nov 7, 2026):
 ## 4. Google Cloud & OAuth Security Requirements
 
 ### 4.1 Required Package Identifiers
-Following the debug isolation established in BT-10 ([`PR-22`](file:///data/data/com.termux/files/home/repo/budget-tracking/docs/code-reviews/PR-22-debug-app-isolation.md)):
+Following the debug isolation established in BT-0010 ([`PR-22`](file:///data/data/com.termux/files/home/repo/budget-tracking/docs/code-reviews/PR-22-debug-app-isolation.md)):
 1. **Production / Release:** `com.budget.tracker_app`
 2. **Development / Debug:** `com.budget.tracker_app.debug`
 
