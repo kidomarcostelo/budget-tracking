@@ -1,6 +1,6 @@
 # Task: Colocate Test Suites with Library Subsystem Structure
 
-**ID:** BT-8  
+**ID:** BT-0008  
 **Issue Reference:** [#14](https://github.com/kidomarcostelo/budget-tracking/issues/14)  
 **Status:** Ready For Agent  
 **Assignee / Agent:** kidomarcostelo / AI Assistant  

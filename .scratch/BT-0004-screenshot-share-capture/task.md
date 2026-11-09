@@ -1,5 +1,6 @@
 # Task: Capture transactions from shared banking screenshots (Android first)
 
+**ID:** BT-0004  
 **Issue Reference:** [#8](https://github.com/kidomarcostelo/budget-tracking/issues/8)  
 **Status:** Completed (All Map Sub-Issues Verified & Closed)  
 **Assignee / Agent:** Antigravity  
