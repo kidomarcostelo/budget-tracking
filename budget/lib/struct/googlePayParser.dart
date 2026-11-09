@@ -235,8 +235,10 @@ class GooglePayParser {
     final wallet = walletOverride ?? await resolveWallet(result);
     final category = categoryOverride ?? await resolveCategory(result);
     final note = result.cardHint;
+    final bool isNonBlocking =
+        appStateSettings["notificationScanningNonBlocking"] == true;
 
-    if (willPushRoute || isPossibleDuplicate) {
+    if ((willPushRoute || isPossibleDuplicate) && !isNonBlocking) {
       pushRoute(
         null,
         AddTransactionPage(
@@ -254,17 +256,17 @@ class GooglePayParser {
         ),
       );
     } else {
-      if (navigatorKey.currentContext != null) {
-        processAddTransactionFromParams(navigatorKey.currentContext!, {
-          'title': result.merchant,
-          'note': note,
-          'categoryPk': category?.categoryPk,
-          'walletPk': wallet?.walletPk,
-          'amount': result.amount.toString(),
-          'date': (dateTime ?? DateTime.now()).toString(),
-          'skipDedupe': 'true',
-        });
-      }
+      processAddTransactionFromParams(navigatorKey.currentContext, {
+        'title': result.merchant,
+        'note': note,
+        'categoryPk': category?.categoryPk,
+        'walletPk': wallet?.walletPk,
+        'amount': result.amount.toString(),
+        'date': (dateTime ?? DateTime.now()).toString(),
+        'skipDedupe': 'true',
+        'pending': isNonBlocking ? 'true' : 'false',
+        'isPossibleDuplicate': isPossibleDuplicate ? 'true' : 'false',
+      });
     }
     return true;
   }

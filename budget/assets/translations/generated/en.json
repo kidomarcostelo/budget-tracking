@@ -1200,5 +1200,22 @@
   "notification-configuration-missing": "No Custom Templates Added",
   "notification-configuration-missing-description": "Add a template if you wish to parse notifications from other banking apps.",
   "custom-notification-templates": "Custom Notification Templates",
-  "custom-notification-templates-description": "Automatically detect and parse transactions using custom notification templates."
+  "custom-notification-templates-description": "Automatically detect and parse transactions using custom notification templates.",
+  "notification-scanning-non-blocking": "Non-blocking notifications",
+  "notification-scanning-non-blocking-description": "Show a notification popup instead of immediately opening the transaction page.",
+  "pending-transactions": "Pending Transactions",
+  "pending-transactions-description": "Review and confirm detected transactions",
+  "no-pending-transactions": "No pending transactions",
+  "no-pending-transactions-description": "Detected transactions from notifications will appear here for review.",
+  "approve-all": "Approve All",
+  "dismiss-all": "Dismiss All",
+  "approve": "Approve",
+  "dismiss": "Dismiss",
+  "transaction-approved": "Transaction approved",
+  "transaction-dismissed": "Transaction dismissed",
+  "all-transactions-approved": "All pending transactions approved",
+  "all-transactions-dismissed": "All pending transactions dismissed",
+  "new-transaction-detected": "New transaction detected",
+  "new-transactions-detected": "new transactions detected",
+  "transaction-no-longer-pending": "Transaction is no longer pending"
 }

@@ -2,6 +2,7 @@ import 'package:budget/widgets/globalSnackbar.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 
 openSnackbar(SnackbarMessage message, {bool postIfQueue = true}) {
+  if (snackbarKey.currentState == null) return;
   snackbarKey.currentState!.post(message, postIfQueue: postIfQueue);
   // ScaffoldMessenger.of(context).showSnackBar(
   //   SnackBar(
