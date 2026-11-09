@@ -1,7 +1,7 @@
 # Code Review: PR #34
 
 - **Target PR:** [#34](https://github.com/kidomarcostelo/budget-tracking/pull/34) (`feat/align-preview-demo-data-banks` → `main`)
-- **Tracking Issue:** [#27](https://github.com/kidomarcostelo/budget-tracking/issues/27) (`.scratch/BT-11-align-preview-demo-data-banks/task.md`)
+- **Tracking Issue:** [#27](https://github.com/kidomarcostelo/budget-tracking/issues/27) (`.scratch/BT-0011-align-preview-demo-data-banks/task.md`)
 - **Commit:** `bc5b9de7 feat(database): align preview demo data with Philippine banks and PHP currency`
 - **Review Date:** 2026-11-09T21:46:35+08:00
 
