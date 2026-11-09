@@ -1,6 +1,6 @@
 # Task: Research Feasibility of Decoupled Bank Notification Parser (Automate / Tasker & Cashew API)
 
-**ID:** BT-14  
+**ID:** BT-0014  
 **Issue Reference:** [#37](https://github.com/kidomarcostelo/budget-tracking/issues/37)  
 **Status:** Ready for Research (Queued for Research Agent / Higher Model)  
 **Assignee:** TBD  
