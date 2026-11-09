@@ -73,6 +73,23 @@ class GoogleAuthClient extends http.BaseClient {
 signIn.GoogleSignIn? googleSignIn;
 signIn.GoogleSignInAccount? googleUser;
 
+String resolveSignInErrorMessage(Object error) {
+  final errStr = error.toString();
+  if (errStr.contains("Login cancelled") ||
+      errStr.contains("User cancelled") ||
+      errStr == "Login failed") {
+    return "Sign-in was cancelled.";
+  }
+  if (errStr.contains("ApiException: 10") ||
+      errStr.contains("DEVELOPER_ERROR")) {
+    return "Google Sign-In configuration error: SHA-1 or package mismatch (ApiException 10).";
+  }
+  if (errStr.contains("ApiException: 12500")) {
+    return "Google Play Services sign-in failed (ApiException 12500).";
+  }
+  return "sign-in-error-description".tr();
+}
+
 Future<bool> signInGoogle(
     {BuildContext? context,
     bool? waitForCompletion,
@@ -187,7 +204,7 @@ Future<bool> signInGoogle(
     openSnackbar(
       SnackbarMessage(
         title: "sign-in-error".tr(),
-        description: "sign-in-error-description".tr(),
+        description: resolveSignInErrorMessage(e),
         icon: appStateSettings["outlinedIcons"]
             ? Icons.error_outlined
             : Icons.error_rounded,

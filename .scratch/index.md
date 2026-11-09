@@ -5,7 +5,7 @@ Each task is a folder `.scratch/BT-N-<slug>/` with its `task.md` (copied from `.
 - IDs are stable and never renumbered. Rows are ordered by ID, which is creation order.
 - To add a task: take `Next ID`, create `.scratch/BT-<N>-<slug>/task.md`, add a row below, and bump `Next ID`.
 
-Next ID: 13
+Next ID: 14
 
 | ID | Title | Issue | Folder |
 |----|-------|-------|--------|
@@ -21,3 +21,4 @@ Next ID: 13
 | BT-10 | Isolate Android debug build with applicationIdSuffix and distinct app label | [#21](https://github.com/kidomarcostelo/budget-tracking/issues/21) | [BT-10-debug-app-isolation](BT-10-debug-app-isolation/task.md) |
 | BT-11 | Align preview demo data with user banks (UnionBank, MariBank, GoTyme, Maya) | [#27](https://github.com/kidomarcostelo/budget-tracking/issues/27) | [BT-11-align-preview-demo-data-banks](BT-11-align-preview-demo-data-banks/task.md) |
 | BT-12 | Fix addTransactionRoute deep link prefilled fields and sequence blocking | [#28](https://github.com/kidomarcostelo/budget-tracking/issues/28) | [BT-12-fix-add-transaction-route-deep-link](BT-12-fix-add-transaction-route-deep-link/task.md) |
+| BT-13 | Enable Google Sign-In and Google Drive Cloud Backup for Custom Builds | [#35](https://github.com/kidomarcostelo/budget-tracking/issues/35) | [BT-13-google-drive-cloud-backup](BT-13-google-drive-cloud-backup/task.md) |
