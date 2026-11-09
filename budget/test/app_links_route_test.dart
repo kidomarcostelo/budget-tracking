@@ -31,6 +31,14 @@ class _TestAssetLoader extends AssetLoader {
   }
 }
 
+Future<void> popToHome(WidgetTester tester) async {
+  while (navigatorKey.currentState?.canPop() == true) {
+    navigatorKey.currentState?.pop();
+    await tester.pumpAndSettle();
+    await Future.delayed(const Duration(milliseconds: 20));
+  }
+}
+
 Widget buildTestApp({
   required AllWallets allWallets,
   Widget? home,
@@ -145,6 +153,7 @@ void main() {
       final defaults = await getDefaultPreferences();
       appStateSettings.clear();
       appStateSettings.addAll(defaults);
+      appStateSettings['appAnimations'] = AppAnimations.disabled.index;
       appStateSettings['askForTransactionTitle'] = true;
 
       // Seed a wallet and a category
@@ -164,7 +173,7 @@ void main() {
               categoryPk: const Value('cat-dining'),
               name: 'Dining',
               colour: const Value('0xFF0000'),
-              iconName: const Value('fastfood'),
+              iconName: const Value(null),
               dateCreated: Value(DateTime.now()),
               order: 0,
               income: const Value(false),
@@ -179,94 +188,94 @@ void main() {
     });
 
     tearDown(() async {
+      while (navigatorKey.currentState?.canPop() == true) {
+        navigatorKey.currentState?.pop();
+      }
       await testDb.close();
     });
+
+    Future<void> runRouteTest(
+      WidgetTester tester, {
+      required Map<String, String?> params,
+      required Future<void> Function(AddTransactionPage page) verify,
+    }) async {
+      await tester.runAsync(() async {
+        try {
+          await tester.pumpWidget(buildTestApp(allWallets: allWallets));
+          await tester.pumpAndSettle();
+
+          final context = navigatorKey.currentContext!;
+          await processAddTransactionRouteFromParams(context, params);
+          await tester.pumpAndSettle();
+
+          final addTxFinder = find.byType(AddTransactionPage);
+          expect(addTxFinder, findsOneWidget);
+          final addTxWidget = tester.widget<AddTransactionPage>(addTxFinder);
+
+          await verify(addTxWidget);
+        } finally {
+          await popToHome(tester);
+        }
+      });
+    }
 
     testWidgets(
         'prefilled route sets startInitialAddTransactionSequence to false and pre-fills all fields',
         (WidgetTester tester) async {
-      await tester.pumpWidget(buildTestApp(allWallets: allWallets));
-      await tester.pumpAndSettle();
+      await runRouteTest(
+        tester,
+        params: {
+          'title': 'GrabFood',
+          'amount': '340.00',
+          'note': 'UnionBank Debit •••• 5678',
+          'wallet': 'UnionBank',
+          'category': 'Dining',
+        },
+        verify: (addTxWidget) async {
+          expect(addTxWidget.selectedTitle, equals('GrabFood'));
+          expect(addTxWidget.selectedAmount, equals(340.0));
+          expect(
+              addTxWidget.selectedNotes, equals('UnionBank Debit •••• 5678'));
+          expect(addTxWidget.selectedWallet?.name, equals('UnionBank'));
+          expect(addTxWidget.selectedCategory?.name, equals('Dining'));
 
-      final context = navigatorKey.currentContext!;
+          // Verify blocking title wizard is disabled
+          expect(addTxWidget.startInitialAddTransactionSequence, isFalse);
+          expect(addTxWidget.useCategorySelectedIncome, isTrue);
 
-      // Execute route with prefilled parameters (including singular note and Dining category)
-      await processAddTransactionRouteFromParams(context, {
-        'title': 'GrabFood',
-        'amount': '340.00',
-        'note': 'UnionBank Debit •••• 5678',
-        'wallet': 'UnionBank',
-        'category': 'Dining',
-      });
-
-      // Pump through the 50ms delay
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pumpAndSettle();
-
-      // Verify AddTransactionPage is rendered
-      final addTxFinder = find.byType(AddTransactionPage);
-      expect(addTxFinder, findsOneWidget);
-
-      final addTxWidget = tester.widget<AddTransactionPage>(addTxFinder);
-
-      // Verify prefilled data
-      expect(addTxWidget.selectedTitle, equals('GrabFood'));
-      expect(addTxWidget.selectedAmount, equals(340.0));
-      expect(addTxWidget.selectedNotes, equals('UnionBank Debit •••• 5678'));
-      expect(addTxWidget.selectedWallet?.name, equals('UnionBank'));
-      expect(addTxWidget.selectedCategory?.name, equals('Dining'));
-
-      // Verify blocking title wizard is disabled
-      expect(addTxWidget.startInitialAddTransactionSequence, isFalse);
-      expect(addTxWidget.useCategorySelectedIncome, isTrue);
-
-      // Modal bottom sheet SelectTitle should NOT be open
-      expect(find.byType(SelectTitle), findsNothing);
+          // Modal bottom sheet SelectTitle should NOT be open
+          expect(find.byType(SelectTitle), findsNothing);
+        },
+      );
     });
 
     testWidgets('supports name alias and notes alias',
         (WidgetTester tester) async {
-      await tester.pumpWidget(buildTestApp(allWallets: allWallets));
-      await tester.pumpAndSettle();
-
-      final context = navigatorKey.currentContext!;
-
-      await processAddTransactionRouteFromParams(context, {
-        'name': 'Jollibee',
-        'amount': '150.00',
-        'notes': 'Takeout lunch',
-      });
-
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pumpAndSettle();
-
-      final addTxFinder = find.byType(AddTransactionPage);
-      expect(addTxFinder, findsOneWidget);
-
-      final addTxWidget = tester.widget<AddTransactionPage>(addTxFinder);
-      expect(addTxWidget.selectedTitle, equals('Jollibee'));
-      expect(addTxWidget.selectedNotes, equals('Takeout lunch'));
-      expect(addTxWidget.startInitialAddTransactionSequence, isFalse);
+      await runRouteTest(
+        tester,
+        params: {
+          'name': 'Jollibee',
+          'amount': '150.00',
+          'notes': 'Takeout lunch',
+        },
+        verify: (addTxWidget) async {
+          expect(addTxWidget.selectedTitle, equals('Jollibee'));
+          expect(addTxWidget.selectedNotes, equals('Takeout lunch'));
+          expect(addTxWidget.startInitialAddTransactionSequence, isFalse);
+        },
+      );
     });
 
     testWidgets(
         'empty params leaves startInitialAddTransactionSequence as true',
         (WidgetTester tester) async {
-      await tester.pumpWidget(buildTestApp(allWallets: allWallets));
-      await tester.pumpAndSettle();
-
-      final context = navigatorKey.currentContext!;
-
-      await processAddTransactionRouteFromParams(context, {});
-
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pumpAndSettle();
-
-      final addTxFinder = find.byType(AddTransactionPage);
-      expect(addTxFinder, findsOneWidget);
-
-      final addTxWidget = tester.widget<AddTransactionPage>(addTxFinder);
-      expect(addTxWidget.startInitialAddTransactionSequence, isTrue);
+      await runRouteTest(
+        tester,
+        params: {},
+        verify: (addTxWidget) async {
+          expect(addTxWidget.startInitialAddTransactionSequence, isTrue);
+        },
+      );
     });
   });
 }
