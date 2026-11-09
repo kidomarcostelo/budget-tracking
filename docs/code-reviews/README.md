@@ -13,4 +13,4 @@ Code reviews in this repository evaluate incoming pull requests along two strict
 
 | PR | Issue / Task | Title | Review Date | Status | Record |
 |:---|:-------------|:------|:------------|:-------|:-------|
-| [#22](https://github.com/kidomarcostelo/budget-tracking/pull/22) | [#21](https://github.com/kidomarcostelo/budget-tracking/issues/21) / BT-10 | feat(android): isolate debug build with applicationIdSuffix and Cashew Dev label | 2026-11-02 | Remediated | [PR-22-debug-app-isolation.md](PR-22-debug-app-isolation.md) |
+| [#22](https://github.com/kidomarcostelo/budget-tracking/pull/22) | [#21](https://github.com/kidomarcostelo/budget-tracking/issues/21) / BT-0010 | feat(android): isolate debug build with applicationIdSuffix and Cashew Dev label | 2026-11-02 | Remediated | [PR-22-debug-app-isolation.md](PR-22-debug-app-isolation.md) |

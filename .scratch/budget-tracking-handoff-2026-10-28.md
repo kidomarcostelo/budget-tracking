@@ -20,7 +20,7 @@
      - `budget/test/dedupe_ledger_test.dart`
 3. **Workspace Transfer Preparedness**:
    - Local branch `feat/dedupe-ledger` is completely pushed to remote `origin/feat/dedupe-ledger`.
-   - Updated task specifications in `.scratch/BT-3-extend-auto-transactions-google-pay/task.md` with CI roadblock and exact resume instructions.
+   - Updated task specifications in `.scratch/BT-0003-extend-auto-transactions-google-pay/task.md` with CI roadblock and exact resume instructions.
 
 ---
 
@@ -53,8 +53,8 @@ When resuming in the target workspace:
 
 - **Active PR #20**: [kidomarcostelo/budget-tracking#20](https://github.com/kidomarcostelo/budget-tracking/pull/20)
 - **Active Issue #7**: [kidomarcostelo/budget-tracking#7](https://github.com/kidomarcostelo/budget-tracking/issues/7)
-- **Task Specification**: [`.scratch/BT-3-extend-auto-transactions-google-pay/task.md`](BT-3-extend-auto-transactions-google-pay/task.md)
-- **Research Document**: [`.scratch/BT-3-extend-auto-transactions-google-pay/research.md`](BT-3-extend-auto-transactions-google-pay/research.md)
+- **Task Specification**: [`.scratch/BT-0003-extend-auto-transactions-google-pay/task.md`](BT-0003-extend-auto-transactions-google-pay/task.md)
+- **Research Document**: [`.scratch/BT-0003-extend-auto-transactions-google-pay/research.md`](BT-0003-extend-auto-transactions-google-pay/research.md)
 - **Local Task Index**: [`.scratch/index.md`](index.md)
 
 ---

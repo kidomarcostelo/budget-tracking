@@ -113,7 +113,7 @@
 2. **Remove Redundant `manifestPlaceholders` in `buildTypes.release`:**
    - Remove `manifestPlaceholders = [appName: "Cashew"]` from `release` block since it is already defined in `defaultConfig`.
 3. **Update Local Task Status:**
-   - Mark completed verification steps in [`.scratch/BT-10-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-10-debug-app-isolation/task.md#L38-L41).
+   - Mark completed verification steps in [`.scratch/BT-0010-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-0010-debug-app-isolation/task.md#L38-L41).
 
 ---
 
@@ -122,5 +122,5 @@
 1. **Profile Build Type Aligned:** Removed the divergent `profile` block in [`budget/android/app/build.gradle`](file:///home/kcostelo/person/budget-tracking/budget/android/app/build.gradle). Profile builds now cleanly inherit the production release package and label (`com.budget.tracker_app`, `Cashew`).
 2. **Redundant Placeholders Removed:** Removed `manifestPlaceholders = [appName: "Cashew"]` from `buildTypes.release`; it inherits automatically from `defaultConfig`.
 3. **Architecture Docs Updated:** Updated [`docs/architecture.md`](file:///home/kcostelo/person/budget-tracking/docs/architecture.md) to accurately document that `profile` measures production-accurate conditions.
-4. **Task Verification Checked:** Verified and checked off all task verification items in [`.scratch/BT-10-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-10-debug-app-isolation/task.md) following successful GitHub Actions CI runs (`Build Android APK` ✓, `CI Quality Gate` ✓).
+4. **Task Verification Checked:** Verified and checked off all task verification items in [`.scratch/BT-0010-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-0010-debug-app-isolation/task.md) following successful GitHub Actions CI runs (`Build Android APK` ✓, `CI Quality Gate` ✓).
 

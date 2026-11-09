@@ -2,7 +2,7 @@
 
 **Target Branch:** `feat/google-pay-settings-ux` against `main`  
 **Pull Request:** [#24](https://github.com/kidomarcostelo/budget-tracking/pull/24) (`feat(settings): add Google Pay notification settings, permission UX, and docs (Slice S5)`)  
-**Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Task: [`BT-3`](../BT-3-extend-auto-transactions-google-pay/task.md))  
+**Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Task: [`BT-0003`](../BT-0003-extend-auto-transactions-google-pay/task.md))  
 **Commits Reviewed:**
 - `87c67d18` fix(settings): surface Notification Transactions on Android and harden startup and lifecycle UX
 - `3d90fc8b` feat(settings): add Google Pay notification settings, permission UX, and docs (Slice S5)

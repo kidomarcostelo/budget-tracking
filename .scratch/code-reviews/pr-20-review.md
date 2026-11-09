@@ -2,7 +2,7 @@
 
 **Target Branch:** `feat/dedupe-ledger` against `main`  
 **Pull Request:** [#20](https://github.com/kidomarcostelo/budget-tracking/pull/20) (`feat(notifications): add dedupe ledger and duplicate suppression (#7)`)  
-**Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Task: [`BT-3`](../BT-3-extend-auto-transactions-google-pay/task.md))  
+**Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Task: [`BT-0003`](../BT-0003-extend-auto-transactions-google-pay/task.md))  
 **Commits Reviewed:**
 - `9850db85` fix(notifications): prevent dedupe self-suppression, cap suppressed entries, and await persistence
 - `05f1a08d` fix(db): implement missing Insertable methods in DedupeEntriesCompanion

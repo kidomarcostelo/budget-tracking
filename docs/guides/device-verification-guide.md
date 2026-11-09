@@ -42,7 +42,7 @@ Cashew processes notifications via the Android notification listener event chann
 
 > [!IMPORTANT]
 > **Android 14+ (API 34+) Platform Security Restriction**:
-> As documented in `.scratch/BT-3-extend-auto-transactions-google-pay/research.md` (Q7), `notification_listener_service: 1.0.0` registers its receiver with `RECEIVER_NOT_EXPORTED` on Android 14+ (API 34+) in compliance with Android security policies. Because the receiver is not exported, ADB shell broadcasts from unprivileged shell `UID 2000` will be blocked with:
+> As documented in `.scratch/BT-0003-extend-auto-transactions-google-pay/research.md` (Q7), `notification_listener_service: 1.0.0` registers its receiver with `RECEIVER_NOT_EXPORTED` on Android 14+ (API 34+) in compliance with Android security policies. Because the receiver is not exported, ADB shell broadcasts from unprivileged shell `UID 2000` will be blocked with:
 > ```
 > java.lang.SecurityException: Intent is protected or receiver is not exported (RECEIVER_NOT_EXPORTED)
 > ```
