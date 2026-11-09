@@ -69,11 +69,11 @@
 
 ### (a) Requirements Missing or Partial
 
-1. **Slice 4 End-to-End Verification ([`task.md:62-76`](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-13-google-drive-cloud-backup/task.md#L62-L76))**
+1. **Slice 4 End-to-End Verification ([`task.md:62-76`](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-0013-google-drive-cloud-backup/task.md#L62-L76))**
    - **Spec Quote:** *"Slice 4: End-to-End Verification: Verify APK signing SHA-1 consistency, install via Wireless ADB, and validate cloud backup upload and restore."*
    - **Finding:** Task checkboxes for Slice 4 in `task.md` remain open pending manual deployment of the new APK artifact to a physical device to execute Google Drive backup creation and restoration.
 
-2. **Cancellation Feedback on Null Account ([`task.md:48`](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-13-google-drive-cloud-backup/task.md#L48))**
+2. **Cancellation Feedback on Null Account ([`task.md:48`](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-0013-google-drive-cloud-backup/task.md#L48))**
    - **Spec Quote:** *"When user cancels account selection (`account == null` without exception): gracefully exit or show cancellation toast instead of claiming network failure."*
    - **Finding:** When a user dismisses the native Google account selector dialog, `googleSignIn!.signIn()` returns `null` without throwing. In [`budget/lib/widgets/accountAndBackup.dart:154`](file:///data/data/com.termux/files/home/repo/budget-tracking/budget/lib/widgets/accountAndBackup.dart#L154), `if (googleUser == null) return false;` exits quietly. This successfully avoids falsely claiming network failure, but does not display cancellation feedback unless an exception was thrown.
 

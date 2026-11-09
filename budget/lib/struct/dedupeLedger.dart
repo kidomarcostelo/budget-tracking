@@ -263,7 +263,7 @@ class DedupeLedger {
     return amount.toStringAsFixed(2);
   }
 
-  /// Strips gateway / aggregator prefixes like "SQ *MERCHANT", "PAYPAL *MERCHANT" (BT-2 §c).
+  /// Strips gateway / aggregator prefixes like "SQ *MERCHANT", "PAYPAL *MERCHANT" (BT-0002 §c).
   static String cleanMerchant(String text) {
     var s = text.trim().toLowerCase();
     s = s.replaceAll(
@@ -328,7 +328,7 @@ class DedupeLedger {
   }
 
   /// Computes Jaro-Winkler similarity between two strings (returns 0.0 to 1.0).
-  /// Performs case folding and trimming per BT-2 research §(c).
+  /// Performs case folding and trimming per BT-0002 research §(c).
   static double jaroWinklerSimilarity(String s1, String s2) {
     final str1 = s1.trim().toLowerCase();
     final str2 = s2.trim().toLowerCase();

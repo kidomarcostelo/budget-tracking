@@ -7,7 +7,7 @@
 - **Commits Evaluated:**
   - `5135c574`: `feat(backup): establish deterministic keystore and diagnostic sign-in reporting`
   - `6a567ca0`: `feat(backup): integrate live google-services.json and address PR review findings`
-- **Tracking Issue / Task:** Issue [#35](https://github.com/kidomarcostelo/budget-tracking/issues/35) / [BT-13](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-13-google-drive-cloud-backup/task.md)
+- **Tracking Issue / Task:** Issue [#35](https://github.com/kidomarcostelo/budget-tracking/issues/35) / [BT-0013](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-0013-google-drive-cloud-backup/task.md)
 - **Review Date:** 2026-11-09
 
 ---
@@ -71,17 +71,17 @@
 
 ### (a) Requirements Missing or Partial
 
-1. **Slice 4 End-to-End Verification ([`task.md:62-76`](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-13-google-drive-cloud-backup/task.md#L62-L76))**
+1. **Slice 4 End-to-End Verification ([`task.md:62-76`](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-0013-google-drive-cloud-backup/task.md#L62-L76))**
    - **Spec Quote:** *"Slice 4: End-to-End Verification: Verify APK signing SHA-1 consistency, install via Wireless ADB, and validate cloud backup upload and restore."*
    - **Finding:** The task checkboxes for Slice 4 remain open pending manual on-device installation and confirmation of Google Drive backup creation and restoration.
 
-2. **Cancellation Feedback on Null Account ([`task.md:48`](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-13-google-drive-cloud-backup/task.md#L48))**
+2. **Cancellation Feedback on Null Account ([`task.md:48`](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-0013-google-drive-cloud-backup/task.md#L48))**
    - **Spec Quote:** *"When user cancels account selection (`account == null` without exception): gracefully exit or show cancellation toast instead of claiming network failure."*
    - **Finding:** When a user dismisses the Google account picker dialog, `await googleSignIn!.signIn()` returns `null` without throwing. Line 154 executes `if (googleUser == null) return false;` and silently exits. This avoids false network failure messages, but does not display cancellation feedback unless an exception was thrown.
 
 ### (b) Scope Creep
 
-- **None observed.** All changes in `build.gradle`, `debug.keystore`, `google-services.json`, `firebase_options.dart`, `accountAndBackup.dart`, `sign_in_diagnostic_test.dart`, and documentation directly trace to Slices 1–3 of BT-13 / Issue #35.
+- **None observed.** All changes in `build.gradle`, `debug.keystore`, `google-services.json`, `firebase_options.dart`, `accountAndBackup.dart`, `sign_in_diagnostic_test.dart`, and documentation directly trace to Slices 1–3 of BT-0013 / Issue #35.
 
 ### (c) Incorrect or Incomplete Implementation
 
