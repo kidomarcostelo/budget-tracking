@@ -341,26 +341,25 @@ Future processAddTransactionRouteFromParams(
   final bool startInitialSequence = !hasPrefilledData;
 
   // Add a delay so the keyboard can focus
-  Future.delayed(const Duration(milliseconds: 50), () {
-    pushRoute(
-      context,
-      AddTransactionPage(
-        routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-        selectedAmount: amount,
-        selectedCategory: mainAndSubCategory.main,
-        selectedSubCategory: mainAndSubCategory.sub,
-        selectedWallet: wallet,
-        selectedDate: dateCreated,
-        selectedTitle: title,
-        selectedNotes: note,
-        selectedIncome: selectedIncome,
-        useCategorySelectedIncome: true,
-        startInitialAddTransactionSequence: startInitialSequence,
-        isPossibleDuplicate: dedupeResult?.isUncertainMatch ?? false,
-        possibleDuplicateEntry: dedupeResult?.matchedEntry,
-      ),
-    );
-  });
+  await Future.delayed(const Duration(milliseconds: 50));
+  pushRoute(
+    context,
+    AddTransactionPage(
+      routesToPopAfterDelete: RoutesToPopAfterDelete.None,
+      selectedAmount: amount,
+      selectedCategory: mainAndSubCategory.main,
+      selectedSubCategory: mainAndSubCategory.sub,
+      selectedWallet: wallet,
+      selectedDate: dateCreated,
+      selectedTitle: title,
+      selectedNotes: note,
+      selectedIncome: selectedIncome,
+      useCategorySelectedIncome: true,
+      startInitialAddTransactionSequence: startInitialSequence,
+      isPossibleDuplicate: dedupeResult?.isUncertainMatch ?? false,
+      possibleDuplicateEntry: dedupeResult?.matchedEntry,
+    ),
+  );
 }
 
 Future processMessageToParse(
