@@ -57,7 +57,7 @@
   4. Enabling Google Sign-In in Firebase Authentication.
   5. Enabling Google Drive API in Google Cloud Console.
   6. Configuring OAuth Consent Screen with scope `drive.appdata` and adding test users.
-- [ ] Generate and integrate the new `google-services.json` matching the fork's project.
+- [x] Generate and integrate the new `google-services.json` matching the fork's project.
 
 ### Slice 4: End-to-End Verification
 - [ ] Trigger CI build (`build-apk.yml`) or local build and verify the produced APK has the expected SHA-1 fingerprint:

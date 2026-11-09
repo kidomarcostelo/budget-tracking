@@ -74,20 +74,44 @@ signIn.GoogleSignIn? googleSignIn;
 signIn.GoogleSignInAccount? googleUser;
 
 String resolveSignInErrorMessage(Object error) {
+  if (error is PlatformException) {
+    final message = error.message ?? '';
+    final code = error.code;
+    if (code == 'sign_in_canceled' ||
+        message.contains('DEVELOPER_ERROR') ||
+        message.contains('ApiException: 10')) {
+      if (message.contains('DEVELOPER_ERROR') ||
+          message.contains('ApiException: 10')) {
+        return 'sign-in-config-error'.tr();
+      }
+      return 'sign-in-cancelled'.tr();
+    }
+    if (message.contains('ApiException: 12500')) {
+      return 'sign-in-play-services-error'.tr();
+    }
+  }
+
   final errStr = error.toString();
-  if (errStr.contains("Login cancelled") ||
-      errStr.contains("User cancelled") ||
-      errStr == "Login failed") {
-    return "Sign-in was cancelled.";
+  if (errStr.contains('Login cancelled') ||
+      errStr.contains('User cancelled') ||
+      errStr == 'Login failed') {
+    return 'sign-in-cancelled'.tr();
   }
-  if (errStr.contains("ApiException: 10") ||
-      errStr.contains("DEVELOPER_ERROR")) {
-    return "Google Sign-In configuration error: SHA-1 or package mismatch (ApiException 10).";
+  if (errStr.contains('ApiException: 10') ||
+      errStr.contains('DEVELOPER_ERROR')) {
+    return 'sign-in-config-error'.tr();
   }
-  if (errStr.contains("ApiException: 12500")) {
-    return "Google Play Services sign-in failed (ApiException 12500).";
+  if (errStr.contains('ApiException: 12500')) {
+    return 'sign-in-play-services-error'.tr();
   }
-  return "sign-in-error-description".tr();
+  if (errStr.contains('SocketException') ||
+      errStr.contains('TimeoutException') ||
+      errStr.contains('Failed host lookup') ||
+      errStr.contains('NetworkException') ||
+      errStr.contains('network_error')) {
+    return 'sign-in-error-description'.tr();
+  }
+  return 'sign-in-error'.tr();
 }
 
 Future<bool> signInGoogle(
