@@ -77,13 +77,11 @@ String resolveSignInErrorMessage(Object error) {
   if (error is PlatformException) {
     final message = error.message ?? '';
     final code = error.code;
-    if (code == 'sign_in_canceled' ||
-        message.contains('DEVELOPER_ERROR') ||
+    if (message.contains('DEVELOPER_ERROR') ||
         message.contains('ApiException: 10')) {
-      if (message.contains('DEVELOPER_ERROR') ||
-          message.contains('ApiException: 10')) {
-        return 'sign-in-config-error'.tr();
-      }
+      return 'sign-in-config-error'.tr();
+    }
+    if (code == 'sign_in_canceled') {
       return 'sign-in-cancelled'.tr();
     }
     if (message.contains('ApiException: 12500')) {
@@ -225,13 +223,19 @@ Future<bool> signInGoogle(
   } catch (e) {
     print(e);
     if (waitForCompletion == true && context != null) popRoute(context);
+    final isCancelled = (e.toString() == "Login failed" ||
+        (e is PlatformException && e.code == "sign_in_canceled"));
     openSnackbar(
       SnackbarMessage(
-        title: "sign-in-error".tr(),
-        description: resolveSignInErrorMessage(e),
-        icon: appStateSettings["outlinedIcons"]
-            ? Icons.error_outlined
-            : Icons.error_rounded,
+        title: isCancelled ? "sign-in-cancelled".tr() : "sign-in-error".tr(),
+        description: isCancelled ? "" : resolveSignInErrorMessage(e),
+        icon: isCancelled
+            ? (appStateSettings["outlinedIcons"]
+                ? Icons.info_outlined
+                : Icons.info_rounded)
+            : (appStateSettings["outlinedIcons"]
+                ? Icons.error_outlined
+                : Icons.error_rounded),
         timeout: Duration(milliseconds: 3400),
         onTap: () => signInGoogle(
           context: context,
