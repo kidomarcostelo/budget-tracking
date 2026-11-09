@@ -5,6 +5,7 @@ import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
+import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/notificationsSettings.dart';
 import 'package:budget/widgets/openPopup.dart';
@@ -49,6 +50,11 @@ Future deletePreviewData({bool resetOnboard = false}) async {
     print(e.toString());
   }
   try {
+    await database.deleteWallet("12", 3);
+  } catch (e) {
+    print(e.toString());
+  }
+  try {
     await database.forceDeleteBudgets(["10", "11"]);
   } catch (e) {
     print(e.toString());
@@ -69,25 +75,30 @@ Future deletePreviewData({bool resetOnboard = false}) async {
   await database.deleteAllDeleteLogs();
 
   await createDefaultCategories();
+  await initializeBalanceCorrectionCategory();
 
   loadingIndeterminateKey.currentState?.setVisibility(false);
   updateSettings("previewDemo", false, updateGlobalState: false);
+  updateSettings("accountOwnerName", "", updateGlobalState: false);
 }
 
 Future generatePreviewData() async {
   updateSettings("previewDemo", true, updateGlobalState: false);
+  updateSettings("accountOwnerName", "Kid Omar Costelo",
+      updateGlobalState: false);
   loadingIndeterminateKey.currentState?.setVisibility(true);
   await createDefaultCategories();
+  await initializeBalanceCorrectionCategory();
   await database.createOrUpdateWallet(
     TransactionWallet(
       walletPk: "0",
-      name: "Bank",
-      colour: null,
+      name: "UnionBank",
+      colour: "0xffff7900",
       iconName: null,
       dateCreated: DateTime.now(),
       dateTimeModified: null,
       order: 0,
-      currency: "usd",
+      currency: "php",
       decimals: 2,
       homePageWidgetDisplay: defaultWalletHomePageWidgetDisplay,
     ),
@@ -95,13 +106,13 @@ Future generatePreviewData() async {
   await database.createOrUpdateWallet(
     TransactionWallet(
       walletPk: "10",
-      name: "Euros",
-      colour: "0xff66bb6a",
+      name: "MariBank",
+      colour: "0xfffa5a2a",
       iconName: null,
       dateCreated: DateTime.now(),
       dateTimeModified: null,
       order: 1,
-      currency: "eur",
+      currency: "php",
       decimals: 2,
       homePageWidgetDisplay: defaultWalletHomePageWidgetDisplay,
     ),
@@ -109,14 +120,28 @@ Future generatePreviewData() async {
   await database.createOrUpdateWallet(
     TransactionWallet(
       walletPk: "11",
-      name: "Bitcoin",
-      colour: "0xffef5350",
+      name: "GoTyme",
+      colour: "0xff00d084",
       iconName: null,
       dateCreated: DateTime.now(),
       dateTimeModified: null,
       order: 2,
-      currency: "btc",
-      decimals: 7,
+      currency: "php",
+      decimals: 2,
+      homePageWidgetDisplay: defaultWalletHomePageWidgetDisplay,
+    ),
+  );
+  await database.createOrUpdateWallet(
+    TransactionWallet(
+      walletPk: "12",
+      name: "Maya",
+      colour: "0xff2bb673",
+      iconName: null,
+      dateCreated: DateTime.now(),
+      dateTimeModified: null,
+      order: 3,
+      currency: "php",
+      decimals: 2,
       homePageWidgetDisplay: defaultWalletHomePageWidgetDisplay,
     ),
   );
@@ -127,7 +152,7 @@ Future generatePreviewData() async {
     Budget(
       budgetPk: "10",
       name: "Vacation",
-      amount: 2500.0,
+      amount: 25000.0,
       colour: "0xffef5350",
       startDate: tripStart.subtract(Duration(minutes: 24)),
       endDate: tripEnd,
@@ -148,17 +173,17 @@ Future generatePreviewData() async {
   await database.createOrUpdateObjective(
     Objective(
       objectivePk: "10",
-      name: "Trip Savings Jar",
-      amount: 500.0,
+      name: "Emergency Fund",
+      amount: 50000.0,
       order: 0,
       colour: "0xff66bb6a",
       dateCreated: DateTime.now().subtract(Duration(days: 5)),
       dateTimeModified: DateTime.now(),
-      iconName: "coconut-tree.png",
+      iconName: "piggy-bank.png",
       emojiIconName: null,
       income: true,
       pinned: true,
-      walletFk: "0",
+      walletFk: "10",
       archived: false,
       type: ObjectiveType.goal,
     ),
@@ -166,15 +191,15 @@ Future generatePreviewData() async {
   await database.createOrUpdateObjective(
     Objective(
       objectivePk: "11",
-      name: "Car Payment Loan",
-      amount: 1000.0,
+      name: "Trip Savings Jar",
+      amount: 20000.0,
       order: 1,
       colour: "0xffff7043",
       dateCreated: DateTime.now().subtract(Duration(days: 25)),
       dateTimeModified: DateTime.now(),
-      iconName: "car.png",
+      iconName: "coconut-tree.png",
       emojiIconName: null,
-      income: false,
+      income: true,
       pinned: true,
       walletFk: "0",
       archived: false,
@@ -188,11 +213,11 @@ Future generatePreviewData() async {
       objectiveFk: "10",
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Vacation savings",
-      amount: 520.0,
-      note: "Some extra money to put towards a trip!",
+      name: "Emergency fund deposit",
+      amount: 15000.0,
+      note: "Initial deposit into MariBank savings",
       categoryFk: "11",
-      walletFk: "0",
+      walletFk: "10",
       dateCreated: DateTime.now().subtract(Duration(days: 4)),
       dateTimeModified: null,
       income: true,
@@ -212,38 +237,14 @@ Future generatePreviewData() async {
       objectiveFk: "11",
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Car Payment",
-      amount: -500.0,
-      note: "",
-      categoryFk: "6",
+      name: "Trip savings deposit",
+      amount: 5000.0,
+      note: "Monthly savings for vacation",
+      categoryFk: "11",
       walletFk: "0",
       dateCreated: tripStart.subtract(Duration(days: 4)),
       dateTimeModified: null,
-      income: false,
-      periodLength: 1,
-      reoccurrence: BudgetReoccurence.monthly,
-      upcomingTransactionNotification: true,
-      type: null,
-      paid: true,
-      createdAnotherFutureTransaction: false,
-      skipPaid: true,
-    ),
-  );
-  await database.createOrUpdateTransaction(
-    updateSharedEntry: false,
-    insert: true,
-    Transaction(
-      objectiveFk: "11",
-      methodAdded: MethodAdded.preview,
-      transactionPk: "-1",
-      name: "Car Payment",
-      amount: -200.0,
-      note: "",
-      categoryFk: "6",
-      walletFk: "0",
-      dateCreated: DateTime.now().subtract(Duration(days: 10)),
-      dateTimeModified: null,
-      income: false,
+      income: true,
       periodLength: 1,
       reoccurrence: BudgetReoccurence.monthly,
       upcomingTransactionNotification: true,
@@ -259,9 +260,9 @@ Future generatePreviewData() async {
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Plane Ticket",
-      amount: -1000.0,
-      note: "",
+      name: "Cebu Pacific Flight",
+      amount: -4500.0,
+      note: "Manila to Caticlan roundtrip",
       categoryFk: "10",
       walletFk: "0",
       dateCreated: tripStart.subtract(Duration(minutes: 41)),
@@ -281,25 +282,25 @@ Future generatePreviewData() async {
     updateSharedEntry: false,
     insert: true,
     Transaction(
-        methodAdded: MethodAdded.preview,
-        transactionPk: "-1",
-        name: "Phone Bill",
-        amount: -25.6,
-        note: "Extra fees",
-        categoryFk: "6",
-        walletFk: "0",
-        dateCreated:
-            tripStart.add(Duration(days: 2)).subtract(Duration(minutes: 41)),
-        dateTimeModified: null,
-        income: false,
-        periodLength: 1,
-        reoccurrence: BudgetReoccurence.monthly,
-        upcomingTransactionNotification: true,
-        type: null,
-        paid: true,
-        createdAnotherFutureTransaction: false,
-        skipPaid: true,
-        sharedReferenceBudgetPk: "10"),
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: "Resort Hotel Booking",
+      amount: -8200.0,
+      note: "3 nights accommodation",
+      categoryFk: "10",
+      walletFk: "0",
+      dateCreated: tripStart.subtract(Duration(minutes: 15)),
+      dateTimeModified: null,
+      income: false,
+      periodLength: 1,
+      reoccurrence: BudgetReoccurence.monthly,
+      upcomingTransactionNotification: true,
+      type: null,
+      paid: true,
+      createdAnotherFutureTransaction: false,
+      skipPaid: true,
+      sharedReferenceBudgetPk: "10",
+    ),
   );
   await database.createOrUpdateTransaction(
     updateSharedEntry: false,
@@ -307,11 +308,59 @@ Future generatePreviewData() async {
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Coffee",
-      amount: -6,
-      note: "",
+      name: "Meralco Electricity",
+      amount: -3450.0,
+      note: "UnionBank Online • Ref: UB982341",
+      categoryFk: "6",
+      walletFk: "0",
+      dateCreated:
+          tripStart.add(Duration(days: 2)).subtract(Duration(minutes: 41)),
+      dateTimeModified: null,
+      income: false,
+      periodLength: 1,
+      reoccurrence: BudgetReoccurence.monthly,
+      upcomingTransactionNotification: true,
+      type: null,
+      paid: true,
+      createdAnotherFutureTransaction: false,
+      skipPaid: true,
+    ),
+  );
+  await database.createOrUpdateTransaction(
+    updateSharedEntry: false,
+    insert: true,
+    Transaction(
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: "Converge Fiber Internet",
+      amount: -1699.0,
+      note: "Monthly Plan 1699",
+      categoryFk: "6",
+      walletFk: "0",
+      dateCreated:
+          tripStart.add(Duration(days: 3)).subtract(Duration(minutes: 20)),
+      dateTimeModified: null,
+      income: false,
+      periodLength: 1,
+      reoccurrence: BudgetReoccurence.monthly,
+      upcomingTransactionNotification: true,
+      type: null,
+      paid: true,
+      createdAnotherFutureTransaction: false,
+      skipPaid: true,
+    ),
+  );
+  await database.createOrUpdateTransaction(
+    updateSharedEntry: false,
+    insert: true,
+    Transaction(
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: "Starbucks Coffee",
+      amount: -185.0,
+      note: "UnionBank Rewards Platinum •••• 3353",
       categoryFk: "1",
-      walletFk: "10",
+      walletFk: "0",
       dateCreated:
           tripStart.add(Duration(days: 2)).subtract(Duration(minutes: 39)),
       dateTimeModified: null,
@@ -323,7 +372,6 @@ Future generatePreviewData() async {
       paid: true,
       createdAnotherFutureTransaction: false,
       skipPaid: true,
-      sharedReferenceBudgetPk: "10",
     ),
   );
   await database.createOrUpdateTransaction(
@@ -332,11 +380,11 @@ Future generatePreviewData() async {
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Coffee",
-      amount: -10.0,
-      note: "",
-      categoryFk: "1",
-      walletFk: "10",
+      name: "7-Eleveb-ST4594",
+      amount: -123.0,
+      note: "UnionBank Rewards Platinum •••• 3353",
+      categoryFk: "2",
+      walletFk: "0",
       dateCreated:
           tripStart.add(Duration(days: 4)).subtract(Duration(minutes: 34)),
       dateTimeModified: null,
@@ -348,7 +396,6 @@ Future generatePreviewData() async {
       paid: true,
       createdAnotherFutureTransaction: false,
       skipPaid: true,
-      sharedReferenceBudgetPk: "10",
     ),
   );
   await database.createOrUpdateTransaction(
@@ -357,11 +404,11 @@ Future generatePreviewData() async {
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Restaurant",
-      amount: -50.0,
-      note: "",
+      name: "GrabFood",
+      amount: -340.0,
+      note: "UnionBank Debit •••• 9227",
       categoryFk: "1",
-      walletFk: "10",
+      walletFk: "0",
       dateCreated:
           tripStart.add(Duration(days: 1)).subtract(Duration(minutes: 27)),
       dateTimeModified: null,
@@ -373,7 +420,6 @@ Future generatePreviewData() async {
       paid: true,
       createdAnotherFutureTransaction: false,
       skipPaid: true,
-      sharedReferenceBudgetPk: "10",
     ),
   );
   await database.createOrUpdateTransaction(
@@ -382,10 +428,10 @@ Future generatePreviewData() async {
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "",
-      amount: -22.0,
-      note: "",
-      categoryFk: "2",
+      name: "Shopee",
+      amount: -890.0,
+      note: "MariBank Direct Debit",
+      categoryFk: "3",
       walletFk: "10",
       dateCreated:
           tripStart.add(Duration(days: 4)).subtract(Duration(minutes: 23)),
@@ -398,7 +444,6 @@ Future generatePreviewData() async {
       paid: true,
       createdAnotherFutureTransaction: false,
       skipPaid: true,
-      sharedReferenceBudgetPk: "10",
     ),
   );
   await database.createOrUpdateTransaction(
@@ -407,11 +452,11 @@ Future generatePreviewData() async {
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "",
-      amount: -15,
-      note: "",
-      categoryFk: "4",
-      walletFk: "10",
+      name: "Mercury Drug",
+      amount: -450.0,
+      note: "GoTyme Debit •••• 3887",
+      categoryFk: "8",
+      walletFk: "11",
       dateCreated:
           tripStart.add(Duration(days: 3)).subtract(Duration(minutes: 8)),
       dateTimeModified: null,
@@ -423,40 +468,88 @@ Future generatePreviewData() async {
       paid: true,
       createdAnotherFutureTransaction: false,
       skipPaid: true,
-      sharedReferenceBudgetPk: "10",
+    ),
+  );
+  await database.createOrUpdateTransaction(
+    updateSharedEntry: false,
+    insert: true,
+    Transaction(
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: "GrabCar",
+      amount: -280.0,
+      note: "Maya Wallet (+63 956 857 9768)",
+      categoryFk: "4",
+      walletFk: "12",
+      dateCreated:
+          tripStart.add(Duration(days: 5)).subtract(Duration(minutes: 18)),
+      dateTimeModified: null,
+      income: false,
+      periodLength: 1,
+      reoccurrence: BudgetReoccurence.monthly,
+      upcomingTransactionNotification: true,
+      type: null,
+      paid: true,
+      createdAnotherFutureTransaction: false,
+      skipPaid: true,
+    ),
+  );
+  await database.createOrUpdateTransaction(
+    updateSharedEntry: false,
+    insert: true,
+    Transaction(
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: "Jollibee",
+      amount: -650.0,
+      note: "Maya QR Payment",
+      categoryFk: "1",
+      walletFk: "12",
+      dateCreated:
+          tripStart.add(Duration(days: 6)).subtract(Duration(minutes: 12)),
+      dateTimeModified: null,
+      income: false,
+      periodLength: 1,
+      reoccurrence: BudgetReoccurence.monthly,
+      upcomingTransactionNotification: true,
+      type: null,
+      paid: true,
+      createdAnotherFutureTransaction: false,
+      skipPaid: true,
     ),
   );
   int monthlySpendingDayStart = DateTime.now().day <= 10 ? 15 : 2;
   await database.createOrUpdateBudget(
     updateSharedEntry: false,
     Budget(
-        budgetPk: "11",
-        name: "Monthly Spending",
-        amount: 500.0,
-        colour: null,
-        startDate: DateTime(DateTime.now().year, DateTime.now().month,
-                monthlySpendingDayStart)
-            .subtract(Duration(minutes: 19)),
-        endDate: DateTime.now(),
-        categoryFks: null,
-        addedTransactionsOnly: false,
-        periodLength: 1,
-        reoccurrence: BudgetReoccurence.monthly,
-        dateCreated: DateTime.now(),
-        dateTimeModified: null,
-        pinned: true,
-        order: 0,
-        walletFk: "0",
-        budgetTransactionFilters: [],
-        memberTransactionFilters: null,
-        sharedKey: null,
-        sharedOwnerMember: null,
-        sharedDateUpdated: null,
-        sharedMembers: null,
-        sharedAllMembersEver: null,
-        isAbsoluteSpendingLimit: false,
-        income: false,
-        archived: false),
+      budgetPk: "11",
+      name: "Monthly Spending",
+      amount: 35000.0,
+      colour: null,
+      startDate: DateTime(DateTime.now().year, DateTime.now().month,
+              monthlySpendingDayStart)
+          .subtract(Duration(minutes: 19)),
+      endDate: DateTime.now(),
+      categoryFks: null,
+      addedTransactionsOnly: false,
+      periodLength: 1,
+      reoccurrence: BudgetReoccurence.monthly,
+      dateCreated: DateTime.now(),
+      dateTimeModified: null,
+      pinned: true,
+      order: 0,
+      walletFk: "0",
+      budgetTransactionFilters: [],
+      memberTransactionFilters: null,
+      sharedKey: null,
+      sharedOwnerMember: null,
+      sharedDateUpdated: null,
+      sharedMembers: null,
+      sharedAllMembersEver: null,
+      isAbsoluteSpendingLimit: false,
+      income: false,
+      archived: false,
+    ),
   );
   await database.createOrUpdateTransaction(
     updateSharedEntry: false,
@@ -465,11 +558,11 @@ Future generatePreviewData() async {
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
       name: "Payroll",
-      amount: 580.89,
-      note: "",
+      amount: 45000.0,
+      note: "Salary Crediting - UnionBank",
       categoryFk: "11",
       walletFk: "0",
-      dateCreated: DateTime(DateTime.now().year, DateTime.now().month - 2, 1)
+      dateCreated: DateTime(DateTime.now().year, DateTime.now().month - 2, 15)
           .subtract(Duration(minutes: 17)),
       dateTimeModified: null,
       income: true,
@@ -489,11 +582,11 @@ Future generatePreviewData() async {
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
       name: "Payroll",
-      amount: 780.55,
-      note: "",
+      amount: 45000.0,
+      note: "Salary Crediting - UnionBank",
       categoryFk: "11",
       walletFk: "0",
-      dateCreated: DateTime(DateTime.now().year, DateTime.now().month - 1, 1)
+      dateCreated: DateTime(DateTime.now().year, DateTime.now().month - 1, 15)
           .subtract(Duration(minutes: 13)),
       dateTimeModified: null,
       income: true,
@@ -513,8 +606,8 @@ Future generatePreviewData() async {
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
       name: "Payroll",
-      amount: 650.45,
-      note: "",
+      amount: 45000.0,
+      note: "Salary Crediting - UnionBank",
       categoryFk: "11",
       walletFk: "0",
       dateCreated:
@@ -530,117 +623,153 @@ Future generatePreviewData() async {
       skipPaid: true,
     ),
   );
-  await database.createOrUpdateTransaction(
+
+  // Self-transfer 1: UnionBank -> MariBank (₱15,000)
+  DateTime ubTransferDate = DateTime.now().subtract(Duration(days: 12));
+  int? ubInRowId = await database.createOrUpdateTransaction(
     updateSharedEntry: false,
     insert: true,
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Extra income",
-      amount: 0.005,
-      note: "",
-      categoryFk: "11",
-      walletFk: "11",
-      dateCreated: DateTime.now()
-          .justDay(dayOffset: -20)
-          .subtract(Duration(minutes: 40)),
+      name: "MariBank transfer-in",
+      amount: 15000.0,
+      note: "Transferred balance\nUnionBank → MariBank\nRef: UB1663112",
+      categoryFk: "0",
+      walletFk: "10",
+      dateCreated: ubTransferDate.add(Duration(seconds: 1)),
       dateTimeModified: null,
       income: true,
-      periodLength: 1,
-      reoccurrence: BudgetReoccurence.monthly,
-      upcomingTransactionNotification: true,
-      type: null,
       paid: true,
-      createdAnotherFutureTransaction: false,
-      skipPaid: true,
+      skipPaid: false,
     ),
   );
+  String? ubInPk;
+  if (ubInRowId != null) {
+    final t = await database.getTransactionFromRowId(ubInRowId);
+    ubInPk = t.transactionPk;
+  }
   await database.createOrUpdateTransaction(
     updateSharedEntry: false,
     insert: true,
     Transaction(
+      pairedTransactionFk: ubInPk,
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Clothes",
-      amount: -95.0,
-      note: "Department store",
-      categoryFk: "3",
+      name: "UnionBank transfer-out",
+      amount: -15000.0,
+      note: "Transferred balance\nUnionBank → MariBank\nRef: UB1663112",
+      categoryFk: "0",
       walletFk: "0",
-      dateCreated: DateTime.now()
-          .subtract(Duration(days: 5))
-          .subtract(Duration(minutes: 30)),
+      dateCreated: ubTransferDate,
       dateTimeModified: null,
       income: false,
-      periodLength: 1,
-      reoccurrence: BudgetReoccurence.monthly,
-      upcomingTransactionNotification: true,
-      type: null,
       paid: true,
-      createdAnotherFutureTransaction: false,
-      skipPaid: true,
+      skipPaid: false,
     ),
   );
-  await database.createOrUpdateTransaction(
+
+  // Self-transfer 2: MariBank -> Maya (₱1,000)
+  DateTime mbTransferDate = DateTime.now().subtract(Duration(days: 6));
+  int? mbInRowId = await database.createOrUpdateTransaction(
     updateSharedEntry: false,
     insert: true,
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "",
-      amount: -32.0,
-      note: "",
-      categoryFk: "1",
-      walletFk: "0",
-      dateCreated: DateTime.now()
-          .subtract(Duration(days: 9))
-          .subtract(Duration(minutes: 5)),
+      name: "Maya transfer-in",
+      amount: 1000.0,
+      note: "Transferred balance\nMariBank → Maya\nRef: 454658",
+      categoryFk: "0",
+      walletFk: "12",
+      dateCreated: mbTransferDate.add(Duration(seconds: 1)),
+      dateTimeModified: null,
+      income: true,
+      paid: true,
+      skipPaid: false,
+    ),
+  );
+  String? mbInPk;
+  if (mbInRowId != null) {
+    final t = await database.getTransactionFromRowId(mbInRowId);
+    mbInPk = t.transactionPk;
+  }
+  await database.createOrUpdateTransaction(
+    updateSharedEntry: false,
+    insert: true,
+    Transaction(
+      pairedTransactionFk: mbInPk,
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: "MariBank transfer-out",
+      amount: -1000.0,
+      note: "Transferred balance\nMariBank → Maya\nRef: 454658",
+      categoryFk: "0",
+      walletFk: "10",
+      dateCreated: mbTransferDate,
       dateTimeModified: null,
       income: false,
-      periodLength: 1,
-      reoccurrence: BudgetReoccurence.monthly,
-      upcomingTransactionNotification: true,
-      type: null,
       paid: true,
-      createdAnotherFutureTransaction: false,
-      skipPaid: true,
+      skipPaid: false,
     ),
   );
-  await database.createOrUpdateTransaction(
+
+  // Self-transfer 3: GoTyme -> MariBank (₱3,600)
+  DateTime gtTransferDate = DateTime.now().subtract(Duration(days: 8));
+  int? gtInRowId = await database.createOrUpdateTransaction(
     updateSharedEntry: false,
     insert: true,
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "",
-      amount: -8.53,
-      note: "",
-      categoryFk: "1",
-      walletFk: "0",
-      dateCreated: DateTime.now()
-          .subtract(Duration(days: 11))
-          .subtract(Duration(minutes: 10)),
+      name: "MariBank transfer-in",
+      amount: 3600.0,
+      note: "Transferred balance\nGoTyme → MariBank\nRef: ITO261019143038004",
+      categoryFk: "0",
+      walletFk: "10",
+      dateCreated: gtTransferDate.add(Duration(seconds: 1)),
+      dateTimeModified: null,
+      income: true,
+      paid: true,
+      skipPaid: false,
+    ),
+  );
+  String? gtInPk;
+  if (gtInRowId != null) {
+    final t = await database.getTransactionFromRowId(gtInRowId);
+    gtInPk = t.transactionPk;
+  }
+  await database.createOrUpdateTransaction(
+    updateSharedEntry: false,
+    insert: true,
+    Transaction(
+      pairedTransactionFk: gtInPk,
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: "GoTyme transfer-out",
+      amount: -3600.0,
+      note: "Transferred balance\nGoTyme → MariBank\nRef: ITO261019143038004",
+      categoryFk: "0",
+      walletFk: "11",
+      dateCreated: gtTransferDate,
       dateTimeModified: null,
       income: false,
-      periodLength: 1,
-      reoccurrence: BudgetReoccurence.monthly,
-      upcomingTransactionNotification: true,
-      type: null,
       paid: true,
-      createdAnotherFutureTransaction: false,
-      skipPaid: true,
+      skipPaid: false,
     ),
   );
+
   await database.createOrUpdateTransaction(
     updateSharedEntry: false,
     insert: true,
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "Movie streaming service",
-      amount: -15.0,
-      note: "",
+      name: "Netflix Subscription",
+      amount: -549.0,
+      note: "Premium Plan",
       categoryFk: "5",
-      walletFk: "0",
+      walletFk: "12",
       dateCreated:
           DateTime.now().add(Duration(days: 2)).subtract(Duration(minutes: 20)),
       dateTimeModified: null,
@@ -660,7 +789,7 @@ Future generatePreviewData() async {
       categoryLimitPk: "-1",
       categoryFk: "1",
       budgetFk: "11",
-      amount: 20.0,
+      amount: 10000.0,
       dateTimeModified: DateTime.now(),
       walletFk: "0",
     ),
@@ -671,7 +800,7 @@ Future generatePreviewData() async {
       categoryLimitPk: "-1",
       categoryFk: "2",
       budgetFk: "11",
-      amount: 35.0,
+      amount: 12000.0,
       dateTimeModified: DateTime.now(),
       walletFk: "0",
     ),
@@ -682,7 +811,7 @@ Future generatePreviewData() async {
       categoryLimitPk: "-1",
       categoryFk: "3",
       budgetFk: "11",
-      amount: 25.0,
+      amount: 8000.0,
       dateTimeModified: DateTime.now(),
       walletFk: "0",
     ),
@@ -693,12 +822,13 @@ Future generatePreviewData() async {
       categoryLimitPk: "-1",
       categoryFk: "10",
       budgetFk: "10",
-      amount: 1100,
+      amount: 15000.0,
       dateTimeModified: DateTime.now(),
       walletFk: "0",
     ),
   );
   loadingIndeterminateKey.currentState?.setVisibility(false);
+  List<String> previewWalletPks = ["0", "10", "11", "12"];
   for (int i = 0; i < 20; i++) {
     List<int> moreCommonCategories = [1, 2, 3, 4, 5];
     List<int> moreCommonCommonCategories = [1, 2, 4];
@@ -709,7 +839,7 @@ Future generatePreviewData() async {
         methodAdded: MethodAdded.preview,
         transactionPk: "-1",
         name: "",
-        amount: (5 + Random().nextDouble() * 10) * -1,
+        amount: (150 + Random().nextDouble() * 350) * -1,
         note: "",
         categoryFk: (Random().nextInt(2) == 0
                 ? Random().nextInt(2) == 0
@@ -719,7 +849,7 @@ Future generatePreviewData() async {
                         Random().nextInt(moreCommonCategories.length)]
                 : Random().nextInt(11) + 1)
             .toString(),
-        walletFk: "0",
+        walletFk: previewWalletPks[Random().nextInt(previewWalletPks.length)],
         dateCreated: DateTime.now()
             .subtract(Duration(days: i))
             .subtract(Duration(minutes: i * 13)),
@@ -740,7 +870,7 @@ Future generatePreviewData() async {
         methodAdded: MethodAdded.preview,
         transactionPk: "-1",
         name: "",
-        amount: (1 + Random().nextDouble() * 45) * -1,
+        amount: (50 + Random().nextDouble() * 1200) * -1,
         note: "",
         categoryFk: (Random().nextInt(2) == 0
                 ? Random().nextInt(2) == 0
@@ -750,7 +880,7 @@ Future generatePreviewData() async {
                         Random().nextInt(moreCommonCategories.length)]
                 : Random().nextInt(11) + 1)
             .toString(),
-        walletFk: "0",
+        walletFk: previewWalletPks[Random().nextInt(previewWalletPks.length)],
         dateCreated: DateTime.now()
             .subtract(Duration(days: i))
             .subtract(Duration(minutes: i * 2)),
@@ -770,11 +900,11 @@ Future generatePreviewData() async {
       Transaction(
         methodAdded: MethodAdded.preview,
         transactionPk: "-1",
-        name: "",
-        amount: 300 + Random().nextDouble() * 200,
+        name: "Side Income",
+        amount: 2500 + Random().nextDouble() * 5000,
         note: "",
-        categoryFk: (Random().nextInt(2) == 0 ? 6 : 10).toString(),
-        walletFk: "0",
+        categoryFk: "11",
+        walletFk: (Random().nextInt(2) == 0 ? "0" : "10"),
         dateCreated: DateTime.now()
             .subtract(Duration(days: i))
             .subtract(Duration(minutes: i * 2)),
