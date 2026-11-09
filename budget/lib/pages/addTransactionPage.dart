@@ -791,11 +791,13 @@ class _AddTransactionPageState extends State<AddTransactionPage>
       _noteInputController = new LinkHighlighter();
 
       Future.delayed(Duration(milliseconds: 0), () async {
+        if (!mounted) return;
         if (widget.transferBalancePopup) {
           openTransferBalancePopup();
           return;
         }
         await premiumPopupAddTransaction(context);
+        if (!mounted) return;
         if (widget.startInitialAddTransactionSequence == false) return;
         if (appStateSettings["askForTransactionTitle"]) {
           openBottomSheet(

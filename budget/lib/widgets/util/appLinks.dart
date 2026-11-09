@@ -197,7 +197,7 @@ Future<Transaction?> processAddTransactionFromParams(
 
   // If ambiguous match detected, route to review with possible duplicate banner instead of auto-creating
   if (dedupeResult != null && dedupeResult.isUncertainMatch) {
-    await pushRoute(
+    pushRoute(
       context,
       AddTransactionPage(
         routesToPopAfterDelete: RoutesToPopAfterDelete.None,
@@ -341,8 +341,8 @@ Future processAddTransactionRouteFromParams(
   final bool startInitialSequence = !hasPrefilledData;
 
   // Add a delay so the keyboard can focus
-  await Future.delayed(Duration(milliseconds: 50), () async {
-    await pushRoute(
+  Future.delayed(const Duration(milliseconds: 50), () {
+    pushRoute(
       context,
       AddTransactionPage(
         routesToPopAfterDelete: RoutesToPopAfterDelete.None,
