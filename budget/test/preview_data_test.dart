@@ -64,21 +64,25 @@ void main() {
       expect(walletByPk['0']!.name, equals('UnionBank'));
       expect(walletByPk['0']!.currency, equals('php'));
       expect(walletByPk['0']!.colour, equals('0xffff7900'));
+      expect(walletByPk['0']!.iconName, equals('bank.png'));
 
       expect(walletByPk.containsKey('10'), isTrue);
       expect(walletByPk['10']!.name, equals('MariBank'));
       expect(walletByPk['10']!.currency, equals('php'));
       expect(walletByPk['10']!.colour, equals('0xfffa5a2a'));
+      expect(walletByPk['10']!.iconName, equals('wallet.png'));
 
       expect(walletByPk.containsKey('11'), isTrue);
       expect(walletByPk['11']!.name, equals('GoTyme'));
       expect(walletByPk['11']!.currency, equals('php'));
       expect(walletByPk['11']!.colour, equals('0xff00d084'));
+      expect(walletByPk['11']!.iconName, equals('credit-card.png'));
 
       expect(walletByPk.containsKey('12'), isTrue);
       expect(walletByPk['12']!.name, equals('Maya'));
       expect(walletByPk['12']!.currency, equals('php'));
       expect(walletByPk['12']!.colour, equals('0xff2bb673'));
+      expect(walletByPk['12']!.iconName, equals('cards.png'));
 
       // 3. Verify Budgets
       final budgets = await testDb.getAllBudgets();
@@ -118,9 +122,7 @@ void main() {
 
       // Check specific verified merchant transactions
       final has7Eleven = previewTxs.any((t) =>
-          t.name == '7-Eleveb-ST4594' &&
-          t.amount == -123.0 &&
-          t.walletFk == '0');
+          t.name == '7-Eleven' && t.amount == -123.0 && t.walletFk == '0');
       expect(has7Eleven, isTrue);
 
       final hasStarbucks = previewTxs.any((t) =>
@@ -247,6 +249,17 @@ void main() {
       // 5. Settings restored
       expect(appStateSettings['previewDemo'], isFalse);
       expect(appStateSettings['accountOwnerName'], isEmpty);
+    });
+
+    test('deletePreviewData restores preexisting accountOwnerName setting',
+        () async {
+      appStateSettings['accountOwnerName'] = 'Juan Dela Cruz';
+      await generatePreviewData();
+      expect(appStateSettings['accountOwnerName'], equals('Kid Omar Costelo'));
+
+      await deletePreviewData();
+      expect(appStateSettings['accountOwnerName'], equals('Juan Dela Cruz'));
+      expect(appStateSettings['previewDemo'], isFalse);
     });
   });
 }

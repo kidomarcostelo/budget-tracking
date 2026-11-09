@@ -1,6 +1,8 @@
+import 'package:budget/colors.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/defaultCategories.dart';
@@ -35,6 +37,33 @@ Future<bool> createDefaultCategories() async {
     }
   }
   return true;
+}
+
+Future<TransactionCategory> initializeBalanceCorrectionCategory() async {
+  try {
+    return await database.getCategory("0").$2;
+  } catch (e) {
+    print(
+        e.toString() + "- creating default category amount balancing category");
+    int numberOfCategories =
+        (await database.getTotalCountOfCategories())[0] ?? 0;
+
+    await database.createOrUpdateCategory(
+      insert: false,
+      updateSharedEntry: false,
+      TransactionCategory(
+        categoryPk: "0",
+        name: "default-category-account-amount-balancing".tr(),
+        colour: toHexString(Colors.blueGrey),
+        iconName: "charts.png",
+        dateCreated: DateTime.now(),
+        dateTimeModified: null,
+        order: numberOfCategories,
+        income: false,
+      ),
+    );
+    return await database.getCategory("0").$2;
+  }
 }
 
 TransactionWallet defaultWallet() {

@@ -5,7 +5,6 @@ import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
-import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/notificationsSettings.dart';
 import 'package:budget/widgets/openPopup.dart';
@@ -79,11 +78,78 @@ Future deletePreviewData({bool resetOnboard = false}) async {
 
   loadingIndeterminateKey.currentState?.setVisibility(false);
   updateSettings("previewDemo", false, updateGlobalState: false);
-  updateSettings("accountOwnerName", "", updateGlobalState: false);
+  String? previousOwner = appStateSettings["previewPreviousAccountOwnerName"];
+  if (previousOwner != null) {
+    updateSettings("accountOwnerName", previousOwner, updateGlobalState: false);
+    updateSettings("previewPreviousAccountOwnerName", null,
+        updateGlobalState: false);
+  } else if (appStateSettings["accountOwnerName"] == "Kid Omar Costelo") {
+    updateSettings("accountOwnerName", "", updateGlobalState: false);
+  }
+}
+
+Future<void> _seedPairedTransfer({
+  required String fromWalletFk,
+  required String fromName,
+  required String toWalletFk,
+  required String toName,
+  required double amount,
+  required String note,
+  required DateTime transferDate,
+}) async {
+  int? inRowId = await database.createOrUpdateTransaction(
+    updateSharedEntry: false,
+    insert: true,
+    Transaction(
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: toName,
+      amount: amount,
+      note: note,
+      categoryFk: "0",
+      walletFk: toWalletFk,
+      dateCreated: transferDate.add(Duration(seconds: 1)),
+      dateTimeModified: null,
+      income: true,
+      paid: true,
+      skipPaid: false,
+    ),
+  );
+  String? inPk;
+  if (inRowId != null) {
+    final t = await database.getTransactionFromRowId(inRowId);
+    inPk = t.transactionPk;
+  }
+  await database.createOrUpdateTransaction(
+    updateSharedEntry: false,
+    insert: true,
+    Transaction(
+      pairedTransactionFk: inPk,
+      methodAdded: MethodAdded.preview,
+      transactionPk: "-1",
+      name: fromName,
+      amount: -amount,
+      note: note,
+      categoryFk: "0",
+      walletFk: fromWalletFk,
+      dateCreated: transferDate,
+      dateTimeModified: null,
+      income: false,
+      paid: true,
+      skipPaid: false,
+    ),
+  );
 }
 
 Future generatePreviewData() async {
   updateSettings("previewDemo", true, updateGlobalState: false);
+  if (appStateSettings["previewPreviousAccountOwnerName"] == null &&
+      appStateSettings["accountOwnerName"] != null &&
+      appStateSettings["accountOwnerName"] != "Kid Omar Costelo") {
+    updateSettings(
+        "previewPreviousAccountOwnerName", appStateSettings["accountOwnerName"],
+        updateGlobalState: false);
+  }
   updateSettings("accountOwnerName", "Kid Omar Costelo",
       updateGlobalState: false);
   loadingIndeterminateKey.currentState?.setVisibility(true);
@@ -94,7 +160,7 @@ Future generatePreviewData() async {
       walletPk: "0",
       name: "UnionBank",
       colour: "0xffff7900",
-      iconName: null,
+      iconName: "bank.png",
       dateCreated: DateTime.now(),
       dateTimeModified: null,
       order: 0,
@@ -108,7 +174,7 @@ Future generatePreviewData() async {
       walletPk: "10",
       name: "MariBank",
       colour: "0xfffa5a2a",
-      iconName: null,
+      iconName: "wallet.png",
       dateCreated: DateTime.now(),
       dateTimeModified: null,
       order: 1,
@@ -122,7 +188,7 @@ Future generatePreviewData() async {
       walletPk: "11",
       name: "GoTyme",
       colour: "0xff00d084",
-      iconName: null,
+      iconName: "credit-card.png",
       dateCreated: DateTime.now(),
       dateTimeModified: null,
       order: 2,
@@ -136,7 +202,7 @@ Future generatePreviewData() async {
       walletPk: "12",
       name: "Maya",
       colour: "0xff2bb673",
-      iconName: null,
+      iconName: "cards.png",
       dateCreated: DateTime.now(),
       dateTimeModified: null,
       order: 3,
@@ -380,7 +446,7 @@ Future generatePreviewData() async {
     Transaction(
       methodAdded: MethodAdded.preview,
       transactionPk: "-1",
-      name: "7-Eleveb-ST4594",
+      name: "7-Eleven",
       amount: -123.0,
       note: "UnionBank Rewards Platinum •••• 3353",
       categoryFk: "2",
@@ -625,138 +691,36 @@ Future generatePreviewData() async {
   );
 
   // Self-transfer 1: UnionBank -> MariBank (₱15,000)
-  DateTime ubTransferDate = DateTime.now().subtract(Duration(days: 12));
-  int? ubInRowId = await database.createOrUpdateTransaction(
-    updateSharedEntry: false,
-    insert: true,
-    Transaction(
-      methodAdded: MethodAdded.preview,
-      transactionPk: "-1",
-      name: "MariBank transfer-in",
-      amount: 15000.0,
-      note: "Transferred balance\nUnionBank → MariBank\nRef: UB1663112",
-      categoryFk: "0",
-      walletFk: "10",
-      dateCreated: ubTransferDate.add(Duration(seconds: 1)),
-      dateTimeModified: null,
-      income: true,
-      paid: true,
-      skipPaid: false,
-    ),
-  );
-  String? ubInPk;
-  if (ubInRowId != null) {
-    final t = await database.getTransactionFromRowId(ubInRowId);
-    ubInPk = t.transactionPk;
-  }
-  await database.createOrUpdateTransaction(
-    updateSharedEntry: false,
-    insert: true,
-    Transaction(
-      pairedTransactionFk: ubInPk,
-      methodAdded: MethodAdded.preview,
-      transactionPk: "-1",
-      name: "UnionBank transfer-out",
-      amount: -15000.0,
-      note: "Transferred balance\nUnionBank → MariBank\nRef: UB1663112",
-      categoryFk: "0",
-      walletFk: "0",
-      dateCreated: ubTransferDate,
-      dateTimeModified: null,
-      income: false,
-      paid: true,
-      skipPaid: false,
-    ),
+  await _seedPairedTransfer(
+    fromWalletFk: "0",
+    fromName: "UnionBank transfer-out",
+    toWalletFk: "10",
+    toName: "MariBank transfer-in",
+    amount: 15000.0,
+    note: "Transferred balance\nUnionBank → MariBank\nRef: UB1663112",
+    transferDate: DateTime.now().subtract(Duration(days: 12)),
   );
 
   // Self-transfer 2: MariBank -> Maya (₱1,000)
-  DateTime mbTransferDate = DateTime.now().subtract(Duration(days: 6));
-  int? mbInRowId = await database.createOrUpdateTransaction(
-    updateSharedEntry: false,
-    insert: true,
-    Transaction(
-      methodAdded: MethodAdded.preview,
-      transactionPk: "-1",
-      name: "Maya transfer-in",
-      amount: 1000.0,
-      note: "Transferred balance\nMariBank → Maya\nRef: 454658",
-      categoryFk: "0",
-      walletFk: "12",
-      dateCreated: mbTransferDate.add(Duration(seconds: 1)),
-      dateTimeModified: null,
-      income: true,
-      paid: true,
-      skipPaid: false,
-    ),
-  );
-  String? mbInPk;
-  if (mbInRowId != null) {
-    final t = await database.getTransactionFromRowId(mbInRowId);
-    mbInPk = t.transactionPk;
-  }
-  await database.createOrUpdateTransaction(
-    updateSharedEntry: false,
-    insert: true,
-    Transaction(
-      pairedTransactionFk: mbInPk,
-      methodAdded: MethodAdded.preview,
-      transactionPk: "-1",
-      name: "MariBank transfer-out",
-      amount: -1000.0,
-      note: "Transferred balance\nMariBank → Maya\nRef: 454658",
-      categoryFk: "0",
-      walletFk: "10",
-      dateCreated: mbTransferDate,
-      dateTimeModified: null,
-      income: false,
-      paid: true,
-      skipPaid: false,
-    ),
+  await _seedPairedTransfer(
+    fromWalletFk: "10",
+    fromName: "MariBank transfer-out",
+    toWalletFk: "12",
+    toName: "Maya transfer-in",
+    amount: 1000.0,
+    note: "Transferred balance\nMariBank → Maya\nRef: 454658",
+    transferDate: DateTime.now().subtract(Duration(days: 6)),
   );
 
   // Self-transfer 3: GoTyme -> MariBank (₱3,600)
-  DateTime gtTransferDate = DateTime.now().subtract(Duration(days: 8));
-  int? gtInRowId = await database.createOrUpdateTransaction(
-    updateSharedEntry: false,
-    insert: true,
-    Transaction(
-      methodAdded: MethodAdded.preview,
-      transactionPk: "-1",
-      name: "MariBank transfer-in",
-      amount: 3600.0,
-      note: "Transferred balance\nGoTyme → MariBank\nRef: ITO261019143038004",
-      categoryFk: "0",
-      walletFk: "10",
-      dateCreated: gtTransferDate.add(Duration(seconds: 1)),
-      dateTimeModified: null,
-      income: true,
-      paid: true,
-      skipPaid: false,
-    ),
-  );
-  String? gtInPk;
-  if (gtInRowId != null) {
-    final t = await database.getTransactionFromRowId(gtInRowId);
-    gtInPk = t.transactionPk;
-  }
-  await database.createOrUpdateTransaction(
-    updateSharedEntry: false,
-    insert: true,
-    Transaction(
-      pairedTransactionFk: gtInPk,
-      methodAdded: MethodAdded.preview,
-      transactionPk: "-1",
-      name: "GoTyme transfer-out",
-      amount: -3600.0,
-      note: "Transferred balance\nGoTyme → MariBank\nRef: ITO261019143038004",
-      categoryFk: "0",
-      walletFk: "11",
-      dateCreated: gtTransferDate,
-      dateTimeModified: null,
-      income: false,
-      paid: true,
-      skipPaid: false,
-    ),
+  await _seedPairedTransfer(
+    fromWalletFk: "11",
+    fromName: "GoTyme transfer-out",
+    toWalletFk: "10",
+    toName: "MariBank transfer-in",
+    amount: 3600.0,
+    note: "Transferred balance\nGoTyme → MariBank\nRef: ITO261019143038004",
+    transferDate: DateTime.now().subtract(Duration(days: 8)),
   );
 
   await database.createOrUpdateTransaction(

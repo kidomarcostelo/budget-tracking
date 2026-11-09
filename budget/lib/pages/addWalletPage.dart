@@ -1,4 +1,7 @@
 import 'package:budget/database/tables.dart';
+import 'package:budget/database/initializeDefaultDatabase.dart';
+export 'package:budget/database/initializeDefaultDatabase.dart'
+    show initializeBalanceCorrectionCategory;
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/editWalletsPage.dart';
@@ -953,33 +956,6 @@ Future<bool> correctWalletBalance(
   );
 
   return true;
-}
-
-Future<TransactionCategory> initializeBalanceCorrectionCategory() async {
-  try {
-    return await database.getCategory("0").$2;
-  } catch (e) {
-    print(
-        e.toString() + "- creating default category amount balancing category");
-    int numberOfCategories =
-        (await database.getTotalCountOfCategories())[0] ?? 0;
-
-    await database.createOrUpdateCategory(
-      insert: false,
-      updateSharedEntry: false,
-      TransactionCategory(
-        categoryPk: "0",
-        name: "default-category-account-amount-balancing".tr(),
-        colour: toHexString(Colors.blueGrey),
-        iconName: "charts.png",
-        dateCreated: DateTime.now(),
-        dateTimeModified: null,
-        order: numberOfCategories,
-        income: false,
-      ),
-    );
-    return await database.getCategory("0").$2;
-  }
 }
 
 Future<String?> createCorrectionTransaction(
