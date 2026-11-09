@@ -1,5 +1,6 @@
 # Task: Unlock Premium Features and Decouple Google Play Store Billing
 
+**ID:** BT-0001  
 **Issue Reference:** [#1](https://github.com/kidomarcostelo/budget-tracking/issues/1)  
 **Status:** Completed  
 **Assignee / Agent:** kidomarcostelo / AI Assistant  

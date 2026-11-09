@@ -1,6 +1,6 @@
 # Task: Isolate Android debug build with applicationIdSuffix and distinct app label
 
-**ID:** BT-10  
+**ID:** BT-0010  
 **Issue Reference:** [#21](https://github.com/kidomarcostelo/budget-tracking/issues/21)  
 **Status:** Complete / Ready to Merge  
 **Assignee / Agent:** AI Assistant  

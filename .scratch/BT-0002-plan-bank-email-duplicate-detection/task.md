@@ -1,6 +1,6 @@
 # Task: Plan duplicate detection for bank-email Transactions
 
-**ID:** BT-2  
+**ID:** BT-0002  
 **Issue Reference:** [#6](https://github.com/kidomarcostelo/budget-tracking/issues/6)
 
 ---

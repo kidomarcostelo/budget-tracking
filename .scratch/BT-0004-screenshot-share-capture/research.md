@@ -1,4 +1,4 @@
-# Research: Android Share Sheet & On-Device OCR Pipeline (BT-4)
+# Research: Android Share Sheet & On-Device OCR Pipeline (BT-0004)
 
 ## 1. Trigger Architecture: Android Intent `ACTION_SEND`
 

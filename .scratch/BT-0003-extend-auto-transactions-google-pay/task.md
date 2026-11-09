@@ -1,6 +1,6 @@
 # Task: Extend automatic transaction creation to Google Pay (Android)
 
-**ID:** BT-3  
+**ID:** BT-0003  
 **Issue Reference:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7)
 
 ---
@@ -18,7 +18,7 @@ the same payment, when both exist) produces at most one prefilled Transaction. T
 it, same as today. Uncertain matches go to review instead of being auto-created.
 
 Out of scope: iOS (Google Pay does not run there), Gmail ingestion (#2/#3), the Triage UI (#4/#5),
-and new bank-email parsing (#6, see BT-2).
+and new bank-email parsing (#6, see BT-0002).
 
 ## Invariants & constraints
 
@@ -63,7 +63,7 @@ Each slice ends in something runnable and testable. S1 to S4 depend on S0.
   - posted + removed events for the same notification
   - Google Pay + bank notification for the same payment
   - Apple Pay Shortcut firing twice, or App Link throttler retries
-- [x] **S4 Review route for uncertain matches.** When a match is ambiguous (two sources, no exact key match, conflicting details, or uncertain merchant), show a "possible duplicate" prompt rather than auto-creating. Align with the heuristics in [`BT-2`](../BT-2-plan-bank-email-duplicate-detection/task.md) and wayfinder #2 Triage Inbox. Do not build the full Triage UI (#4).
+- [x] **S4 Review route for uncertain matches.** When a match is ambiguous (two sources, no exact key match, conflicting details, or uncertain merchant), show a "possible duplicate" prompt rather than auto-creating. Align with the heuristics in [`BT-0002`](../BT-0002-plan-bank-email-duplicate-detection/task.md) and wayfinder #2 Triage Inbox. Do not build the full Triage UI (#4).
 - [x] **S5 Settings, permission UX, docs.** Settings copy for the Google Pay source (toggle per source). Update the FAQ/README pointer. Explain the notification-access permission and the Play policy note from S0.
 - [x] **S6 Verification.** Widget tests for the prefilled page (`google_pay_flow_widget_test.dart`), unit tests for dedupe window and source classification, redacted real device fixtures, manual verification guide (`device-verification-guide.md`), and comprehensive verification across all test suites.
 
@@ -82,7 +82,7 @@ None currently.
 
 ## Tried
 
-- S0 research written to `.scratch/BT-3-extend-auto-transactions-google-pay/research.md`.
+- S0 research written to `.scratch/BT-0003-extend-auto-transactions-google-pay/research.md`.
 - S0b evaluation of `notification_listener_service: 1.0.0` completed and recorded in `research.md`.
 - S1 implemented: upgraded to `notification_listener_service: ^1.0.0`, created `NotificationDispatcher` to own the listener stream, filtered out `hasRemoved == true` events, and added unit tests in `notification_dispatcher_test.dart`.
 - S2 implemented: created `GooglePayParser`, classified packages and payment content, routed to prefilled `AddTransactionPage`, and added unit tests with real 7-Eleven sample in `google_pay_parser_test.dart`.
@@ -99,4 +99,4 @@ All slices S0 through S6 complete and code review findings in PR #26 resolved. R
 
 - GitHub: #7 (kidomarcostelo/budget-tracking)
 - Research: [`research.md`](research.md)
-- Related: [`BT-2`](../BT-2-plan-bank-email-duplicate-detection/task.md) (bank-email duplicate heuristics)
+- Related: [`BT-0002`](../BT-0002-plan-bank-email-duplicate-detection/task.md) (bank-email duplicate heuristics)

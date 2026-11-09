@@ -18,11 +18,11 @@ Whenever a code review is completed, the reviewing agent must automatically save
 
 1. **Target Directory:**
    - Dedicated review directory: `.scratch/code-reviews/`
-   - Alternatively, when reviewing a designated local task: `.scratch/BT-N-<slug>/`
+   - Alternatively, when reviewing a designated local task: `.scratch/BT-NNNN-<slug>/`
 2. **File Naming Convention:**
    - For pull requests: `.scratch/code-reviews/pr-<PR_NUMBER>-review.md` (e.g. `.scratch/code-reviews/pr-20-review.md`)
    - For branches or commits: `.scratch/code-reviews/<branch-or-commit>-review.md`
-   - For task-specific violation reports: `.scratch/BT-N-<slug>/code-review-violations.md`
+   - For task-specific violation reports: `.scratch/BT-NNNN-<slug>/code-review-violations.md`
 3. **Report Structure:**
    - Metadata header: Target PR/branch/commit, tracking issue/task, timestamp.
    - `## Standards`: (a) Documented standards violations; (b) Baseline smells.

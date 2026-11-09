@@ -1,6 +1,6 @@
 # Task: Evaluate on-device Gmail message body extraction and background fetch feasibility
 
-**ID:** BT-5  
+**ID:** BT-0005  
 **Issue Reference:** [#3](https://github.com/kidomarcostelo/budget-tracking/issues/3)  
 **Parent Map:** [#2](https://github.com/kidomarcostelo/budget-tracking/issues/2)  
 **Status:** Complete (Research & Feasibility Spec Approved)  

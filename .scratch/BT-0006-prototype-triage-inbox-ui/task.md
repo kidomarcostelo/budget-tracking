@@ -1,6 +1,6 @@
 # Task: Prototype the Triage Inbox UI and Review Flow
 
-**ID:** BT-6  
+**ID:** BT-0006  
 **Issue Reference:** [#4](https://github.com/kidomarcostelo/budget-tracking/issues/4)  
 **Parent Map:** [#2](https://github.com/kidomarcostelo/budget-tracking/issues/2)  
 **Status:** In Progress (Spec & Prototype Definition)  
@@ -94,6 +94,6 @@ budget/lib/pages/triageInboxPage.dart
 
 - GitHub Issue: [#4](https://github.com/kidomarcostelo/budget-tracking/issues/4)
 - Parent Map: [#2](https://github.com/kidomarcostelo/budget-tracking/issues/2)
-- Upstream Research: [#3](https://github.com/kidomarcostelo/budget-tracking/issues/3) ([`BT-5`](../BT-5-gmail-extraction-sync-feasibility/task.md))
+- Upstream Research: [#3](https://github.com/kidomarcostelo/budget-tracking/issues/3) ([`BT-0005`](../BT-0005-gmail-extraction-sync-feasibility/task.md))
 - Downstream Schema: [#5](https://github.com/kidomarcostelo/budget-tracking/issues/5)
-- Duplicate Detection: [#6](https://github.com/kidomarcostelo/budget-tracking/issues/6) ([`BT-2`](../BT-2-plan-bank-email-duplicate-detection/task.md))
+- Duplicate Detection: [#6](https://github.com/kidomarcostelo/budget-tracking/issues/6) ([`BT-0002`](../BT-0002-plan-bank-email-duplicate-detection/task.md))
