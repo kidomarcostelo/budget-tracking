@@ -4,7 +4,7 @@
 - **Commits Evaluated:**
   - `5135c574`: `feat(backup): establish deterministic keystore and diagnostic sign-in reporting`
   - `6a567ca0`: `feat(backup): integrate live google-services.json and address PR review findings`
-- **Originating Issue / Task:** Issue [#35](https://github.com/kidomarcostelo/budget-tracking/issues/35) / [BT-13](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-13-google-drive-cloud-backup/task.md)
+- **Originating Issue / Task:** Issue [#35](https://github.com/kidomarcostelo/budget-tracking/issues/35) / [BT-0013](file:///data/data/com.termux/files/home/repo/budget-tracking/.scratch/BT-0013-google-drive-cloud-backup/task.md)
 - **Reviewed At:** 2026-11-09 22:45:00 (UTC+8)
 
 ---
@@ -79,7 +79,7 @@
 
 ### (b) Scope Creep
 
-- **None observed.** All changes in `build.gradle`, `debug.keystore`, `google-services.json`, `firebase_options.dart`, `accountAndBackup.dart`, `sign_in_diagnostic_test.dart`, and documentation directly trace to Slices 1–3 of BT-13 / Issue #35.
+- **None observed.** All changes in `build.gradle`, `debug.keystore`, `google-services.json`, `firebase_options.dart`, `accountAndBackup.dart`, `sign_in_diagnostic_test.dart`, and documentation directly trace to Slices 1–3 of BT-0013 / Issue #35.
 
 ### (c) Incorrect or Incomplete Implementation
 
