@@ -1,6 +1,6 @@
 # Feasibility Research: Decoupled Bank Notification Parser via External Automation
 
-**Task Reference:** BT-14  
+**Task Reference:** BT-0014  
 **GitHub Issue:** [#37](https://github.com/kidomarcostelo/budget-tracking/issues/37)  
 **Status:** Pending Research (To be conducted by research model)  
 
