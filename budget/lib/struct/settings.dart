@@ -244,7 +244,11 @@ Future<Map<String, dynamic>> getUserSettings() async {
       userSettingsJSON =
           attemptToMigrateCyclePreferences(userSettingsJSON, key);
       if (userSettingsJSON[key] == null) {
-        userSettingsJSON[key] = userPreferencesDefault[key];
+        if (key == "notificationScanningNonBlocking") {
+          userSettingsJSON[key] = false;
+        } else {
+          userSettingsJSON[key] = userPreferencesDefault[key];
+        }
       }
     });
     if (userSettingsJSON["purchaseID"] == null) {

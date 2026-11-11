@@ -1,14 +1,19 @@
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addTransactionPage.dart';
+import 'package:budget/pages/pendingTransactionsPage.dart';
 import 'package:budget/pages/upcomingOverdueTransactionsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/notificationsGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/upcomingTransactionsFunctions.dart';
+import 'package:budget/widgets/globalSnackbar.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/notificationsSettings.dart';
 import 'package:budget/widgets/openPopup.dart';
+import 'package:budget/widgets/openSnackbar.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -100,9 +105,134 @@ Future<bool> runNotificationPayLoads(context) async {
       ),
     );
     return true;
+  } else if (notificationPayload?.split("?")[0] == "openPendingTransaction") {
+    final String currentPayload = notificationPayload ?? "";
+    notificationPayload = "";
+    Uri notificationPayloadUri = Uri.parse(currentPayload);
+    String? transactionPk =
+        notificationPayloadUri.queryParameters["transactionPk"];
+    if (transactionPk == null) return false;
+    Transaction? transaction =
+        await database.tryGetTransactionFromPk(transactionPk);
+    if (transaction == null || transaction.pending != true) {
+      openSnackbar(SnackbarMessage(
+        title: "transaction-no-longer-pending".tr(),
+        description: "",
+      ));
+      return true;
+    }
+    final uncertainEntry =
+        DedupeLedger.instance.getUncertainEntryForTransaction(transactionPk);
+    final bool isDuplicate = uncertainEntry != null;
+    pushRoute(
+      context,
+      AddTransactionPage(
+        transaction: transaction,
+        routesToPopAfterDelete: RoutesToPopAfterDelete.One,
+        isPossibleDuplicate: isDuplicate,
+        possibleDuplicateEntry: uncertainEntry,
+      ),
+    );
+    return true;
+  } else if (notificationPayload == "openPendingQueue") {
+    notificationPayload = "";
+    pushRoute(
+      context,
+      const PendingTransactionsPage(),
+    );
+    return true;
   }
   notificationPayload = "";
   return false;
+}
+
+int _getNotificationId(String pk) => pk.hashCode.abs() % 100000 + 10000;
+
+Future<void> showPendingTransactionNotification({
+  required Transaction transaction,
+  String? walletCurrency,
+  bool isPossibleDuplicate = false,
+}) async {
+  if (kIsWeb) return;
+
+  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    'pendingTransactions',
+    'Pending Transactions',
+    channelDescription:
+        'Notifications for transactions detected from notifications',
+    importance: Importance.high,
+    priority: Priority.high,
+    groupKey: 'cashew_pending_transactions',
+  );
+
+  final NotificationDetails notificationDetails = const NotificationDetails(
+    android: androidDetails,
+  );
+
+  final int notificationId = _getNotificationId(transaction.transactionPk);
+
+  String amountStr = transaction.amount.abs().toStringAsFixed(2);
+  String currencyPrefix = walletCurrency != null && walletCurrency.isNotEmpty
+      ? "$walletCurrency "
+      : "";
+  String sign =
+      transaction.amount < 0 || transaction.income == false ? "-" : "+";
+  String formattedAmount = "$sign$currencyPrefix$amountStr";
+
+  String title = isPossibleDuplicate
+      ? "possible-duplicate-detected".tr()
+      : "new-transaction-detected".tr();
+  String body = transaction.name.isNotEmpty
+      ? "$formattedAmount • ${transaction.name}"
+      : formattedAmount;
+
+  await flutterLocalNotificationsPlugin.show(
+    notificationId,
+    title,
+    body,
+    notificationDetails,
+    payload:
+        "openPendingTransaction?transactionPk=${transaction.transactionPk}",
+  );
+
+  await updatePendingTransactionsGroupSummary();
+}
+
+Future<void> cancelPendingTransactionNotification(String transactionPk) async {
+  if (kIsWeb) return;
+  final int notificationId = _getNotificationId(transactionPk);
+  await flutterLocalNotificationsPlugin.cancel(notificationId);
+  await updatePendingTransactionsGroupSummary();
+}
+
+Future<void> updatePendingTransactionsGroupSummary() async {
+  if (kIsWeb) return;
+  if (getPlatform(ignoreEmulation: true) != PlatformOS.isAndroid) return;
+
+  final count = await database.watchCountPendingTransactions().first;
+  if (count <= 1) {
+    await flutterLocalNotificationsPlugin.cancel(0);
+    return;
+  }
+
+  const AndroidNotificationDetails summaryDetails = AndroidNotificationDetails(
+    'pendingTransactions',
+    'Pending Transactions',
+    channelDescription:
+        'Notifications for transactions detected from notifications',
+    importance: Importance.high,
+    priority: Priority.high,
+    groupKey: 'cashew_pending_transactions',
+    setAsGroupSummary: true,
+  );
+
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    "pending-transactions".tr(),
+    "new-transactions-detected".tr(namedArgs: {"count": count.toString()}),
+    const NotificationDetails(android: summaryDetails),
+    payload: "openPendingQueue",
+  );
 }
 
 Future<void> setDailyNotifications(context) async {

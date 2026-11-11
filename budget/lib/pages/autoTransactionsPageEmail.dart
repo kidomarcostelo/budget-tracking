@@ -123,32 +123,16 @@ Future queueTransactionFromMessage(
       ? null
       : await database.getWalletInstanceOrNull(templateFound.walletFk);
 
-  if (willPushRoute || isPossibleDuplicate) {
-    pushRoute(
-      null,
-      AddTransactionPage(
-        useCategorySelectedIncome: true,
-        routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-        selectedAmount: amountDouble,
-        selectedTitle: title,
-        selectedCategory: category,
-        startInitialAddTransactionSequence: false,
-        selectedWallet: wallet,
-        selectedDate: dateTime,
-        isPossibleDuplicate: isPossibleDuplicate,
-        possibleDuplicateEntry: possibleDuplicateEntry,
-      ),
-    );
-  } else {
-    processAddTransactionFromParams(navigatorKey.currentContext!, {
-      "title": title,
-      "categoryPk": category?.categoryPk,
-      "walletPk": wallet?.walletPk,
-      "amount": amountDouble.toString(),
-      "date": dateTime.toString(),
-      "skipDedupe": "true",
-    });
-  }
+  await dispatchParsedTransaction(
+    title: title,
+    amount: amountDouble,
+    date: dateTime ?? DateTime.now(),
+    category: category,
+    wallet: wallet,
+    willPushRoute: willPushRoute,
+    isPossibleDuplicate: isPossibleDuplicate,
+    possibleDuplicateEntry: possibleDuplicateEntry,
+  );
 }
 
 class AutoTransactionsPageNotifications extends StatefulWidget {
@@ -269,6 +253,21 @@ class _AutoTransactionsPageNotificationsState
                   appStateSettings["googlePayNotificationScanning"] ?? true,
               onSwitched: (value) async {
                 await updateSettings("googlePayNotificationScanning", value,
+                    updateGlobalState: false);
+              },
+            ),
+          if (appStateSettings["notificationScanning"] == true)
+            SettingsContainerSwitch(
+              title: "notification-scanning-non-blocking".tr(),
+              description:
+                  "notification-scanning-non-blocking-description".tr(),
+              icon: appStateSettings["outlinedIcons"] == true
+                  ? Icons.notifications_active_outlined
+                  : Icons.notifications_active_rounded,
+              initialValue:
+                  appStateSettings["notificationScanningNonBlocking"] ?? false,
+              onSwitched: (value) async {
+                await updateSettings("notificationScanningNonBlocking", value,
                     updateGlobalState: false);
               },
             ),

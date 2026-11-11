@@ -1,4 +1,4 @@
-import 'dart:ffi';
+import 'dart:ffi' hide Size;
 import 'package:budget/colors.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
@@ -55,6 +55,9 @@ class _TestAssetLoader extends AssetLoader {
       'custom-notification-templates': 'Custom Notification Templates',
       'custom-notification-templates-description':
           'Automatically detect and parse transactions using custom notification templates.',
+      'notification-scanning-non-blocking': 'Non-Blocking Notifications',
+      'notification-scanning-non-blocking-description':
+          'Display a system notification popup instead of opening Cashew immediately upon detecting transactions.',
       'help': 'Help',
       'faq': 'FAQ',
     };
@@ -460,6 +463,10 @@ void main() {
     testWidgets(
         'displays Google Pay toggle and permission-required warning when notificationScanning is true but permission not granted',
         (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
       appStateSettings["notificationScanning"] = true;
       appStateSettings["googlePayNotificationScanning"] = true;
       mockPermissionGranted = false;
@@ -567,6 +574,40 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(appStateSettings["googlePayNotificationScanning"], isTrue);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    });
+
+    testWidgets('toggling non-blocking switch updates preference',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      appStateSettings["notificationScanning"] = true;
+      appStateSettings["notificationScanningNonBlocking"] = false;
+      mockPermissionGranted = true;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          const AutoTransactionsPageNotifications(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final nonBlockingFinder = find.ancestor(
+        of: find.text('Non-Blocking Notifications'),
+        matching: find.byType(SettingsContainerSwitch),
+      );
+      expect(nonBlockingFinder, findsOneWidget);
+
+      await tester.tap(nonBlockingFinder);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(appStateSettings["notificationScanningNonBlocking"], isTrue);
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);
@@ -708,6 +749,10 @@ void main() {
     testWidgets(
         'does not display "No Custom Templates Added" error when customTemplatesNotificationScanning is false',
         (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
       appStateSettings["notificationScanning"] = true;
       appStateSettings["customTemplatesNotificationScanning"] = false;
       mockPermissionGranted = true;

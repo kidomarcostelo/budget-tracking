@@ -236,36 +236,17 @@ class GooglePayParser {
     final category = categoryOverride ?? await resolveCategory(result);
     final note = result.cardHint;
 
-    if (willPushRoute || isPossibleDuplicate) {
-      pushRoute(
-        null,
-        AddTransactionPage(
-          useCategorySelectedIncome: true,
-          routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-          selectedAmount: result.amount,
-          selectedTitle: result.merchant,
-          selectedNotes: note,
-          selectedCategory: category,
-          startInitialAddTransactionSequence: false,
-          selectedWallet: wallet,
-          selectedDate: dateTime ?? DateTime.now(),
-          isPossibleDuplicate: isPossibleDuplicate,
-          possibleDuplicateEntry: possibleDuplicateEntry,
-        ),
-      );
-    } else {
-      if (navigatorKey.currentContext != null) {
-        processAddTransactionFromParams(navigatorKey.currentContext!, {
-          'title': result.merchant,
-          'note': note,
-          'categoryPk': category?.categoryPk,
-          'walletPk': wallet?.walletPk,
-          'amount': result.amount.toString(),
-          'date': (dateTime ?? DateTime.now()).toString(),
-          'skipDedupe': 'true',
-        });
-      }
-    }
+    await dispatchParsedTransaction(
+      title: result.merchant,
+      amount: result.amount,
+      date: dateTime ?? DateTime.now(),
+      note: note,
+      category: category,
+      wallet: wallet,
+      willPushRoute: willPushRoute,
+      isPossibleDuplicate: isPossibleDuplicate,
+      possibleDuplicateEntry: possibleDuplicateEntry,
+    );
     return true;
   }
 

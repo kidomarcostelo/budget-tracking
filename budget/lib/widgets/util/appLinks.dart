@@ -7,6 +7,7 @@ import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/autoTransactionsPageEmail.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/dedupeLedger.dart';
+import 'package:budget/struct/initializeNotifications.dart';
 import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/throttler.dart';
@@ -173,7 +174,11 @@ Future<bool> shouldDedupePayment({
 }
 
 Future<Transaction?> processAddTransactionFromParams(
-    BuildContext context, Map<String, String?> params) async {
+    BuildContext? contextPassed, Map<String, String?> params) async {
+  BuildContext? context = contextPassed ?? navigatorKey.currentContext;
+  bool isPending = params["pending"] == "true";
+  bool isPossibleDuplicate = params["isPossibleDuplicate"] == "true";
+
   MainAndSubcategory mainAndSubCategory =
       await getMainAndSubcategoryFromParams(params);
   TransactionWallet? wallet = await getWalletFromParams(params);
@@ -197,79 +202,97 @@ Future<Transaction?> processAddTransactionFromParams(
 
   // If ambiguous match detected, route to review with possible duplicate banner instead of auto-creating
   if (dedupeResult != null && dedupeResult.isUncertainMatch) {
-    pushRoute(
-      context,
-      AddTransactionPage(
-        routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-        selectedAmount: amount,
-        selectedCategory: mainAndSubCategory.main,
-        selectedSubCategory: mainAndSubCategory.sub,
-        selectedWallet: wallet,
-        selectedDate: dateCreated,
-        selectedTitle: title.isNotEmpty ? title : null,
-        selectedNotes: note.isNotEmpty ? note : null,
-        startInitialAddTransactionSequence: false,
-        isPossibleDuplicate: true,
-        possibleDuplicateEntry: dedupeResult.matchedEntry,
-      ),
-    );
-    return null;
+    if (isPending) {
+      isPossibleDuplicate = true;
+    } else {
+      pushRoute(
+        context,
+        AddTransactionPage(
+          routesToPopAfterDelete: RoutesToPopAfterDelete.None,
+          selectedAmount: amount,
+          selectedCategory: mainAndSubCategory.main,
+          selectedSubCategory: mainAndSubCategory.sub,
+          selectedWallet: wallet,
+          selectedDate: dateCreated,
+          selectedTitle: title.isNotEmpty ? title : null,
+          selectedNotes: note.isNotEmpty ? note : null,
+          startInitialAddTransactionSequence: false,
+          isPossibleDuplicate: true,
+          possibleDuplicateEntry: dedupeResult.matchedEntry,
+        ),
+      );
+      return null;
+    }
   }
 
   if (mainAndSubCategory.main == null) {
-    Future.delayed(Duration(milliseconds: 100), () {
-      bottomSheetControllerGlobal.snapToExtent(0);
-    });
-    mainAndSubCategory = await selectCategorySequence(
-      context,
-      selectedCategory: null,
-      setSelectedCategory: (_) {},
-      selectedSubCategory: null,
-      setSelectedSubCategory: (_) {},
-      selectedIncomeInitial: null,
-      allowReorder: false,
-      extraWidgetBefore: Padding(
-        padding: const EdgeInsetsDirectional.only(bottom: 18),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TableEntry(
-                padding: const EdgeInsetsDirectional.symmetric(horizontal: 18),
-                firstEntry: [
-                  convertToMoney(
-                      Provider.of<AllWallets>(context, listen: false), amount,
-                      currencyKey:
-                          Provider.of<AllWallets>(context, listen: false)
-                              .indexedByPk[walletPk]
-                              ?.currency),
-                  if (dateCreated != null) getWordedDate(dateCreated),
-                  if (title != "") title,
-                  if (note != "") note,
-                  if (wallet != null) wallet.name,
-                ],
-                headers: [
-                  "amount".tr(),
-                  if (dateCreated != null) "date".tr(),
-                  if (title != "") "title".tr(),
-                  if (note != "") "note".tr(),
-                  if (wallet != null) "account".tr(),
-                ],
+    if (isPending) {
+      List<TransactionCategory> allCategories =
+          await database.getAllCategories();
+      if (allCategories.isNotEmpty) {
+        mainAndSubCategory.main = allCategories.firstWhere(
+          (c) => c.categoryPk != "0" && (amount < 0 ? c.income == false : true),
+          orElse: () => allCategories.first,
+        );
+      }
+    } else if (context != null) {
+      Future.delayed(Duration(milliseconds: 100), () {
+        bottomSheetControllerGlobal.snapToExtent(0);
+      });
+      mainAndSubCategory = await selectCategorySequence(
+        context,
+        selectedCategory: null,
+        setSelectedCategory: (_) {},
+        selectedSubCategory: null,
+        setSelectedSubCategory: (_) {},
+        selectedIncomeInitial: null,
+        allowReorder: false,
+        extraWidgetBefore: Padding(
+          padding: const EdgeInsetsDirectional.only(bottom: 18),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TableEntry(
+                  padding:
+                      const EdgeInsetsDirectional.symmetric(horizontal: 18),
+                  firstEntry: [
+                    convertToMoney(
+                        Provider.of<AllWallets>(context, listen: false), amount,
+                        currencyKey:
+                            Provider.of<AllWallets>(context, listen: false)
+                                .indexedByPk[walletPk]
+                                ?.currency),
+                    if (dateCreated != null) getWordedDate(dateCreated),
+                    if (title != "") title,
+                    if (note != "") note,
+                    if (wallet != null) wallet.name,
+                  ],
+                  headers: [
+                    "amount".tr(),
+                    if (dateCreated != null) "date".tr(),
+                    if (title != "") "title".tr(),
+                    if (note != "") "note".tr(),
+                    if (wallet != null) "account".tr(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
   if (mainAndSubCategory.main?.categoryPk == null) {
-    openSnackbar(SnackbarMessage(
-      title: "category-not-selected".tr(),
-      description: "all-transactions-require-a-category".tr(),
-      icon: appStateSettings["outlinedIcons"]
-          ? Icons.warning_amber_outlined
-          : Icons.warning_amber_rounded,
-    ));
+    if (!isPending) {
+      openSnackbar(SnackbarMessage(
+        title: "category-not-selected".tr(),
+        description: "all-transactions-require-a-category".tr(),
+        icon: appStateSettings["outlinedIcons"]
+            ? Icons.warning_amber_outlined
+            : Icons.warning_amber_rounded,
+      ));
+    }
     return null;
   }
 
@@ -287,6 +310,7 @@ Future<Transaction?> processAddTransactionFromParams(
       paid: true,
       skipPaid: false,
       methodAdded: MethodAdded.appLink,
+      pending: isPending,
     ),
     insert: true,
   );
@@ -297,17 +321,91 @@ Future<Transaction?> processAddTransactionFromParams(
   if (rowId != null) {
     final Transaction transactionJustAdded =
         await database.getTransactionFromRowId(rowId);
-    flashTransaction(transactionJustAdded.transactionPk);
-    openSnackbar(SnackbarMessage(
-      title: "added-transaction".tr(),
-      description: await getTransactionLabel(transactionJustAdded),
-      icon: appStateSettings["outlinedIcons"]
-          ? Icons.post_add_outlined
-          : Icons.post_add_rounded,
-    ));
+    if (isPending && isPossibleDuplicate) {
+      if (dedupeResult?.uncertainEntry != null) {
+        await DedupeLedger.instance.associateUncertainEntryWithTransaction(
+          dedupeResult!.uncertainEntry!,
+          transactionJustAdded.transactionPk,
+        );
+      } else {
+        final manualUncertain = DedupeEntryRecord(
+          eventKey: 'manual_uncertain_${transactionJustAdded.transactionPk}',
+          packageName: 'notification',
+          title: title,
+          amount: amount,
+          currency: wallet?.currency ?? params["currency"] ?? 'USD',
+          status: 'uncertain',
+          createdTransactionPk: transactionJustAdded.transactionPk,
+        );
+        await DedupeLedger.instance
+            .recordUncertainEntryDirectly(manualUncertain);
+      }
+    }
+    if (isPending) {
+      await showPendingTransactionNotification(
+        transaction: transactionJustAdded,
+        walletCurrency: wallet?.currency,
+        isPossibleDuplicate: isPossibleDuplicate,
+      );
+    } else {
+      flashTransaction(transactionJustAdded.transactionPk);
+      openSnackbar(SnackbarMessage(
+        title: "added-transaction".tr(),
+        description: await getTransactionLabel(transactionJustAdded),
+        icon: appStateSettings["outlinedIcons"]
+            ? Icons.post_add_outlined
+            : Icons.post_add_rounded,
+      ));
+    }
     return transactionJustAdded;
   }
   return null;
+}
+
+Future<void> dispatchParsedTransaction({
+  required String title,
+  required double amount,
+  required DateTime date,
+  String? note,
+  TransactionCategory? category,
+  TransactionWallet? wallet,
+  bool willPushRoute = false,
+  bool isPossibleDuplicate = false,
+  DedupeEntryRecord? possibleDuplicateEntry,
+}) async {
+  final bool isNonBlocking =
+      appStateSettings["notificationScanningNonBlocking"] == true;
+
+  if ((willPushRoute || isPossibleDuplicate) && !isNonBlocking) {
+    pushRoute(
+      null,
+      AddTransactionPage(
+        useCategorySelectedIncome: true,
+        routesToPopAfterDelete: RoutesToPopAfterDelete.None,
+        selectedAmount: amount,
+        selectedTitle: title,
+        selectedNotes: note,
+        selectedCategory: category,
+        startInitialAddTransactionSequence: false,
+        selectedWallet: wallet,
+        selectedDate: date,
+        isPossibleDuplicate: isPossibleDuplicate,
+        possibleDuplicateEntry: possibleDuplicateEntry,
+      ),
+    );
+  } else {
+    processAddTransactionFromParams(navigatorKey.currentContext, {
+      'title': title,
+      if (note != null) 'note': note,
+      'categoryPk': category?.categoryPk,
+      'walletPk': wallet?.walletPk,
+      'amount': amount.toString(),
+      'date': date.toString(),
+      'skipDedupe': 'true',
+      'pending': isNonBlocking ? 'true' : 'false',
+      'isPossibleDuplicate': isPossibleDuplicate ? 'true' : 'false',
+    });
+  }
 }
 
 Future processAddTransactionRouteFromParams(
@@ -555,7 +653,7 @@ double getAmountFromParams(Map<String, String?> params) {
 }
 
 DateTime? getDateTimeFromParams(
-    Map<String, String?> params, BuildContext context) {
+    Map<String, String?> params, BuildContext? context) {
   DateTime? dateCreated;
   String? dateToParse = params["date"] ?? params["dateCreated"];
   if (dateToParse != null) {
@@ -572,7 +670,17 @@ DateTime? getDateTimeFromParams(
     } catch (e) {
       DateTime? result;
       for (String commonFormat in getCommonDateFormats()) {
-        result = tryDateFormatting(context, commonFormat, dateToParse);
+        if (context != null) {
+          result = tryDateFormatting(context, commonFormat, dateToParse);
+        } else {
+          try {
+            DateFormat format = DateFormat(commonFormat.toString());
+            result = format.parse(dateToParse.trim());
+            if (result.year < 1500) result = null;
+          } catch (_) {
+            result = null;
+          }
+        }
         if (result != null) break;
       }
       dateCreated = result;

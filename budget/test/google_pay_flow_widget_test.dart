@@ -129,6 +129,7 @@ void main() {
       appStateSettings['notificationScanning'] = true;
       appStateSettings['googlePayNotificationScanning'] = true;
       appStateSettings['customTemplatesNotificationScanning'] = true;
+      appStateSettings['notificationScanningNonBlocking'] = false;
       appStateSettings['currentUserEmail'] = 'tester@example.com';
 
       unionBankWallet = TransactionWallet(

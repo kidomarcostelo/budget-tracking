@@ -596,6 +596,10 @@ class _AddTransactionPageState extends State<AddTransactionPage>
         }
       }
 
+      if (widget.transaction?.pending == true) {
+        cancelPendingTransactionNotification(widget.transaction!.transactionPk);
+      }
+
       if ([
         TransactionSpecialType.repetitive,
         TransactionSpecialType.subscription,
@@ -714,6 +718,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
           : null,
       objectiveFk: selectedObjectivePk,
       objectiveLoanFk: selectedObjectiveLoanPk,
+      pending: false,
       budgetFksExclude:
           selectedExcludedBudgetPks.isEmpty ? null : selectedExcludedBudgetPks,
     );
@@ -3486,6 +3491,9 @@ void deleteTransactionPopup(
     }
     openLoadingPopupTryCatch(() async {
       await database.deleteTransaction(transaction.transactionPk);
+      if (transaction.pending == true) {
+        cancelPendingTransactionNotification(transaction.transactionPk);
+      }
       openSnackbar(
         SnackbarMessage(
           title: "deleted-transaction".tr(),

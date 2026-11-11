@@ -15,7 +15,9 @@ import 'package:budget/pages/homePage/homePageBudgets.dart';
 import 'package:budget/pages/homePage/homePageUpcomingTransactions.dart';
 import 'package:budget/pages/homePage/homePageAllSpendingSummary.dart';
 import 'package:budget/pages/editHomePage.dart';
+import 'package:budget/pages/pendingTransactionsPage.dart';
 import 'package:budget/pages/settingsPage.dart';
+import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/pages/homePage/homePageCreditDebts.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
@@ -273,6 +275,31 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 ),
                               )
                             : SizedBox.shrink(),
+                        StreamBuilder<int>(
+                          stream: database.watchCountPendingTransactions(),
+                          builder: (context, snapshot) {
+                            final int count = snapshot.data ?? 0;
+                            if (count <= 0) return const SizedBox.shrink();
+                            return Tooltip(
+                              message: "pending-transactions".tr(),
+                              child: IconButton(
+                                padding: const EdgeInsetsDirectional.all(15),
+                                onPressed: () {
+                                  pushRoute(
+                                    context,
+                                    const PendingTransactionsPage(),
+                                  );
+                                },
+                                icon: Badge.count(
+                                  count: count,
+                                  child: Icon(appStateSettings["outlinedIcons"]
+                                      ? Icons.notifications_outlined
+                                      : Icons.notifications_rounded),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         Tooltip(
                           message: "edit-home".tr(),
                           child: IconButton(

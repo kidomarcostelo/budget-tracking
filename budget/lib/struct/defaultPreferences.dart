@@ -131,6 +131,7 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "notificationScanning": false,
     "googlePayNotificationScanning": true,
     "customTemplatesNotificationScanning": true,
+    "notificationScanningNonBlocking": true,
     "accountColorfulAmountsWithArrows": false,
     "netTotalsColorful": false,
     "EmailAutoTransactions-amountOfEmails": 10,
