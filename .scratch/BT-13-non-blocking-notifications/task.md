@@ -69,10 +69,11 @@
 ---
 
 ## 4. Verification & Testing
-- [x] Unit / Widget tests added or updated (170 tests passing)
+- [x] Unit / Widget tests added or updated (176 tests passing)
 - [x] Static analysis passes: `flutter analyze` (0 issues)
 - [x] Code formatted: `dart format --output=none --set-exit-if-changed .` (clean)
 - [x] Verify existing blocking flow still works when toggle is off
 - [x] Verify aggregate queries exclude pending transactions
 - [x] Verify notification tap opens correct transaction
 - [x] Verify swipe approve/dismiss in pending queue
+- [x] Addressed PR #39 code review findings (commit `ca617b01`): theming colors, localization interpolation, aggregate queries exclusion, fresh install setting defaults, duplicate indication in queue and edit review flow, and deduplicated parsing dispatcher.
