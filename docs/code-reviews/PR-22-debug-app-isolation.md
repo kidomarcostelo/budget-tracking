@@ -3,7 +3,7 @@
 - **PR:** [#22](https://github.com/kidomarcostelo/budget-tracking/pull/22) — `feat(android): isolate debug build with applicationIdSuffix and Cashew Dev label (#21)`
 - **Branch:** `feat/debug-app-isolation` → `main`
 - **Head Commit:** [`7fb0309f`](https://github.com/kidomarcostelo/budget-tracking/commit/7fb0309f990c24334f4ad3c74bda9c58901b5046)
-- **Originating Spec:** Issue [#21](https://github.com/kidomarcostelo/budget-tracking/issues/21) & [`.scratch/BT-10-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-10-debug-app-isolation/task.md)
+- **Originating Spec:** Issue [#21](https://github.com/kidomarcostelo/budget-tracking/issues/21) & [`.scratch/BT-0010-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-0010-debug-app-isolation/task.md)
 - **Review Date:** 2026-11-02
 - **Review Type:** Two-Axis Code Review (Standards & Spec)
 
@@ -37,7 +37,7 @@
 - **Fully Compliant Repository Standards:**
   - **Branching & PR Guardrails ([`AGENTS.md`](file:///home/kcostelo/person/budget-tracking/AGENTS.md)):** PR created from a dedicated feature branch (`feat/debug-app-isolation`), target is `main`, no direct commits to `main`.
   - **Commit Trailers ([`AGENTS.md`](file:///home/kcostelo/person/budget-tracking/AGENTS.md)):** No `Co-authored-by` or AI trailers added.
-  - **Local Task Tracker ([`docs/agents/issue-tracker.md`](file:///home/kcostelo/person/budget-tracking/docs/agents/issue-tracker.md)):** Local scratch directory properly initialized at [`.scratch/BT-10-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-10-debug-app-isolation/task.md) and task index bumped to `Next ID: 11` in [`.scratch/index.md`](file:///home/kcostelo/person/budget-tracking/.scratch/index.md).
+  - **Local Task Tracker ([`docs/agents/issue-tracker.md`](file:///home/kcostelo/person/budget-tracking/docs/agents/issue-tracker.md)):** Local scratch directory properly initialized at [`.scratch/BT-0010-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-0010-debug-app-isolation/task.md) and task index bumped to `Next ID: 0011` in [`.scratch/index.md`](file:///home/kcostelo/person/budget-tracking/.scratch/index.md).
   - **Domain & Architecture Documentation ([`GLOSSARY.md`](file:///home/kcostelo/person/budget-tracking/GLOSSARY.md) & [`docs/architecture.md`](file:///home/kcostelo/person/budget-tracking/docs/architecture.md)):** Architecture documentation updated with a dedicated section (*"4. Android Environments & Package Isolation"*) documenting data preservation invariants and the `.sql` snapshot bridge.
 
 ### Fowler Refactoring Smell Baseline (Judgement Calls)
@@ -86,7 +86,7 @@
   - *Spec:* `"`google-services.json` recognizes both com.budget.tracker_app and com.budget.tracker_app.debug"` → Implemented in [`budget/android/app/google-services.json`](file:///home/kcostelo/person/budget-tracking/budget/android/app/google-services.json#L60).
   - *Spec:* `"Release builds remain unchanged (com.budget.tracker_app, Cashew)"` → Preserved in `release` build type and `defaultConfig`.
 
-*(Minor tracking note: Section 4 verification checkboxes in [`.scratch/BT-10-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-10-debug-app-isolation/task.md#L38-L41) remain unchecked `[ ]`).*
+*(Minor tracking note: Section 4 verification checkboxes in [`.scratch/BT-0010-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-0010-debug-app-isolation/task.md#L38-L41) remain unchecked `[ ]`).*
 
 ### (b) Behaviour Not Asked For (Scope Creep)
 - **`profile` Build Type Customization:**
@@ -113,7 +113,7 @@
 2. **Remove Redundant `manifestPlaceholders` in `buildTypes.release`:**
    - Remove `manifestPlaceholders = [appName: "Cashew"]` from `release` block since it is already defined in `defaultConfig`.
 3. **Update Local Task Status:**
-   - Mark completed verification steps in [`.scratch/BT-10-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-10-debug-app-isolation/task.md#L38-L41).
+   - Mark completed verification steps in [`.scratch/BT-0010-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-0010-debug-app-isolation/task.md#L38-L41).
 
 ---
 
@@ -122,5 +122,5 @@
 1. **Profile Build Type Aligned:** Removed the divergent `profile` block in [`budget/android/app/build.gradle`](file:///home/kcostelo/person/budget-tracking/budget/android/app/build.gradle). Profile builds now cleanly inherit the production release package and label (`com.budget.tracker_app`, `Cashew`).
 2. **Redundant Placeholders Removed:** Removed `manifestPlaceholders = [appName: "Cashew"]` from `buildTypes.release`; it inherits automatically from `defaultConfig`.
 3. **Architecture Docs Updated:** Updated [`docs/architecture.md`](file:///home/kcostelo/person/budget-tracking/docs/architecture.md) to accurately document that `profile` measures production-accurate conditions.
-4. **Task Verification Checked:** Verified and checked off all task verification items in [`.scratch/BT-10-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-10-debug-app-isolation/task.md) following successful GitHub Actions CI runs (`Build Android APK` ✓, `CI Quality Gate` ✓).
+4. **Task Verification Checked:** Verified and checked off all task verification items in [`.scratch/BT-0010-debug-app-isolation/task.md`](file:///home/kcostelo/person/budget-tracking/.scratch/BT-0010-debug-app-isolation/task.md) following successful GitHub Actions CI runs (`Build Android APK` ✓, `CI Quality Gate` ✓).
 

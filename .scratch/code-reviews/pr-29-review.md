@@ -2,7 +2,7 @@
 
 - **Target PR:** [#29](https://github.com/kidomarcostelo/budget-tracking/pull/29) (`fix/add-transaction-route-prefilled` -> `main`)
 - **Commit:** `69b2e945` (`fix(routing): prevent title wizard blocking and support aliases in addTransactionRoute`)
-- **Originating Issue:** [#28](https://github.com/kidomarcostelo/budget-tracking/issues/28) / Task `BT-12`
+- **Originating Issue:** [#28](https://github.com/kidomarcostelo/budget-tracking/issues/28) / Task `BT-0012`
 - **Reviewed At:** 2026-11-07 15:50:00 (UTC+8)
 
 ---

@@ -2,7 +2,7 @@
 
 Issues and specs for this repo live as GitHub issues on the fork (`kidomarcostelo/budget-tracking`). Use the `gh` CLI for all operations, explicitly targeting the fork.
 
-Local scratchpads, offline tracking, and working notes live under `.scratch/BT-N-<slug>/`, indexed by `.scratch/index.md`.
+Local scratchpads, offline tracking, and working notes live under `.scratch/BT-NNNN-<slug>/`, indexed by `.scratch/index.md`.
 
 ## Target Repository
 
@@ -21,8 +21,8 @@ Local scratchpads, offline tracking, and working notes live under `.scratch/BT-N
 
 ## Local Markdown (.scratch/)
 
-- Issues, drafts, and notes can be stored locally as markdown files under `.scratch/BT-N-<slug>/` in this repo, indexed by `.scratch/index.md`.
-- For local or offline tasks, markdown files under `.scratch/BT-N-<slug>/` serve as the ticket source before or alongside publishing to GitHub.
+- Issues, drafts, and notes can be stored locally as markdown files under `.scratch/BT-NNNN-<slug>/` in this repo, indexed by `.scratch/index.md`.
+- For local or offline tasks, markdown files under `.scratch/BT-NNNN-<slug>/` serve as the ticket source before or alongside publishing to GitHub.
 
 ## Pull requests as a triage surface
 
@@ -42,7 +42,7 @@ Create a GitHub issue in `kidomarcostelo/budget-tracking`.
 
 ## When a skill says "fetch the relevant ticket"
 
-Read it as in **Read an issue** above. If a local ticket is specified, look up its folder in `.scratch/index.md` and read `.scratch/BT-N-<slug>/task.md`.
+Read it as in **Read an issue** above. If a local ticket is specified, look up its folder in `.scratch/index.md` and read `.scratch/BT-NNNN-<slug>/task.md`.
 
 ## Wayfinding operations
 

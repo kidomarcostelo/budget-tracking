@@ -1,5 +1,6 @@
 # Task: [Short descriptive title]
 
+**ID:** [e.g., BT-0015]  
 **Issue Reference:** [e.g., #42 or Local]  
 **Status:** [Draft | In Progress | Blocked | Complete]  
 **Assignee / Agent:** [Name / Role]

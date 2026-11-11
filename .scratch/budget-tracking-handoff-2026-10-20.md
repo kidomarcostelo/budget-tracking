@@ -13,19 +13,19 @@
    - The APK was downloaded to `/storage/emulated/0/Download/app-debug.apk`.
    - **User Test Result**: Confirmed **"the OCR worked"** for Philippine bank receipts shared via Android `ACTION_SEND`.
 2. **Issue #3 & #4 Converted to Documented Tasks**:
-   - **BT-5**: [`BT-5-gmail-extraction-sync-feasibility`](.scratch/BT-5-gmail-extraction-sync-feasibility/task.md) with complete [`research.md`](.scratch/BT-5-gmail-extraction-sync-feasibility/research.md) covering Google CASA Tier 1, restricted `gmail.readonly`, MIME extraction, and SQLite WAL mode. GitHub Issue [#3](https://github.com/kidomarcostelo/budget-tracking/issues/3) updated.
-   - **BT-6**: [`BT-6-prototype-triage-inbox-ui`](.scratch/BT-6-prototype-triage-inbox-ui/task.md) detailing the Triage Inbox screen and interactive `TriageTransactionCard` layout. GitHub Issue [#4](https://github.com/kidomarcostelo/budget-tracking/issues/4) updated.
+   - **BT-0005**: [`BT-0005-gmail-extraction-sync-feasibility`](.scratch/BT-0005-gmail-extraction-sync-feasibility/task.md) with complete [`research.md`](.scratch/BT-0005-gmail-extraction-sync-feasibility/research.md) covering Google CASA Tier 1, restricted `gmail.readonly`, MIME extraction, and SQLite WAL mode. GitHub Issue [#3](https://github.com/kidomarcostelo/budget-tracking/issues/3) updated.
+   - **BT-0006**: [`BT-0006-prototype-triage-inbox-ui`](.scratch/BT-0006-prototype-triage-inbox-ui/task.md) detailing the Triage Inbox screen and interactive `TriageTransactionCard` layout. GitHub Issue [#4](https://github.com/kidomarcostelo/budget-tracking/issues/4) updated.
    - Updated [`.scratch/index.md`](.scratch/index.md).
 3. **New Feature Request: Owner Recognition & Self-Transfer Routing**:
    - User requested owner recognition to distinguish internal self-transfers from external expenses.
    - User confirmed adding an **Account Owner Name** preference (`appStateSettings["accountOwnerName"]`).
    - Created GitHub Issue [#12](https://github.com/kidomarcostelo/budget-tracking/issues/12) (`enhancement`, `ready-for-agent`).
-   - Created local task **BT-7**: [`BT-7-owner-recognition-self-transfers`](.scratch/BT-7-owner-recognition-self-transfers/task.md).
-   - Bumped `Next ID: 8` in [`.scratch/index.md`](.scratch/index.md).
+   - Created local task **BT-0007**: [`BT-0007-owner-recognition-self-transfers`](.scratch/BT-0007-owner-recognition-self-transfers/task.md).
+   - Bumped `Next ID: 0008` in [`.scratch/index.md`](.scratch/index.md).
 
 ---
 
-## 2. Immediate Next Task: Implement Issue #12 / BT-7
+## 2. Immediate Next Task: Implement Issue #12 / BT-0007
 
 The user explicitly approved the design and asked to proceed with implementing owner recognition and self-transfer routing.
 
@@ -74,7 +74,7 @@ When capturing an inter-bank transfer between user-owned accounts (e.g. UnionBan
 - **Active Issue #12 (Owner Recognition)**: [kidomarcostelo/budget-tracking#12](https://github.com/kidomarcostelo/budget-tracking/issues/12)
 - **Task Tracking**:
   - [`.scratch/index.md`](.scratch/index.md)
-  - [`.scratch/BT-7-owner-recognition-self-transfers/task.md`](.scratch/BT-7-owner-recognition-self-transfers/task.md)
+  - [`.scratch/BT-0007-owner-recognition-self-transfers/task.md`](.scratch/BT-0007-owner-recognition-self-transfers/task.md)
 - **Architectural Constraints**:
   - [`CONSTRAINTS.md`](CONSTRAINTS.md)
   - [`GLOSSARY.md`](GLOSSARY.md)

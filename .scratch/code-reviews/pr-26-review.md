@@ -2,7 +2,7 @@
 
 **Target Branch:** `feat/google-pay-verification` against `main`  
 **Pull Request:** [#26](https://github.com/kidomarcostelo/budget-tracking/pull/26) (`feat(notifications): Google Pay end-to-end verification and device testing guide (Slice S6)`)  
-**Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Task: [`BT-3`](../BT-3-extend-auto-transactions-google-pay/task.md))  
+**Tracking Issue:** [#7](https://github.com/kidomarcostelo/budget-tracking/issues/7) (Task: [`BT-0003`](../BT-0003-extend-auto-transactions-google-pay/task.md))  
 **Commits Reviewed:**
 - `5bc718ef` fix(notifications): harden flow tests, resolve timeouts, and correct device verification commands
 - `370bf4e8` feat(notifications): add Google Pay end-to-end flow tests and verification guide (Slice S6)  
