@@ -235,39 +235,18 @@ class GooglePayParser {
     final wallet = walletOverride ?? await resolveWallet(result);
     final category = categoryOverride ?? await resolveCategory(result);
     final note = result.cardHint;
-    final bool isNonBlocking =
-        appStateSettings["notificationScanningNonBlocking"] == true;
 
-    if ((willPushRoute || isPossibleDuplicate) && !isNonBlocking) {
-      pushRoute(
-        null,
-        AddTransactionPage(
-          useCategorySelectedIncome: true,
-          routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-          selectedAmount: result.amount,
-          selectedTitle: result.merchant,
-          selectedNotes: note,
-          selectedCategory: category,
-          startInitialAddTransactionSequence: false,
-          selectedWallet: wallet,
-          selectedDate: dateTime ?? DateTime.now(),
-          isPossibleDuplicate: isPossibleDuplicate,
-          possibleDuplicateEntry: possibleDuplicateEntry,
-        ),
-      );
-    } else {
-      processAddTransactionFromParams(navigatorKey.currentContext, {
-        'title': result.merchant,
-        'note': note,
-        'categoryPk': category?.categoryPk,
-        'walletPk': wallet?.walletPk,
-        'amount': result.amount.toString(),
-        'date': (dateTime ?? DateTime.now()).toString(),
-        'skipDedupe': 'true',
-        'pending': isNonBlocking ? 'true' : 'false',
-        'isPossibleDuplicate': isPossibleDuplicate ? 'true' : 'false',
-      });
-    }
+    await dispatchParsedTransaction(
+      title: result.merchant,
+      amount: result.amount,
+      date: dateTime ?? DateTime.now(),
+      note: note,
+      category: category,
+      wallet: wallet,
+      willPushRoute: willPushRoute,
+      isPossibleDuplicate: isPossibleDuplicate,
+      possibleDuplicateEntry: possibleDuplicateEntry,
+    );
     return true;
   }
 

@@ -1216,6 +1216,6 @@
   "all-transactions-approved": "All pending transactions approved",
   "all-transactions-dismissed": "All pending transactions dismissed",
   "new-transaction-detected": "New transaction detected",
-  "new-transactions-detected": "new transactions detected",
+  "new-transactions-detected": "{count} new transactions detected",
   "transaction-no-longer-pending": "Transaction is no longer pending"
 }

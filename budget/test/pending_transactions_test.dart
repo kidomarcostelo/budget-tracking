@@ -1,5 +1,6 @@
 import 'dart:ffi';
 import 'package:budget/database/tables.dart';
+import 'package:budget/pages/transactionFilters.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:drift/native.dart';
@@ -321,6 +322,114 @@ void main() {
 
       final allTx = await testDb.watchAllTransactions().first;
       expect(allTx, isEmpty);
+    });
+
+    test('watchTotalNetBeforeStartDate excludes pending transactions',
+        () async {
+      final now = DateTime.now();
+      final wallet = TransactionWallet(
+        walletPk: '0',
+        name: 'Main Wallet',
+        colour: '0xff000000',
+        dateCreated: now,
+        order: 0,
+        currency: 'USD',
+        decimals: 2,
+      );
+      final allWallets = AllWallets(
+        list: [wallet],
+        indexedByPk: {'0': wallet},
+      );
+
+      await testDb.createOrUpdateTransaction(
+        Transaction(
+          transactionPk: 'tx-approved-prior',
+          name: 'Approved Prior',
+          amount: 50.0,
+          note: '',
+          categoryFk: 'cat-1',
+          walletFk: '0',
+          dateCreated: now.subtract(const Duration(days: 2)),
+          income: true,
+          paid: true,
+          skipPaid: false,
+          pending: false,
+        ),
+        insert: false,
+      );
+
+      await testDb.createOrUpdateTransaction(
+        Transaction(
+          transactionPk: 'tx-pending-prior',
+          name: 'Pending Prior',
+          amount: 100.0,
+          note: '',
+          categoryFk: 'cat-1',
+          walletFk: '0',
+          dateCreated: now.subtract(const Duration(days: 2)),
+          income: true,
+          paid: true,
+          skipPaid: false,
+          pending: true,
+        ),
+        insert: false,
+      );
+
+      final totalNet = await testDb
+          .watchTotalNetBeforeStartDate(
+            searchFilters: null,
+            allWallets: allWallets,
+            startDate: now,
+            isIncome: true,
+          )
+          .first;
+
+      expect(totalNet, 50.0);
+    });
+
+    test('getHighestLowestAmount excludes pending transactions', () async {
+      await testDb.createOrUpdateTransaction(
+        Transaction(
+          transactionPk: 'tx-approved-range',
+          name: 'Approved Range',
+          amount: 25.0,
+          note: '',
+          categoryFk: 'cat-1',
+          walletFk: '0',
+          dateCreated: DateTime.now(),
+          income: false,
+          paid: true,
+          skipPaid: false,
+          pending: false,
+        ),
+        insert: false,
+      );
+
+      await testDb.createOrUpdateTransaction(
+        Transaction(
+          transactionPk: 'tx-pending-extreme',
+          name: 'Pending Extreme',
+          amount: 9999.0,
+          note: '',
+          categoryFk: 'cat-1',
+          walletFk: '0',
+          dateCreated: DateTime.now(),
+          income: false,
+          paid: true,
+          skipPaid: false,
+          pending: true,
+        ),
+        insert: false,
+      );
+
+      final range = await testDb
+          .getHighestLowestAmount(
+            SearchFilters(),
+          )
+          .first;
+
+      expect(range.end, 25.0);
+      expect(range.start, 25.0);
     });
   });
 }

@@ -230,7 +230,10 @@ Future<Transaction?> processAddTransactionFromParams(
       List<TransactionCategory> allCategories =
           await database.getAllCategories();
       if (allCategories.isNotEmpty) {
-        mainAndSubCategory.main = allCategories.first;
+        mainAndSubCategory.main = allCategories.firstWhere(
+          (c) => c.categoryPk != "0" && (amount < 0 ? c.income == false : true),
+          orElse: () => allCategories.first,
+        );
       }
     } else if (context != null) {
       Future.delayed(Duration(milliseconds: 100), () {
@@ -318,6 +321,26 @@ Future<Transaction?> processAddTransactionFromParams(
   if (rowId != null) {
     final Transaction transactionJustAdded =
         await database.getTransactionFromRowId(rowId);
+    if (isPending && isPossibleDuplicate) {
+      if (dedupeResult?.uncertainEntry != null) {
+        await DedupeLedger.instance.associateUncertainEntryWithTransaction(
+          dedupeResult!.uncertainEntry!,
+          transactionJustAdded.transactionPk,
+        );
+      } else {
+        final manualUncertain = DedupeEntryRecord(
+          eventKey: 'manual_uncertain_${transactionJustAdded.transactionPk}',
+          packageName: 'notification',
+          title: title,
+          amount: amount,
+          currency: wallet?.currency ?? params["currency"] ?? 'USD',
+          status: 'uncertain',
+          createdTransactionPk: transactionJustAdded.transactionPk,
+        );
+        await DedupeLedger.instance
+            .recordUncertainEntryDirectly(manualUncertain);
+      }
+    }
     if (isPending) {
       await showPendingTransactionNotification(
         transaction: transactionJustAdded,
@@ -337,6 +360,52 @@ Future<Transaction?> processAddTransactionFromParams(
     return transactionJustAdded;
   }
   return null;
+}
+
+Future<void> dispatchParsedTransaction({
+  required String title,
+  required double amount,
+  required DateTime date,
+  String? note,
+  TransactionCategory? category,
+  TransactionWallet? wallet,
+  bool willPushRoute = false,
+  bool isPossibleDuplicate = false,
+  DedupeEntryRecord? possibleDuplicateEntry,
+}) async {
+  final bool isNonBlocking =
+      appStateSettings["notificationScanningNonBlocking"] == true;
+
+  if ((willPushRoute || isPossibleDuplicate) && !isNonBlocking) {
+    pushRoute(
+      null,
+      AddTransactionPage(
+        useCategorySelectedIncome: true,
+        routesToPopAfterDelete: RoutesToPopAfterDelete.None,
+        selectedAmount: amount,
+        selectedTitle: title,
+        selectedNotes: note,
+        selectedCategory: category,
+        startInitialAddTransactionSequence: false,
+        selectedWallet: wallet,
+        selectedDate: date,
+        isPossibleDuplicate: isPossibleDuplicate,
+        possibleDuplicateEntry: possibleDuplicateEntry,
+      ),
+    );
+  } else {
+    processAddTransactionFromParams(navigatorKey.currentContext, {
+      'title': title,
+      if (note != null) 'note': note,
+      'categoryPk': category?.categoryPk,
+      'walletPk': wallet?.walletPk,
+      'amount': amount.toString(),
+      'date': date.toString(),
+      'skipDedupe': 'true',
+      'pending': isNonBlocking ? 'true' : 'false',
+      'isPossibleDuplicate': isPossibleDuplicate ? 'true' : 'false',
+    });
+  }
 }
 
 Future processAddTransactionRouteFromParams(

@@ -1648,14 +1648,15 @@ class FinanceDatabase extends _$FinanceDatabase {
     final min = transactions.amount.min();
     final query = selectOnly(transactions)
       ..where(onlyShowIfFollowsSearchFilters(
-        transactions,
-        searchFilters,
-        joinedWithBudgets: false,
-        joinedWithCategories: false,
-        joinedWithObjectives: false,
-        joinedWithSubcategoriesTable: null,
-        joinedWithObjectiveLoans: null,
-      ))
+            transactions,
+            searchFilters,
+            joinedWithBudgets: false,
+            joinedWithCategories: false,
+            joinedWithObjectives: false,
+            joinedWithSubcategoriesTable: null,
+            joinedWithObjectiveLoans: null,
+          ) &
+          onlyShowIfNotPending(transactions))
       ..addColumns([max, min]);
     return query
         .map((row) => RangeValues(row.read(min) ?? 0, row.read(max) ?? 0))
@@ -5926,7 +5927,7 @@ class FinanceDatabase extends _$FinanceDatabase {
     required bool joinedWithBudgets,
     required bool joinedWithObjectives,
   }) {
-    if (searchFilters == null) return Constant(true);
+    if (searchFilters == null) return onlyShowIfNotPending(tbl);
 
     Expression<bool> isInWalletPks =
         onlyShowBasedOnWalletFks(tbl, searchFilters.walletPks);
@@ -7422,7 +7423,8 @@ class FinanceDatabase extends _$FinanceDatabase {
                 joinedWithObjectives: false,
                 joinedWithObjectiveLoans: null,
               ) &
-              onlyShowBasedOnIncome(transactions, isIncome),
+              onlyShowBasedOnIncome(transactions, isIncome) &
+              onlyShowIfNotPending(transactions),
         );
       mergedStreams.add(query
           .map((row) =>

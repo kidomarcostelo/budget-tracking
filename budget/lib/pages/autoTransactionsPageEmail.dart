@@ -123,37 +123,16 @@ Future queueTransactionFromMessage(
       ? null
       : await database.getWalletInstanceOrNull(templateFound.walletFk);
 
-  final bool isNonBlocking =
-      appStateSettings["notificationScanningNonBlocking"] == true;
-
-  if ((willPushRoute || isPossibleDuplicate) && !isNonBlocking) {
-    pushRoute(
-      null,
-      AddTransactionPage(
-        useCategorySelectedIncome: true,
-        routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-        selectedAmount: amountDouble,
-        selectedTitle: title,
-        selectedCategory: category,
-        startInitialAddTransactionSequence: false,
-        selectedWallet: wallet,
-        selectedDate: dateTime,
-        isPossibleDuplicate: isPossibleDuplicate,
-        possibleDuplicateEntry: possibleDuplicateEntry,
-      ),
-    );
-  } else {
-    processAddTransactionFromParams(navigatorKey.currentContext, {
-      "title": title,
-      "categoryPk": category?.categoryPk,
-      "walletPk": wallet?.walletPk,
-      "amount": amountDouble.toString(),
-      "date": dateTime.toString(),
-      "skipDedupe": "true",
-      "pending": isNonBlocking ? "true" : "false",
-      "isPossibleDuplicate": isPossibleDuplicate ? "true" : "false",
-    });
-  }
+  await dispatchParsedTransaction(
+    title: title,
+    amount: amountDouble,
+    date: dateTime ?? DateTime.now(),
+    category: category,
+    wallet: wallet,
+    willPushRoute: willPushRoute,
+    isPossibleDuplicate: isPossibleDuplicate,
+    possibleDuplicateEntry: possibleDuplicateEntry,
+  );
 }
 
 class AutoTransactionsPageNotifications extends StatefulWidget {

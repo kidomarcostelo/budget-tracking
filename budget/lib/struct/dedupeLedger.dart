@@ -614,6 +614,40 @@ class DedupeLedger {
     await _tryPersist(uncertain);
   }
 
+  Future<void> recordUncertainEntryDirectly(DedupeEntryRecord uncertain) async {
+    await _recordUncertainEntry(uncertain);
+  }
+
+  /// Associates an uncertain entry with a pending transaction that was created.
+  Future<void> associateUncertainEntryWithTransaction(
+    DedupeEntryRecord entry,
+    String createdTransactionPk,
+  ) async {
+    entry.createdTransactionPk = createdTransactionPk;
+    try {
+      await database.updateDedupeEntryStatus(
+        entry.entryPk,
+        entry.status,
+        createdTransactionPk: createdTransactionPk,
+      );
+    } catch (_) {
+      // Ignored if running without Drift database
+    }
+  }
+
+  /// Returns the uncertain record associated with [transactionPk], if any.
+  DedupeEntryRecord? getUncertainEntryForTransaction(String transactionPk) {
+    for (final e in uncertainEntries.reversed) {
+      if (e.createdTransactionPk == transactionPk) return e;
+    }
+    return null;
+  }
+
+  /// Checks whether [transactionPk] is flagged as an uncertain/possible duplicate.
+  bool isPossibleDuplicateTransaction(String transactionPk) {
+    return getUncertainEntryForTransaction(transactionPk) != null;
+  }
+
   /// Promotes an uncertain entry to confirmed [entries] (e.g. after user confirms/saves transaction).
   Future<void> confirmUncertainEntry(
     DedupeEntryRecord entry, {

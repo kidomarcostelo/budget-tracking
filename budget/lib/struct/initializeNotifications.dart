@@ -4,6 +4,7 @@ import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/pendingTransactionsPage.dart';
 import 'package:budget/pages/upcomingOverdueTransactionsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/notificationsGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/upcomingTransactionsFunctions.dart';
@@ -120,11 +121,16 @@ Future<bool> runNotificationPayLoads(context) async {
       ));
       return true;
     }
+    final uncertainEntry =
+        DedupeLedger.instance.getUncertainEntryForTransaction(transactionPk);
+    final bool isDuplicate = uncertainEntry != null;
     pushRoute(
       context,
       AddTransactionPage(
         transaction: transaction,
         routesToPopAfterDelete: RoutesToPopAfterDelete.One,
+        isPossibleDuplicate: isDuplicate,
+        possibleDuplicateEntry: uncertainEntry,
       ),
     );
     return true;
@@ -139,6 +145,8 @@ Future<bool> runNotificationPayLoads(context) async {
   notificationPayload = "";
   return false;
 }
+
+int _getNotificationId(String pk) => pk.hashCode.abs() % 100000 + 10000;
 
 Future<void> showPendingTransactionNotification({
   required Transaction transaction,
@@ -157,17 +165,11 @@ Future<void> showPendingTransactionNotification({
     groupKey: 'cashew_pending_transactions',
   );
 
-  const DarwinNotificationDetails darwinDetails = DarwinNotificationDetails(
-    threadIdentifier: 'cashew_pending_transactions',
-  );
-
-  final NotificationDetails notificationDetails = NotificationDetails(
+  final NotificationDetails notificationDetails = const NotificationDetails(
     android: androidDetails,
-    iOS: darwinDetails,
   );
 
-  final int notificationId =
-      transaction.transactionPk.hashCode.abs() % 100000 + 10000;
+  final int notificationId = _getNotificationId(transaction.transactionPk);
 
   String amountStr = transaction.amount.abs().toStringAsFixed(2);
   String currencyPrefix = walletCurrency != null && walletCurrency.isNotEmpty
@@ -178,10 +180,10 @@ Future<void> showPendingTransactionNotification({
   String formattedAmount = "$sign$currencyPrefix$amountStr";
 
   String title = isPossibleDuplicate
-      ? "possible-duplicate".tr()
+      ? "possible-duplicate-detected".tr()
       : "new-transaction-detected".tr();
   String body = transaction.name.isNotEmpty
-      ? "$formattedAmount ${"at".tr()} ${transaction.name}"
+      ? "$formattedAmount • ${transaction.name}"
       : formattedAmount;
 
   await flutterLocalNotificationsPlugin.show(
@@ -198,7 +200,7 @@ Future<void> showPendingTransactionNotification({
 
 Future<void> cancelPendingTransactionNotification(String transactionPk) async {
   if (kIsWeb) return;
-  final int notificationId = transactionPk.hashCode.abs() % 100000 + 10000;
+  final int notificationId = _getNotificationId(transactionPk);
   await flutterLocalNotificationsPlugin.cancel(notificationId);
   await updatePendingTransactionsGroupSummary();
 }
@@ -227,7 +229,7 @@ Future<void> updatePendingTransactionsGroupSummary() async {
   await flutterLocalNotificationsPlugin.show(
     0,
     "pending-transactions".tr(),
-    "$count " + "new-transactions-detected".tr(),
+    "new-transactions-detected".tr(namedArgs: {"count": count.toString()}),
     const NotificationDetails(android: summaryDetails),
     payload: "openPendingQueue",
   );

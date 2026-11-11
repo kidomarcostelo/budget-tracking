@@ -3,6 +3,7 @@ import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/initializeNotifications.dart';
 import 'package:budget/struct/notificationsGlobal.dart';
 import 'package:budget/struct/settings.dart';
@@ -128,12 +129,15 @@ class _PendingTransactionsPageState extends State<PendingTransactionsPage> {
                   (context, index) {
                     final item = items[index];
                     final String pk = item.transaction.transactionPk;
+                    final dedupeEntry = DedupeLedger.instance
+                        .getUncertainEntryForTransaction(pk);
+                    final bool isPossibleDuplicate = dedupeEntry != null;
 
                     return Dismissible(
                       key: ValueKey("pending_$pk"),
                       direction: DismissDirection.horizontal,
                       background: Container(
-                        color: Colors.green.withOpacity(0.85),
+                        color: getColor(context, "incomeAmount"),
                         alignment: AlignmentDirectional.centerStart,
                         padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: 24),
@@ -155,7 +159,7 @@ class _PendingTransactionsPageState extends State<PendingTransactionsPage> {
                         ),
                       ),
                       secondaryBackground: Container(
-                        color: Colors.red.withOpacity(0.85),
+                        color: getColor(context, "expenseAmount"),
                         alignment: AlignmentDirectional.centerEnd,
                         padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: 24),
@@ -208,10 +212,39 @@ class _PendingTransactionsPageState extends State<PendingTransactionsPage> {
                           TransactionEntry(
                             transaction: item.transaction,
                             category: item.category,
+                            aboveWidget: isPossibleDuplicate
+                                ? Padding(
+                                    padding: const EdgeInsetsDirectional.only(
+                                        start: 18, bottom: 4),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 15,
+                                          color: getColor(
+                                              context, "warningAmount"),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          "possible-duplicate-detected".tr(),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: getColor(
+                                                context, "warningAmount"),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : null,
                             openPage: AddTransactionPage(
                               transaction: item.transaction,
                               routesToPopAfterDelete:
                                   RoutesToPopAfterDelete.One,
+                              isPossibleDuplicate: isPossibleDuplicate,
+                              possibleDuplicateEntry: dedupeEntry,
                             ),
                             listID: "pendingTransactions",
                           ),

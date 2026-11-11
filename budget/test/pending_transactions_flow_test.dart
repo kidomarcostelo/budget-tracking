@@ -5,6 +5,7 @@ import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/autoTransactionsPageEmail.dart';
 import 'package:budget/pages/pendingTransactionsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/defaultPreferences.dart';
 import 'package:budget/struct/initializeNotifications.dart';
 import 'package:budget/struct/notificationsGlobal.dart';
@@ -56,6 +57,8 @@ class _FlowTestAssetLoader extends AssetLoader {
       'edit-home': 'Edit Home',
       'added-transaction': 'Added Transaction',
       'new-transaction-detected': 'New transaction detected',
+      'new-transactions-detected': '{} new transactions detected',
+      'possible-duplicate-detected': 'Possible duplicate detected',
       'transaction-no-longer-pending': 'Transaction is no longer pending',
       'help': 'Help',
       'faq': 'FAQ',
@@ -254,6 +257,72 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);
     });
+
+    testWidgets(
+        'renders possible duplicate warning for uncertain duplicate transaction',
+        (WidgetTester tester) async {
+      final sampleTx = Transaction(
+        transactionPk: 'pending-duplicate-tx',
+        name: 'Duplicate Starbucks',
+        amount: 5.75,
+        note: '',
+        categoryFk: 'cat-1',
+        walletFk: '0',
+        dateCreated: DateTime.now(),
+        income: false,
+        paid: true,
+        skipPaid: false,
+        pending: true,
+      );
+      final sampleCat = TransactionCategory(
+        categoryPk: 'cat-1',
+        name: 'Food',
+        colour: '0xffff0000',
+        dateCreated: DateTime.now(),
+        order: 0,
+        income: false,
+      );
+
+      await tester.runAsync(() async {
+        DedupeLedger.instance.clear();
+        await DedupeLedger.instance.recordUncertainEntryDirectly(
+          DedupeEntryRecord(
+            eventKey: 'event-duplicate-1',
+            packageName: 'notification',
+            title: 'Duplicate Starbucks',
+            amount: 5.75,
+            currency: 'USD',
+            status: 'uncertain',
+            createdTransactionPk: 'pending-duplicate-tx',
+          ),
+        );
+
+        await tester.pumpWidget(
+          buildTestWidget(
+            PendingTransactionsPage(
+              stream: Stream.value([
+                TransactionWithCategory(
+                  transaction: sampleTx,
+                  category: sampleCat,
+                  subCategory: null,
+                  wallet: null,
+                  objectiveLoan: null,
+                ),
+              ]),
+            ),
+          ),
+        );
+        await tester.pump();
+        await Future.delayed(const Duration(milliseconds: 300));
+        await tester.pump();
+      });
+
+      expect(find.text('Duplicate Starbucks'), findsOneWidget);
+      expect(find.text('Possible duplicate detected'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    });
   });
 
   group('HomePage Pending Badge UI Tests (VS5)', () {
@@ -346,6 +415,33 @@ void main() {
           notificationsChannelLog.where((c) => c.method == 'show').toList();
       expect(showCalls.isNotEmpty, isTrue);
     });
+
+    test(
+        'processAddTransactionFromParams with isPossibleDuplicate: true records uncertain entry and sets title in notification',
+        () async {
+      DedupeLedger.instance.clear();
+      final tx = await processAddTransactionFromParams(null, {
+        'title': 'Coffee Shop',
+        'amount': '4.50',
+        'categoryPk': 'cat-1',
+        'walletPk': '0',
+        'pending': 'true',
+        'isPossibleDuplicate': 'true',
+      });
+
+      expect(tx, isNotNull);
+      expect(tx!.pending, isTrue);
+      expect(
+        DedupeLedger.instance.isPossibleDuplicateTransaction(tx.transactionPk),
+        isTrue,
+      );
+
+      final showCalls =
+          notificationsChannelLog.where((c) => c.method == 'show').toList();
+      expect(showCalls.isNotEmpty, isTrue);
+      final lastShow = showCalls.last.arguments as Map;
+      expect(lastShow['title'], 'Possible duplicate detected');
+    });
   });
 
   group('Notification Payload Routing (VS2 & VS6)', () {
@@ -431,6 +527,29 @@ void main() {
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);
+    });
+  });
+
+  group('Non-Blocking Notification Preferences (VS2)', () {
+    test('fresh install defaults notificationScanningNonBlocking to true',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      sharedPreferences = await SharedPreferences.getInstance();
+
+      final settings = await getUserSettings();
+      expect(settings['notificationScanningNonBlocking'], isTrue);
+    });
+
+    test(
+        'existing user upgrade defaults notificationScanningNonBlocking to false',
+        () async {
+      SharedPreferences.setMockInitialValues({
+        'userSettings': '{"hasSignedIn": true}',
+      });
+      sharedPreferences = await SharedPreferences.getInstance();
+
+      final settings = await getUserSettings();
+      expect(settings['notificationScanningNonBlocking'], isFalse);
     });
   });
 }
