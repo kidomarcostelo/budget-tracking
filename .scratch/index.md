@@ -6,7 +6,7 @@ Each task is a folder `.scratch/BT-NNNN-<slug>/` with its `task.md` (copied from
 - IDs are stable and never renumbered. Rows are ordered by ID, which is creation order.
 - To add a task: take `Next ID`, create `.scratch/BT-<NNNN>-<slug>/task.md`, add a row below, and bump `Next ID`.
 
-Next ID: 0016
+Next ID: 0018
 
 | ID | Title | Issue | Folder |
 |----|-------|-------|--------|
@@ -25,3 +25,5 @@ Next ID: 0016
 | BT-0013 | Enable Google Sign-In and Google Drive Cloud Backup for Custom Builds | [#35](https://github.com/kidomarcostelo/budget-tracking/issues/35) | [BT-0013-google-drive-cloud-backup](BT-0013-google-drive-cloud-backup/task.md) |
 | BT-0014 | Research Feasibility of Decoupled Bank Notification Parser (Automate / Tasker & Cashew API) | [#37](https://github.com/kidomarcostelo/budget-tracking/issues/37) | [BT-0014-decoupled-notification-parser](BT-0014-decoupled-notification-parser/task.md) |
 | BT-0015 | Non-blocking notification with pending transaction queue | [#33](https://github.com/kidomarcostelo/budget-tracking/issues/33) | [BT-0015-non-blocking-notifications](BT-0015-non-blocking-notifications/task.md) |
+| BT-0016 | Background headless notification listener for tap-to-pay capture | TBD | [BT-0016-background-headless-listener](BT-0016-background-headless-listener/task.md) |
+| BT-0017 | Enhanced Pie Chart, Category Spending Legend, and Dedicated Stats Page | TBD | [BT-0017-enhanced-piechart-and-stats-page](BT-0017-enhanced-piechart-and-stats-page/task.md) |

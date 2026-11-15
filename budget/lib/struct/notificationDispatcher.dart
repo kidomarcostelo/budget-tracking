@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
+import 'package:budget/struct/backgroundService.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/googlePayParser.dart';
@@ -317,7 +318,7 @@ class NotificationDispatcher {
   Future<void> initNotificationScanning({PlatformOS? platformOverride}) async {
     final platform = platformOverride ?? getPlatform(ignoreEmulation: true);
     if (platform != PlatformOS.isAndroid) return;
-    await stopListening();
+    await stopListening(platformOverride: platform);
     if (appStateSettings["notificationScanning"] != true) return;
 
     await DedupeLedger.instance.loadFromDatabase();
@@ -327,13 +328,18 @@ class NotificationDispatcher {
       _subscription = NotificationListenerService.notificationsStream.listen(
         (event) => handleEvent(event),
       );
+      await BackgroundServiceManager.instance
+          .startKeepAlive(platformOverride: platform);
     }
   }
 
-  /// Cancels the active stream subscription.
-  Future<void> stopListening() async {
+  /// Cancels the active stream subscription and stops background keep-alive.
+  Future<void> stopListening({PlatformOS? platformOverride}) async {
     await _subscription?.cancel();
     _subscription = null;
+    final platform = platformOverride ?? getPlatform(ignoreEmulation: true);
+    await BackgroundServiceManager.instance
+        .stopKeepAlive(platformOverride: platform);
   }
 
   /// Appends a raw message string to [recentCapturedNotifications], maintaining a max size of 50.

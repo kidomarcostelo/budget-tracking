@@ -31,6 +31,7 @@ import 'package:provider/provider.dart';
 import 'package:budget/functions.dart';
 import 'package:googleapis/gmail/v1.dart' as gMail;
 import 'package:html/parser.dart';
+import 'package:budget/struct/backgroundService.dart';
 import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
@@ -146,6 +147,7 @@ class AutoTransactionsPageNotifications extends StatefulWidget {
 class _AutoTransactionsPageNotificationsState
     extends State<AutoTransactionsPageNotifications> {
   bool? hasNotificationPermission;
+  bool isIgnoringBatteryOptimizations = true;
 
   @override
   void initState() {
@@ -160,9 +162,12 @@ class _AutoTransactionsPageNotificationsState
       if (granted && appStateSettings["notificationScanning"] == true) {
         initNotificationScanning();
       }
+      bool isIgnoring = await BackgroundServiceManager.instance
+          .isIgnoringBatteryOptimizations();
       if (mounted) {
         setState(() {
           hasNotificationPermission = granted;
+          isIgnoringBatteryOptimizations = isIgnoring;
         });
       }
     } catch (_) {
@@ -177,6 +182,14 @@ class _AutoTransactionsPageNotificationsState
   Future<void> _requestPermission() async {
     try {
       await NotificationDispatcher.instance.requestReadNotificationPermission();
+    } catch (_) {}
+    await _checkPermission();
+  }
+
+  Future<void> _requestBatteryOptimizationExemption() async {
+    try {
+      await BackgroundServiceManager.instance
+          .requestIgnoreBatteryOptimizations();
     } catch (_) {}
     await _checkPermission();
   }
@@ -329,6 +342,36 @@ class _AutoTransactionsPageNotificationsState
                     ? Icons.check_circle_outline
                     : Icons.check_circle_rounded,
                 color: getColor(context, "incomeAmount"),
+              ),
+            ),
+          if (appStateSettings["notificationScanning"] == true &&
+              hasNotificationPermission == true &&
+              !isIgnoringBatteryOptimizations &&
+              getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid)
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: 20, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  StatusBox(
+                    title: "battery-optimization-active".tr(),
+                    description: "battery-optimization-active-description".tr(),
+                    icon: appStateSettings["outlinedIcons"] == true
+                        ? Icons.battery_alert_outlined
+                        : Icons.battery_alert_rounded,
+                    color: Theme.of(context).colorScheme.error,
+                    onTap: _requestBatteryOptimizationExemption,
+                  ),
+                  const SizedBox(height: 5),
+                  Button(
+                    label: "disable-battery-optimization".tr(),
+                    icon: appStateSettings["outlinedIcons"] == true
+                        ? Icons.battery_charging_full_outlined
+                        : Icons.battery_charging_full_rounded,
+                    onTap: _requestBatteryOptimizationExemption,
+                  ),
+                ],
               ),
             ),
           const NotificationPrivacyCard(),
