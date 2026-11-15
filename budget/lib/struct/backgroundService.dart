@@ -12,34 +12,32 @@ class BackgroundServiceManager {
   MethodChannel channel =
       const MethodChannel('com.budget.tracker_app/background_service');
 
-  /// Starts the Android keep-alive foreground service.
-  ///
-  /// Keeps the Flutter engine and [NotificationDispatcher] resident in memory
-  /// while the screen is locked or Google Wallet is in the foreground.
-  Future<bool> startKeepAlive({PlatformOS? platformOverride}) async {
+  Future<bool> _invokeNativeAction(
+    String method, {
+    PlatformOS? platformOverride,
+    bool nonAndroidFallback = false,
+  }) async {
     final platform = platformOverride ?? getPlatform(ignoreEmulation: true);
-    if (platform != PlatformOS.isAndroid) return false;
+    if (platform != PlatformOS.isAndroid) return nonAndroidFallback;
     try {
-      final bool? result = await channel.invokeMethod<bool>('startKeepAlive');
+      final bool? result = await channel.invokeMethod<bool>(method);
       return result ?? true;
     } catch (e) {
-      print('BackgroundServiceManager: Error starting keep alive: $e');
+      print('BackgroundServiceManager: Error invoking $method: $e');
       return false;
     }
   }
 
+  /// Starts the Android keep-alive foreground service.
+  ///
+  /// Keeps the Flutter engine and [NotificationDispatcher] resident in memory
+  /// while the screen is locked or Google Wallet is in the foreground.
+  Future<bool> startKeepAlive({PlatformOS? platformOverride}) =>
+      _invokeNativeAction('startKeepAlive', platformOverride: platformOverride);
+
   /// Stops the Android keep-alive foreground service.
-  Future<bool> stopKeepAlive({PlatformOS? platformOverride}) async {
-    final platform = platformOverride ?? getPlatform(ignoreEmulation: true);
-    if (platform != PlatformOS.isAndroid) return false;
-    try {
-      final bool? result = await channel.invokeMethod<bool>('stopKeepAlive');
-      return result ?? true;
-    } catch (e) {
-      print('BackgroundServiceManager: Error stopping keep alive: $e');
-      return false;
-    }
-  }
+  Future<bool> stopKeepAlive({PlatformOS? platformOverride}) =>
+      _invokeNativeAction('stopKeepAlive', platformOverride: platformOverride);
 
   /// Checks if Cashew is currently exempt from Android battery optimizations.
   Future<bool> isIgnoringBatteryOptimizations({
@@ -61,17 +59,9 @@ class BackgroundServiceManager {
   /// Prompts the Android system dialog/settings to exempt Cashew from battery optimizations.
   Future<bool> requestIgnoreBatteryOptimizations({
     PlatformOS? platformOverride,
-  }) async {
-    final platform = platformOverride ?? getPlatform(ignoreEmulation: true);
-    if (platform != PlatformOS.isAndroid) return false;
-    try {
-      final bool? result = await channel
-          .invokeMethod<bool>('requestIgnoreBatteryOptimizations');
-      return result ?? true;
-    } catch (e) {
-      print(
-          'BackgroundServiceManager: Error requesting battery optimizations exemption: $e');
-      return false;
-    }
-  }
+  }) =>
+      _invokeNativeAction(
+        'requestIgnoreBatteryOptimizations',
+        platformOverride: platformOverride,
+      );
 }

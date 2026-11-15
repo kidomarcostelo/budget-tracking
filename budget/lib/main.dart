@@ -1,6 +1,7 @@
 import 'package:budget/functions.dart';
 import 'package:budget/pages/accountsPage.dart';
 import 'package:budget/pages/autoTransactionsPageEmail.dart';
+import 'package:budget/struct/backgroundService.dart';
 import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/struct/iconObjects.dart';
 import 'package:budget/struct/keyboardIntents.dart';
@@ -60,6 +61,7 @@ void main() async {
     if (getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid &&
         appStateSettings["notificationScanning"] == true) {
       await DedupeLedger.instance.loadFromDatabase();
+      await BackgroundServiceManager.instance.startKeepAlive();
     }
     tz.initializeTimeZones();
     final String? locationName = await FlutterTimezone.getLocalTimezone();

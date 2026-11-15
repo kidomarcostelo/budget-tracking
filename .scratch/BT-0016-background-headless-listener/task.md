@@ -2,7 +2,7 @@
 
 **Task ID:** BT-0016  
 **Issue Reference:** [Local Tracking] (publish via `gh issue create` once authenticated)  
-**Status:** In Progress  
+**Status:** In Review (Remediations Applied)  
 **Assignee / Agent:** Antigravity  
 
 ---
@@ -54,28 +54,41 @@ When Cashew is in the background or the screen is locked, Android's process life
 ```
 
 ### VS1: Native Foreground Keep-Alive Service & MethodChannel
-- Implement `CashewKeepAliveService.kt` in `budget/android/app/src/main/kotlin/com/example/budget/`.
-- Declare service and permissions in `AndroidManifest.xml` (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`, `WAKE_LOCK`).
-- Expose `startKeepAlive`, `stopKeepAlive`, `isIgnoringBatteryOptimizations`, and `requestIgnoreBatteryOptimizations` on `com.budget.tracker_app/background_service` in `MainActivity.kt`.
+- [x] Implement `CashewKeepAliveService.kt` in `budget/android/app/src/main/kotlin/com/example/budget/`.
+- [x] Pass `ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE` in `startForeground` for Android 14+ (API 34) compliance.
+- [x] Use localized Android string resources (`strings.xml`) for notification title, content, channel name, and description.
+- [x] Declare service and permissions in `AndroidManifest.xml` (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`, `WAKE_LOCK`).
+- [x] Expose `startKeepAlive`, `stopKeepAlive`, `isIgnoringBatteryOptimizations`, and `requestIgnoreBatteryOptimizations` on `com.budget.tracker_app/background_service` in `MainActivity.kt`.
 
 ### VS2: Dart BackgroundServiceManager & Lifecycle Binding
-- Create `budget/lib/struct/backgroundService.dart` managing the MethodChannel.
-- Bind service start/stop to `NotificationDispatcher.initNotificationScanning()` and `stopListening()`.
-- Ensure foreground service starts automatically on app launch if `notificationScanning == true`.
+- [x] Create `budget/lib/struct/backgroundService.dart` managing the MethodChannel with consolidated invocation helper.
+- [x] Bind service start/stop to `NotificationDispatcher.initNotificationScanning()` and `stopListening()`.
+- [x] Automatically invoke `BackgroundServiceManager.instance.startKeepAlive()` eagerly in `main.dart` if `notificationScanning == true`.
 
 ### VS3: Battery Optimization Reliability UX
-- Add a battery optimization status/prompt tile in `autoTransactionsPageEmail.dart`.
-- Detect if battery optimization is active; if so, display warning tile with action to open Android system battery optimization settings.
-- Add localized strings for the new guidance tile.
+- [x] Extract `BatteryOptimizationCard` into `budget/lib/widgets/batteryOptimizationCard.dart`.
+- [x] Remove duplicate tap handlers between container card and button.
+- [x] Add localized strings in `en.json` for title, description, and action button.
 
 ### VS4: Unit Tests & Verification
-- Unit test `BackgroundServiceManager` platform channel calls.
-- Unit test notification dispatch with keep-alive active.
-- Verify static analysis and formatting.
+- [x] Unit test `BackgroundServiceManager` platform channel calls for start, stop, battery check, exemption request, and non-Android no-ops.
+- [x] Unit test notification dispatch with keep-alive verified active.
+- [x] Verify static analysis and formatting.
 
 ---
 
-## 4. Invariants & Safety Guardrails
+## 4. Code Review Remediation Summary (PR #40 / BT-0016)
+1. **Android 14 API 34 Support:** `CashewKeepAliveService.kt` passes `ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE` to `startForeground()`.
+2. **Localization:** Added `budget/android/app/src/main/res/values/strings.xml` and referenced resource strings in native service.
+3. **Widget Decomposition:** Extracted `BatteryOptimizationCard` into `budget/lib/widgets/batteryOptimizationCard.dart`.
+4. **App Startup:** `budget/lib/main.dart` eagerly starts keep-alive on startup when `notificationScanning == true`.
+5. **Deduplication:** Consolidated channel invocation in `budget/lib/struct/backgroundService.dart`.
+6. **Task Cleanliness:** Reverted unrelated `BT-0017` from `.scratch/index.md`.
+7. **Integration Test:** Added notification processing test while keep-alive is active in `background_service_test.dart`.
+
+---
+
+## 5. Invariants & Safety Guardrails
 - NEVER edit past Drift migration steps.
 - No raw color hex codes in UI widgets — use semantic theme palette.
 - All user-facing strings must use `app_localizations` / `.tr()`.

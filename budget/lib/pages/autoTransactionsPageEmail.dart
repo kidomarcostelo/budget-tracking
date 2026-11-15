@@ -23,6 +23,7 @@ import 'package:budget/widgets/tappable.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:budget/widgets/util/onAppResume.dart';
+import 'package:budget/widgets/batteryOptimizationCard.dart';
 import 'package:budget/widgets/notificationPrivacyCard.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -348,31 +349,8 @@ class _AutoTransactionsPageNotificationsState
               hasNotificationPermission == true &&
               !isIgnoringBatteryOptimizations &&
               getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid)
-            Padding(
-              padding: const EdgeInsetsDirectional.symmetric(
-                  horizontal: 20, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  StatusBox(
-                    title: "battery-optimization-active".tr(),
-                    description: "battery-optimization-active-description".tr(),
-                    icon: appStateSettings["outlinedIcons"] == true
-                        ? Icons.battery_alert_outlined
-                        : Icons.battery_alert_rounded,
-                    color: Theme.of(context).colorScheme.error,
-                    onTap: _requestBatteryOptimizationExemption,
-                  ),
-                  const SizedBox(height: 5),
-                  Button(
-                    label: "disable-battery-optimization".tr(),
-                    icon: appStateSettings["outlinedIcons"] == true
-                        ? Icons.battery_charging_full_outlined
-                        : Icons.battery_charging_full_rounded,
-                    onTap: _requestBatteryOptimizationExemption,
-                  ),
-                ],
-              ),
+            BatteryOptimizationCard(
+              onRequestExemption: _requestBatteryOptimizationExemption,
             ),
           const NotificationPrivacyCard(),
           StreamBuilder<List<ScannerTemplate>>(

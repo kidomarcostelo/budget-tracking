@@ -1,9 +1,9 @@
 import 'package:budget/functions.dart';
 import 'package:budget/struct/backgroundService.dart';
 import 'package:budget/struct/notificationDispatcher.dart';
-import 'package:budget/struct/settings.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:notification_listener_service/notification_event.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -102,6 +102,45 @@ void main() {
 
       expect(log, hasLength(1));
       expect(log.first.method, equals('stopKeepAlive'));
+    });
+
+    test(
+        'notification event is successfully processed by dispatcher while keep-alive is active',
+        () async {
+      final dispatcher = NotificationDispatcher.instance;
+      String? queuedMessage;
+      dispatcher.queueHandler = (messageString,
+          {dateTime,
+          isPossibleDuplicate = false,
+          possibleDuplicateEntry,
+          willPushRoute = true}) async {
+        queuedMessage = messageString;
+      };
+
+      final keepAliveStarted = await BackgroundServiceManager.instance
+          .startKeepAlive(platformOverride: PlatformOS.isAndroid);
+      expect(keepAliveStarted, isTrue);
+      expect(log.first.method, equals('startKeepAlive'));
+
+      final event = ServiceNotificationEvent(
+        id: 99,
+        packageName: 'com.bank.app',
+        title: 'Payment Sent',
+        content: 'You paid PHP 500.00 at Store',
+        hasRemoved: false,
+        canReply: false,
+        haveExtraPicture: false,
+        onGoing: false,
+        timestamp: DateTime.now().millisecondsSinceEpoch,
+        appIcon: null,
+        extrasPicture: null,
+        largeIcon: null,
+      );
+
+      final handled = await dispatcher.handleEvent(event);
+      expect(handled, isTrue);
+      expect(queuedMessage, contains('Package name: com.bank.app'));
+      expect(queuedMessage, contains('You paid PHP 500.00 at Store'));
     });
   });
 }

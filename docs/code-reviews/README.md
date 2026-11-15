@@ -14,3 +14,4 @@ Code reviews in this repository evaluate incoming pull requests along two strict
 | PR | Issue / Task | Title | Review Date | Status | Record |
 |:---|:-------------|:------|:------------|:-------|:-------|
 | [#22](https://github.com/kidomarcostelo/budget-tracking/pull/22) | [#21](https://github.com/kidomarcostelo/budget-tracking/issues/21) / BT-0010 | feat(android): isolate debug build with applicationIdSuffix and Cashew Dev label | 2026-11-02 | Remediated | [PR-22-debug-app-isolation.md](PR-22-debug-app-isolation.md) |
+| #40 / #41 | #7 / BT-0016 | feat(notifications): add background keep-alive service and battery optimization prompt | 2026-11-16 | Under Review | [PR-40-background-headless-listener.md](PR-40-background-headless-listener.md) |

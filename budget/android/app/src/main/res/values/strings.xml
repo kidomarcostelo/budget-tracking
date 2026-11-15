@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="background_monitor_channel_name">Background Transaction Monitor</string>
+    <string name="background_monitor_channel_description">Keeps Cashew running in background to capture Google Pay and bank notifications</string>
+    <string name="background_monitor_notification_title">Cashew background monitor active</string>
+    <string name="background_monitor_notification_text">Listening for Google Pay and payment notifications</string>
+</resources>
