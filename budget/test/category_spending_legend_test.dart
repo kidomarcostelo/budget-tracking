@@ -12,6 +12,7 @@ void main() {
     walletPk: '0',
     name: 'Main Wallet',
     currency: 'USD',
+    decimals: 2,
     dateCreated: DateTime(2025, 1, 1),
     order: 0,
   );
