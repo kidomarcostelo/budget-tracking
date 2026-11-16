@@ -510,144 +510,111 @@ class PieChartCalloutPainter extends CustomPainter {
 
     // Render left candidates
     for (final c in leftCandidates) {
-      final bool isSelected = touchedIndex == c.index;
-      final double opacity = hasSelection && !isSelected ? 0.35 : 1.0;
-
-      final titlePainter = TextPainter(
-        text: TextSpan(
-          text: c.categoryName,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: textColor.withOpacity(opacity),
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-        ellipsis: "...",
+      _drawCallout(
+        canvas: canvas,
+        size: size,
+        center: center,
+        c: c,
+        isLeft: true,
+        hasSelection: hasSelection,
       );
-
-      final percentPainter = TextPainter(
-        text: TextSpan(
-          text: "${c.percent.toStringAsFixed(1)} %",
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w500,
-            color: subtextColor.withOpacity(opacity),
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-      );
-
-      final double textRight = max(8.0, center.dx - pieRadius - 18.0);
-      final double maxTextWidth = max(20.0, textRight - 4.0);
-      titlePainter.layout(maxWidth: maxTextWidth);
-      percentPainter.layout(maxWidth: maxTextWidth);
-
-      final double lineEndX = textRight + 4.0;
-      final double targetY = c.targetY;
-
-      final Path linePath = Path();
-      linePath.moveTo(c.slicePoint.dx, c.slicePoint.dy);
-
-      const double tickDist = 8.0;
-      final double tickX = c.slicePoint.dx + cos(c.midAngleRad) * tickDist;
-      final double tickY = c.slicePoint.dy + sin(c.midAngleRad) * tickDist;
-      linePath.lineTo(tickX, tickY);
-
-      final double elbowX = min(tickX - 6.0, lineEndX + 10.0);
-      linePath.lineTo(elbowX, targetY);
-      linePath.lineTo(lineEndX, targetY);
-
-      final linePaint = Paint()
-        ..color = c.color.withOpacity(opacity)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = isSelected ? 2.2 : 1.4
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
-
-      canvas.drawPath(linePath, linePaint);
-
-      final double titleX = textRight - titlePainter.width;
-      final double percentX = textRight - percentPainter.width;
-      final double titleY = targetY - titlePainter.height + 1.0;
-      final double percentY = targetY + 2.0;
-
-      titlePainter.paint(canvas, Offset(titleX, titleY));
-      percentPainter.paint(canvas, Offset(percentX, percentY));
     }
 
     // Render right candidates
     for (final c in rightCandidates) {
-      final bool isSelected = touchedIndex == c.index;
-      final double opacity = hasSelection && !isSelected ? 0.35 : 1.0;
-
-      final titlePainter = TextPainter(
-        text: TextSpan(
-          text: c.categoryName,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: textColor.withOpacity(opacity),
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-        ellipsis: "...",
+      _drawCallout(
+        canvas: canvas,
+        size: size,
+        center: center,
+        c: c,
+        isLeft: false,
+        hasSelection: hasSelection,
       );
-
-      final percentPainter = TextPainter(
-        text: TextSpan(
-          text: "${c.percent.toStringAsFixed(1)} %",
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w500,
-            color: subtextColor.withOpacity(opacity),
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-      );
-
-      final double textLeft =
-          min(size.width - 8.0, center.dx + pieRadius + 18.0);
-      final double maxTextWidth = max(20.0, size.width - 4.0 - textLeft);
-      titlePainter.layout(maxWidth: maxTextWidth);
-      percentPainter.layout(maxWidth: maxTextWidth);
-
-      final double lineStartX = textLeft - 4.0;
-      final double targetY = c.targetY;
-
-      final Path linePath = Path();
-      linePath.moveTo(c.slicePoint.dx, c.slicePoint.dy);
-
-      const double tickDist = 8.0;
-      final double tickX = c.slicePoint.dx + cos(c.midAngleRad) * tickDist;
-      final double tickY = c.slicePoint.dy + sin(c.midAngleRad) * tickDist;
-      linePath.lineTo(tickX, tickY);
-
-      final double elbowX = max(tickX + 6.0, lineStartX - 10.0);
-      linePath.lineTo(elbowX, targetY);
-      linePath.lineTo(lineStartX, targetY);
-
-      final linePaint = Paint()
-        ..color = c.color.withOpacity(opacity)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = isSelected ? 2.2 : 1.4
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
-
-      canvas.drawPath(linePath, linePaint);
-
-      final double titleX = textLeft;
-      final double percentX = textLeft;
-      final double titleY = targetY - titlePainter.height + 1.0;
-      final double percentY = targetY + 2.0;
-
-      titlePainter.paint(canvas, Offset(titleX, titleY));
-      percentPainter.paint(canvas, Offset(percentX, percentY));
     }
+  }
+
+  void _drawCallout({
+    required Canvas canvas,
+    required Size size,
+    required Offset center,
+    required _CalloutCandidate c,
+    required bool isLeft,
+    required bool hasSelection,
+  }) {
+    final bool isSelected = touchedIndex == c.index;
+    final double opacity = hasSelection && !isSelected ? 0.35 : 1.0;
+
+    final titlePainter = TextPainter(
+      text: TextSpan(
+        text: c.categoryName,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+          color: textColor.withOpacity(opacity),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: "...",
+    );
+
+    final percentPainter = TextPainter(
+      text: TextSpan(
+        text: "${c.percent.toStringAsFixed(1)} %",
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w500,
+          color: subtextColor.withOpacity(opacity),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    );
+
+    final double textAnchor = isLeft
+        ? max(8.0, center.dx - pieRadius - 18.0)
+        : min(size.width - 8.0, center.dx + pieRadius + 18.0);
+    final double maxTextWidth = isLeft
+        ? max(20.0, textAnchor - 4.0)
+        : max(20.0, size.width - 4.0 - textAnchor);
+
+    titlePainter.layout(maxWidth: maxTextWidth);
+    percentPainter.layout(maxWidth: maxTextWidth);
+
+    final double lineEndX = isLeft ? textAnchor + 4.0 : textAnchor - 4.0;
+    final double targetY = c.targetY;
+
+    final Path linePath = Path();
+    linePath.moveTo(c.slicePoint.dx, c.slicePoint.dy);
+
+    const double tickDist = 8.0;
+    final double tickX = c.slicePoint.dx + cos(c.midAngleRad) * tickDist;
+    final double tickY = c.slicePoint.dy + sin(c.midAngleRad) * tickDist;
+    linePath.lineTo(tickX, tickY);
+
+    final double elbowX = isLeft
+        ? min(tickX - 6.0, lineEndX + 10.0)
+        : max(tickX + 6.0, lineEndX - 10.0);
+    linePath.lineTo(elbowX, targetY);
+    linePath.lineTo(lineEndX, targetY);
+
+    final linePaint = Paint()
+      ..color = c.color.withOpacity(opacity)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isSelected ? 2.2 : 1.4
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(linePath, linePaint);
+
+    final double titleX = isLeft ? textAnchor - titlePainter.width : textAnchor;
+    final double percentX =
+        isLeft ? textAnchor - percentPainter.width : textAnchor;
+    final double titleY = targetY - titlePainter.height + 1.0;
+    final double percentY = targetY + 2.0;
+
+    titlePainter.paint(canvas, Offset(titleX, titleY));
+    percentPainter.paint(canvas, Offset(percentX, percentY));
   }
 
   @override

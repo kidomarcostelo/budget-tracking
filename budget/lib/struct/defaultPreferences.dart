@@ -175,6 +175,7 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "netWorthAllWallets": true,
     "walletsListCurrencyBreakdown": false,
     "allSpendingSummaryAllWallets": true,
+    "statsAllWallets": true,
     "showPastSpendingTrajectory": false,
     "lastSynced": null,
     "font": "Avenir",
@@ -302,6 +303,16 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
         DateTime.now().firstDayOfMonth().toString(),
     "customPeriodEndDateCreditDebts": null,
     "customPeriodPastDaysCreditDebts": 30,
+    // For showing information within a certain cycle for stats page pie chart
+    // cycleSettingsExtension = "StatsPieChart"
+    "selectedPeriodCycleTypeStatsPieChart": CycleType.cycle.index,
+    "cyclePeriodLengthStatsPieChart": 1,
+    "cycleReoccurrenceStatsPieChart": BudgetReoccurence.monthly.index,
+    "cycleStartDateStatsPieChart": DateTime.now().firstDayOfMonth().toString(),
+    "customPeriodStartDateStatsPieChart":
+        DateTime.now().firstDayOfMonth().toString(),
+    "customPeriodEndDateStatsPieChart": null,
+    "customPeriodPastDaysStatsPieChart": 30,
     // // For showing information within a certain cycle for wallets homepage section
     // // cycleSettingsExtension = "Wallets"
     // "selectedPeriodCycleTypeWallets": CycleType.allTime.index,
@@ -440,4 +451,11 @@ Map<String, String> migrateCyclePreferencesKeys = {
   "cycleStartDateAllSpendingSummary": "customPeriodStartDate",
   "customPeriodStartDateAllSpendingSummary": "customPeriodStartDate",
   "customPeriodPastDaysAllSpendingSummary": "customPeriodPastDays",
+  //
+  "selectedPeriodCycleTypeStatsPieChart": "selectedPeriodCycleType",
+  "cyclePeriodLengthStatsPieChart": "cyclePeriodLength",
+  "cycleReoccurrenceStatsPieChart": "cycleReoccurrence",
+  "cycleStartDateStatsPieChart": "customPeriodStartDate",
+  "customPeriodStartDateStatsPieChart": "customPeriodStartDate",
+  "customPeriodPastDaysStatsPieChart": "customPeriodPastDays",
 };
