@@ -628,4 +628,3 @@ class PieChartCalloutPainter extends CustomPainter {
         oldDelegate.data != data;
   }
 }
-
