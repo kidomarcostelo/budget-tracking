@@ -182,16 +182,16 @@ class GooglePayParser {
 
       // 2. Match card name against wallet names (e.g. "UnionBank")
       if (result.cardName != null && result.cardName!.isNotEmpty) {
+        // 2a. Try exact/LIKE full-name match first
         final wallet = await database.getRelatingWallet(result.cardName!);
         if (wallet != null) return wallet;
 
-        final tokens = result.cardName!.split(RegExp(r'\s+'));
-        for (final token in tokens) {
-          if (token.length >= 4) {
-            final tokenWallet = await database.getRelatingWallet(token);
-            if (tokenWallet != null) return tokenWallet;
-          }
-        }
+        // 2b. Find the wallet whose name is longest AND is contained in the card name.
+        //     e.g. card="UnionBank Visa Platinum", wallets=["UnionBank","UnionBank Visa"]
+        //          → "UnionBank Visa" (14 chars) preferred over "UnionBank" (9 chars)
+        final bestMatch =
+            await database.getWalletByLongestContainedName(result.cardName!);
+        if (bestMatch != null) return bestMatch;
       }
 
       // 3. Fall back to user's selected/default wallet

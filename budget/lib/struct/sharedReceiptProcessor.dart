@@ -119,14 +119,9 @@ class SharedReceiptProcessor {
       if (wallet != null) return wallet;
     }
 
-    // Check if any existing wallet name is contained inside the search string
-    final allWallets = await database.getAllWallets();
-    for (final w in allWallets) {
-      if (w.name.isNotEmpty &&
-          trimmed.toLowerCase().contains(w.name.toLowerCase())) {
-        return w;
-      }
-    }
+    // Check if any existing wallet name is contained inside the search string (prefer longest match)
+    final bestMatch = await database.getWalletByLongestContainedName(trimmed);
+    if (bestMatch != null) return bestMatch;
     return null;
   }
 

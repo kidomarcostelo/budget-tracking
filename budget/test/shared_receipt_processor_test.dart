@@ -1,6 +1,9 @@
+import 'package:budget/database/tables.dart';
+import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/receiptParser.dart';
 import 'package:budget/struct/shareIntentOcr.dart';
 import 'package:budget/struct/sharedReceiptProcessor.dart';
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -134,6 +137,46 @@ Get help
 
       expect(deletedPath, '/cache/blank_image.png');
       expect(receipt, null);
+    });
+  });
+
+  group('SharedReceiptProcessor.resolveWalletByName', () {
+    late FinanceDatabase testDb;
+
+    setUp(() async {
+      testDb = FinanceDatabase(NativeDatabase.memory());
+      database = testDb;
+    });
+
+    tearDown(() async {
+      await testDb.close();
+    });
+
+    test(
+        'prefers longest matching wallet name when multiple wallet names are contained',
+        () async {
+      await testDb.createOrUpdateWallet(TransactionWallet(
+        walletPk: 'ub',
+        name: 'UnionBank',
+        colour: null,
+        dateCreated: DateTime(2026, 1, 1),
+        order: 0,
+        currency: 'PHP',
+        decimals: 2,
+      ));
+      await testDb.createOrUpdateWallet(TransactionWallet(
+        walletPk: 'ubvp',
+        name: 'UnionBank Visa Platinum',
+        colour: null,
+        dateCreated: DateTime(2026, 1, 1),
+        order: 1,
+        currency: 'PHP',
+        decimals: 2,
+      ));
+
+      final wallet = await SharedReceiptProcessor.resolveWalletByName(
+          'UnionBank Visa Platinum Savings');
+      expect(wallet?.name, 'UnionBank Visa Platinum');
     });
   });
 }
