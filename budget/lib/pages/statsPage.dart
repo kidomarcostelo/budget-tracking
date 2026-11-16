@@ -154,6 +154,7 @@ class StatsPageState extends State<StatsPage>
         child: const WalletPickerPeriodCycle(
           allWalletsSettingKey: "statsAllWallets",
           cycleSettingsExtension: "StatsPieChart",
+          homePageWidgetDisplay: null,
         ),
       ),
     );
@@ -186,7 +187,8 @@ class StatsPageState extends State<StatsPage>
     return Scaffold(
       body: SafeArea(
         child: StreamBuilder<List<CategoryWithTotal>>(
-          stream: database.watchTotalSpentInEachCategoryInTimeRangeFromCategories(
+          stream:
+              database.watchTotalSpentInEachCategoryInTimeRangeFromCategories(
             allWallets: allWallets,
             start: dateRange?.start ?? DateTime.now(),
             end: dateRange?.end ?? DateTime.now(),
@@ -328,8 +330,8 @@ class StatsPageState extends State<StatsPage>
                               ? "no-income-within-period".tr()
                               : "no-expense-within-period".tr(),
                           fontSize: 16,
-                          textColor: theme.colorScheme.onBackground
-                              .withOpacity(0.6),
+                          textColor:
+                              theme.colorScheme.onBackground.withOpacity(0.6),
                           textAlign: TextAlign.center,
                         ),
                       ),

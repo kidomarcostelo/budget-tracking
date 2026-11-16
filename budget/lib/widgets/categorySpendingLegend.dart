@@ -116,9 +116,8 @@ class _CategorySpendingRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: isSelected
-                  ? pillColor.withOpacity(0.08)
-                  : Colors.transparent,
+              color:
+                  isSelected ? pillColor.withOpacity(0.08) : Colors.transparent,
             ),
             child: Row(
               children: [
@@ -176,9 +175,8 @@ class _CategorySpendingRow extends StatelessWidget {
                 start: 24, end: 8, bottom: 8, top: 2),
             child: Column(
               children: subcategories.map((sub) {
-                final double subPercent = totalSpent == 0
-                    ? 0
-                    : (sub.total / totalSpent * 100).abs();
+                final double subPercent =
+                    totalSpent == 0 ? 0 : (sub.total / totalSpent * 100).abs();
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Row(

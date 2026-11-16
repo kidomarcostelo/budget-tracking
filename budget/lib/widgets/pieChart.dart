@@ -254,18 +254,18 @@ class PieChartDisplayState extends State<PieChartDisplay> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double width = constraints.maxWidth.isFinite &&
-                constraints.maxWidth > 0
-            ? constraints.maxWidth
-            : (enableDoubleColumn(context) == false || widget.disableLarge
-                ? 320.0
-                : 360.0);
-        final double height = constraints.maxHeight.isFinite &&
-                constraints.maxHeight > 0
-            ? constraints.maxHeight
-            : (enableDoubleColumn(context) == false || widget.disableLarge
-                ? 220.0
-                : 250.0);
+        final double width =
+            constraints.maxWidth.isFinite && constraints.maxWidth > 0
+                ? constraints.maxWidth
+                : (enableDoubleColumn(context) == false || widget.disableLarge
+                    ? 320.0
+                    : 360.0);
+        final double height =
+            constraints.maxHeight.isFinite && constraints.maxHeight > 0
+                ? constraints.maxHeight
+                : (enableDoubleColumn(context) == false || widget.disableLarge
+                    ? 220.0
+                    : 250.0);
         final Size chartSize = Size(width, height);
 
         return SizedBox(
@@ -537,7 +537,7 @@ class PieChartCalloutPainter extends CustomPainter {
     required Canvas canvas,
     required Size size,
     required Offset center,
-    required _CalloutCandidate c,
+    required CalloutCandidate c,
     required bool isLeft,
     required bool hasSelection,
   }) {

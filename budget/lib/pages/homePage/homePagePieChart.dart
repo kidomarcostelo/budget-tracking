@@ -330,8 +330,8 @@ class _PieChartHomeAndCategorySummaryState
                                       });
                                     }
                                   },
-                                  middleColor: getColor(context,
-                                      "lightDarkAccentHeavyLight"),
+                                  middleColor: getColor(
+                                      context, "lightDarkAccentHeavyLight"),
                                 ),
                                 if (snapshot.data!.isEmpty)
                                   Padding(
@@ -408,7 +408,8 @@ class _PieChartHomeAndCategorySummaryState
                             clearCategorySelection();
                           } else {
                             TransactionCategory? foundCat;
-                            for (final c in s.dataFilterUnassignedTransactions) {
+                            for (final c
+                                in s.dataFilterUnassignedTransactions) {
                               if (c.category.categoryPk == categoryPk) {
                                 foundCat = c.category;
                                 break;

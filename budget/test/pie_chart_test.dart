@@ -77,7 +77,8 @@ void main() {
   group('resolveCalloutCollisions', () {
     test('handles empty list gracefully', () {
       final list = <CalloutCandidate>[];
-      expect(() => resolveCalloutCollisions(list, 10, 200, 28), returnsNormally);
+      expect(
+          () => resolveCalloutCollisions(list, 10, 200, 28), returnsNormally);
       expect(list, isEmpty);
     });
 

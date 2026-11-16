@@ -102,7 +102,9 @@ void main() {
       await tester.pumpWidget(
         buildTestableWidget(
           CategorySpendingLegend(
-            categoriesWithTotal: [CategoryWithTotal(category: cat1, total: 500)],
+            categoriesWithTotal: [
+              CategoryWithTotal(category: cat1, total: 500)
+            ],
             subcategoriesMap: const {},
             totalSpent: 500,
             selectedCategoryPk: null,
@@ -115,7 +117,8 @@ void main() {
       expect(tappedPk, equals('cat-1'));
     });
 
-    testWidgets('tapping selected row calls onCategoryTapped with null (collapse)',
+    testWidgets(
+        'tapping selected row calls onCategoryTapped with null (collapse)',
         (WidgetTester tester) async {
       final cat1 = createTestCategory(pk: 'cat-1', name: 'Rent');
       String? tappedPk = 'init';
@@ -123,7 +126,9 @@ void main() {
       await tester.pumpWidget(
         buildTestableWidget(
           CategorySpendingLegend(
-            categoriesWithTotal: [CategoryWithTotal(category: cat1, total: 500)],
+            categoriesWithTotal: [
+              CategoryWithTotal(category: cat1, total: 500)
+            ],
             subcategoriesMap: const {},
             totalSpent: 500,
             selectedCategoryPk: 'cat-1',
@@ -136,7 +141,8 @@ void main() {
       expect(tappedPk, isNull);
     });
 
-    testWidgets('expands subcategories accordion when selectedCategoryPk matches',
+    testWidgets(
+        'expands subcategories accordion when selectedCategoryPk matches',
         (WidgetTester tester) async {
       final mainCat = createTestCategory(pk: 'cat-food', name: 'Food');
       final subCat1 = createTestCategory(
