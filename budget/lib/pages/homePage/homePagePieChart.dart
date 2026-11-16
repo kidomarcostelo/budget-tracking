@@ -11,6 +11,7 @@ import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/spendingSummaryHelper.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/categoryEntry.dart';
+import 'package:budget/widgets/categorySpendingLegend.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/tappable.dart';
@@ -299,218 +300,81 @@ class _PieChartHomeAndCategorySummaryState
                   absoluteTotal: true,
                 );
 
-                List<Widget> categoryEntries = [];
-                double totalSpentPercent = 45 / 360;
-                snapshot.data!.asMap().forEach(
-                  (index, category) {
-                    if (selectedCategory?.categoryPk ==
-                            category.category.categoryPk ||
-                        selectedCategory?.mainCategoryPk ==
-                            category.category.categoryPk)
-                      categoryEntries.add(
-                        CategoryEntry(
-                          percentageOffset: totalSpentPercent,
-                          getPercentageAfterText: (double categorySpent) {
-                            return "of-total".tr().toLowerCase();
-                          },
-                          useHorizontalPaddingConstrained: false,
-                          expandSubcategories: showAllSubcategories ||
-                              category.category.categoryPk ==
-                                  selectedCategory?.categoryPk ||
-                              category.category.categoryPk ==
-                                  selectedCategory?.mainCategoryPk,
-                          subcategoriesWithTotalMap:
-                              s.subCategorySpendingIndexedByMainCategoryPk,
-                          todayPercent: 0,
-                          overSpentColor: category.total > 0
-                              ? getColor(context, "incomeAmount")
-                              : getColor(context, "expenseAmount"),
-                          showIncomeExpenseIcons: true,
-                          onLongPress: (TransactionCategory category,
-                              CategoryBudgetLimit? categoryBudgetLimit) {
-                            pushRoute(
-                              context,
-                              AddCategoryPage(
-                                routesToPopAfterDelete:
-                                    RoutesToPopAfterDelete.One,
-                                category: category,
-                              ),
-                            );
-                          },
-                          categoryBudgetLimit: category.categoryBudgetLimit,
-                          category: category.category,
-                          totalSpent: s.totalSpent,
-                          transactionCount: category.transactionCount,
-                          categorySpent: category.total,
-                          onTap: (TransactionCategory tappedCategory, _) {
-                            pushRoute(
-                              context,
-                              TransactionsSearchPage(
-                                initialFilters: SearchFilters().copyWith(
-                                  dateTimeRange:
-                                      getDateTimeRangeForPassedSearchFilters(
-                                          cycleSettingsExtension: "PieChart"),
-                                  categoryPks: selectedCategory
-                                              ?.mainCategoryPk !=
-                                          null
-                                      ? [selectedCategory!.mainCategoryPk ?? ""]
-                                      : selectedCategory == null
-                                          ? null
-                                          : [selectedCategory!.categoryPk],
-                                  subcategoryPks: selectedCategory != null &&
-                                          selectedCategory?.mainCategoryPk !=
-                                              null
-                                      ? [selectedCategory!.categoryPk]
-                                      : null,
-                                  positiveCashFlow: appStateSettings[
-                                              "pieChartIncomeAndExpenseOnly"] ==
-                                          true
-                                      ? null
-                                      : widget.isIncome,
-                                  expenseIncome: [
-                                    if (appStateSettings[
-                                            "pieChartIncomeAndExpenseOnly"] ==
-                                        true)
-                                      (widget.isIncome == true
-                                          ? ExpenseIncome.income
-                                          : ExpenseIncome.expense)
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                          selected: false,
-                          allSelected: true,
-                        ),
-                      );
-                    if (s.totalSpent != 0)
-                      totalSpentPercent += category.total.abs() / s.totalSpent;
-                  },
-                );
-
                 return Column(
                   children: [
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
                         Padding(
-                          padding: EdgeInsetsDirectional.only(
-                              start: 10, end: 10, bottom: 15, top: 30),
-                          child: LayoutBuilder(
-                            builder: (_, boxConstraints) {
-                              bool showTopCategoriesLegend =
-                                  boxConstraints.maxWidth > 320 &&
-                                      snapshot.data!.length > 0;
-                              return Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (showTopCategoriesLegend)
-                                    Flexible(
-                                      flex: 1,
-                                      child: Padding(
-                                        padding: EdgeInsetsDirectional.only(
-                                            start: 12),
-                                        child: TopCategoriesSpentLegend(
-                                          categoriesWithTotal: snapshot.data!
-                                              .take(
-                                                boxConstraints.maxWidth < 420
-                                                    ? 3
-                                                    : 5,
-                                              )
-                                              .toList(),
-                                        ),
-                                      ),
-                                    ),
-                                  Flexible(
-                                    flex: 2,
-                                    child: Stack(
-                                      clipBehavior: Clip.none,
-                                      alignment: AlignmentDirectional.center,
+                          padding: const EdgeInsetsDirectional.only(
+                              start: 10, end: 10, bottom: 15, top: 20),
+                          child: Center(
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              alignment: AlignmentDirectional.center,
+                              children: [
+                                PieChartWrapper(
+                                  disableLarge: true,
+                                  pieChartDisplayStateKey:
+                                      pieChartDisplayStateKey,
+                                  data: s.dataFilterUnassignedTransactions,
+                                  totalSpent: s.totalSpent,
+                                  setSelectedCategory: (categoryPk, category) {
+                                    if (category == null ||
+                                        categoryPk == "-1") {
+                                      clearCategorySelection();
+                                    } else {
+                                      setState(() {
+                                        selectedCategory = category;
+                                        expandCategorySelection = true;
+                                      });
+                                    }
+                                  },
+                                  middleColor: getColor(context,
+                                      "lightDarkAccentHeavyLight"),
+                                ),
+                                if (snapshot.data!.isEmpty)
+                                  Padding(
+                                    padding:
+                                        const EdgeInsetsDirectional.all(8.0),
+                                    child: Column(
                                       children: [
-                                        Padding(
-                                          padding: EdgeInsetsDirectional.only(
-                                              end: showTopCategoriesLegend
-                                                  ? 20
-                                                  : 0),
-                                          child: PieChartWrapper(
-                                            disableLarge: true,
-                                            pieChartDisplayStateKey:
-                                                pieChartDisplayStateKey,
-                                            data: s
-                                                .dataFilterUnassignedTransactions,
-                                            totalSpent: s.totalSpent,
-                                            setSelectedCategory:
-                                                (categoryPk, category) {
-                                              if (category == null) {
-                                                clearCategorySelection();
-                                              } else {
-                                                setState(() {
-                                                  selectedCategory = category;
-                                                  expandCategorySelection =
-                                                      true;
-                                                });
-                                              }
-                                            },
-                                            middleColor: getColor(context,
-                                                "lightDarkAccentHeavyLight"),
+                                        ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                              maxWidth: 280),
+                                          child: TextFont(
+                                            text: widget.isIncome
+                                                ? appStateSettings[
+                                                            "pieChartIncomeAndExpenseOnly"] ==
+                                                        true
+                                                    ? "no-income-within-period"
+                                                        .tr()
+                                                    : "no-incoming-within-period"
+                                                        .tr()
+                                                : appStateSettings[
+                                                            "pieChartIncomeAndExpenseOnly"] ==
+                                                        true
+                                                    ? "no-expense-within-period"
+                                                        .tr()
+                                                    : "no-outgoing-within-period"
+                                                        .tr(),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 20,
+                                            fontSize: 17,
                                           ),
                                         ),
-                                        if (snapshot.data!.length <= 0)
-                                          Padding(
-                                            padding:
-                                                const EdgeInsetsDirectional.all(
-                                                    8.0),
-                                            child: Column(
-                                              children: [
-                                                ConstrainedBox(
-                                                  constraints: BoxConstraints(
-                                                      maxWidth: boxConstraints
-                                                                      .maxWidth -
-                                                                  50 <=
-                                                              10
-                                                          ? 10
-                                                          : boxConstraints
-                                                                  .maxWidth -
-                                                              50),
-                                                  child: TextFont(
-                                                    text: widget.isIncome
-                                                        ? appStateSettings[
-                                                                    "pieChartIncomeAndExpenseOnly"] ==
-                                                                true
-                                                            ? "no-income-within-period"
-                                                                .tr()
-                                                            : "no-incoming-within-period"
-                                                                .tr()
-                                                        : appStateSettings[
-                                                                    "pieChartIncomeAndExpenseOnly"] ==
-                                                                true
-                                                            ? "no-expense-within-period"
-                                                                .tr()
-                                                            : "no-outgoing-within-period"
-                                                                .tr(),
-                                                    textAlign: TextAlign.center,
-                                                    maxLines: 20,
-                                                    fontSize: 17,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 15),
-                                                LowKeyButton(
-                                                  onTap: openPieChartSettings,
-                                                  text: "select-period"
-                                                      .tr()
-                                                      .capitalizeFirstofEach,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
+                                        const SizedBox(height: 15),
+                                        LowKeyButton(
+                                          onTap: openPieChartSettings,
+                                          text: "select-period"
+                                              .tr()
+                                              .capitalizeFirstofEach,
+                                        ),
                                       ],
                                     ),
                                   ),
-                                ],
-                              );
-                            },
+                              ],
+                            ),
                           ),
                         ),
                         PositionedDirectional(
@@ -532,75 +396,42 @@ class _PieChartHomeAndCategorySummaryState
                         ),
                       ],
                     ),
-                    widget.animatedSizeCategoryContainer
-                        ? AnimatedSizeSwitcher(
-                            child: expandCategorySelection == false
-                                ? Container(key: ValueKey(1), height: 10)
-                                : Column(
-                                    children: categoryEntries,
-                                    key: ValueKey(
-                                        selectedCategory?.categoryPk ?? ""),
-                                  ),
-                          )
-                        : AnimatedSwitcher(
-                            duration: Duration(milliseconds: 300),
-                            child: expandCategorySelection == false
-                                ? Container(key: ValueKey(1), height: 10)
-                                : Column(
-                                    children: categoryEntries,
-                                    key: ValueKey(
-                                        selectedCategory?.categoryPk ?? ""),
-                                  ),
-                          ),
+                    if (s.dataFilterUnassignedTransactions.isNotEmpty)
+                      CategorySpendingLegend(
+                        categoriesWithTotal: s.dataFilterUnassignedTransactions,
+                        subcategoriesMap:
+                            s.subCategorySpendingIndexedByMainCategoryPk,
+                        totalSpent: s.totalSpent,
+                        selectedCategoryPk: selectedCategory?.categoryPk,
+                        onCategoryTapped: (categoryPk) {
+                          if (categoryPk == null) {
+                            clearCategorySelection();
+                          } else {
+                            TransactionCategory? foundCat;
+                            for (final c in s.dataFilterUnassignedTransactions) {
+                              if (c.category.categoryPk == categoryPk) {
+                                foundCat = c.category;
+                                break;
+                              }
+                            }
+                            setState(() {
+                              selectedCategory = foundCat;
+                              expandCategorySelection = true;
+                              pieChartDisplayStateKey.currentState
+                                  ?.setTouchedCategoryPk(categoryPk);
+                            });
+                          }
+                        },
+                      ),
                   ],
                 );
               }
-              return SizedBox(height: 255);
+              return const SizedBox(height: 255);
             },
           );
         }
-        return SizedBox(height: 255);
+        return const SizedBox(height: 255);
       },
-    );
-  }
-}
-
-class TopCategoriesSpentLegend extends StatelessWidget {
-  const TopCategoriesSpentLegend(
-      {required this.categoriesWithTotal, super.key});
-  final List<CategoryWithTotal> categoriesWithTotal;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (CategoryWithTotal categoryWithTotal in categoriesWithTotal)
-          Padding(
-            padding: const EdgeInsetsDirectional.only(bottom: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadiusDirectional.circular(100),
-                    color: HexColor(categoryWithTotal.category.colour),
-                  ),
-                ),
-                SizedBox(width: 5),
-                Flexible(
-                  child: TextFont(
-                    text: categoryWithTotal.category.name,
-                    fontSize: 15,
-                    maxLines: 2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
     );
   }
 }

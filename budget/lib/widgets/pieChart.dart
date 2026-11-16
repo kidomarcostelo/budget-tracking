@@ -1,14 +1,24 @@
+import 'dart:math';
 import 'package:budget/colors.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/struct/databaseGlobal.dart';
-import 'package:budget/widgets/categoryIcon.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/widgets/navigationSidebar.dart';
 import 'package:budget/widgets/pinWheelReveal.dart';
-import 'package:budget/widgets/textWidgets.dart';
 import 'package:budget/functions.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+
+Color getSpendingHeatmapColor(int index, int totalCount) {
+  if (totalCount <= 1) {
+    return const Color(0xFFFF6B6B);
+  }
+  final double ratio = (index / (totalCount - 1)).clamp(0.0, 1.0);
+  final double hue = ratio * 165.0;
+  const double saturation = 0.78;
+  const double value = 0.95;
+  return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
+}
 
 class CategoryTotal {
   CategoryTotal(
@@ -61,7 +71,11 @@ class PieChartWrapper extends StatelessWidget {
     required this.pieChartDisplayStateKey,
     this.middleColor,
     this.disableLarge = false,
+    this.isDonut = false,
+    this.customWidth,
+    this.customHeight,
   }) : super(key: key);
+
   final List<CategoryWithTotal> data;
   final double totalSpent;
   final Function(String categoryPk, TransactionCategory? category)
@@ -69,6 +83,9 @@ class PieChartWrapper extends StatelessWidget {
   final GlobalKey<PieChartDisplayState>? pieChartDisplayStateKey;
   final Color? middleColor;
   final bool disableLarge;
+  final bool isDonut;
+  final double? customWidth;
+  final double? customHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -83,9 +100,17 @@ class PieChartWrapper extends StatelessWidget {
         dataFiltered.add(categoryWithTotal);
       }
     }
+    // Sort descending by absolute spending so index 0 is always largest spending category
+    dataFiltered.sort((a, b) => b.total.abs().compareTo(a.total.abs()));
+
+    final double containerWidth = customWidth ??
+        (enableDoubleColumn(context) == false || disableLarge ? 320.0 : 360.0);
+    final double containerHeight = customHeight ??
+        (enableDoubleColumn(context) == false || disableLarge ? 220.0 : 250.0);
+
     return Container(
-      width: enableDoubleColumn(context) == false || disableLarge ? 200 : 300,
-      height: enableDoubleColumn(context) == false || disableLarge ? 200 : 300,
+      width: containerWidth,
+      height: containerHeight,
       child: Stack(
         alignment: AlignmentDirectional.center,
         children: [
@@ -95,7 +120,9 @@ class PieChartWrapper extends StatelessWidget {
                     .toString(),
             child: data.length <= 0 || numberZeroTransactions == data.length
                 ? Container(
-                    key: ValueKey(1),
+                    key: const ValueKey(1),
+                    width: 130,
+                    height: 130,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Theme.of(context)
@@ -112,39 +139,41 @@ class PieChartWrapper extends StatelessWidget {
                     disableLarge: disableLarge,
                   ),
           ),
-          IgnorePointer(
-            child: Center(
-              child: Container(
-                width: enableDoubleColumn(context) == false || disableLarge
-                    ? 105
-                    : 130,
-                height: enableDoubleColumn(context) == false || disableLarge
-                    ? 105
-                    : 130,
-                decoration: BoxDecoration(
-                  color: middleColor?.withOpacity(0.2) ??
-                      getColor(context, "white").withOpacity(0.2),
-                  shape: BoxShape.circle,
+          if (isDonut) ...[
+            IgnorePointer(
+              child: Center(
+                child: Container(
+                  width: enableDoubleColumn(context) == false || disableLarge
+                      ? 105
+                      : 130,
+                  height: enableDoubleColumn(context) == false || disableLarge
+                      ? 105
+                      : 130,
+                  decoration: BoxDecoration(
+                    color: middleColor?.withOpacity(0.2) ??
+                        getColor(context, "white").withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
-          ),
-          IgnorePointer(
-            child: Center(
-              child: Container(
-                width: enableDoubleColumn(context) == false || disableLarge
-                    ? 80
-                    : 110,
-                height: enableDoubleColumn(context) == false || disableLarge
-                    ? 80
-                    : 110,
-                decoration: BoxDecoration(
-                    color:
-                        middleColor ?? Theme.of(context).colorScheme.background,
-                    shape: BoxShape.circle),
+            IgnorePointer(
+              child: Center(
+                child: Container(
+                  width: enableDoubleColumn(context) == false || disableLarge
+                      ? 80
+                      : 110,
+                  height: enableDoubleColumn(context) == false || disableLarge
+                      ? 80
+                      : 110,
+                  decoration: BoxDecoration(
+                      color: middleColor ??
+                          Theme.of(context).colorScheme.background,
+                      shape: BoxShape.circle),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -161,11 +190,13 @@ class PieChartDisplay extends StatefulWidget {
     required this.setSelectedCategory,
     this.disableLarge = false,
   }) : super(key: key);
+
   final List<CategoryWithTotal> data;
   final double totalSpent;
   final Function(String categoryPk, TransactionCategory? category)
       setSelectedCategory;
   final bool disableLarge;
+
   @override
   State<StatefulWidget> createState() => PieChartDisplayState();
 }
@@ -173,35 +204,30 @@ class PieChartDisplay extends StatefulWidget {
 class PieChartDisplayState extends State<PieChartDisplay> {
   int touchedIndex = -1;
   bool scaleIn = false;
-  int showLabels = 0;
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(milliseconds: 0), () {
-      setState(() {
-        scaleIn = true;
-      });
-    });
-    Future.delayed(Duration(milliseconds: 500), () async {
-      int numCategories = (await database.getAllCategories()).length;
-      for (int i = 1; i <= numCategories + 25; i++) {
-        await Future.delayed(const Duration(milliseconds: 70));
-        if (mounted)
-          setState(() {
-            showLabels = showLabels + 1;
-          });
+    Future.delayed(Duration.zero, () {
+      if (mounted) {
+        setState(() {
+          scaleIn = true;
+        });
       }
     });
   }
 
-  void setTouchedIndex(index) {
+  void setTouchedIndex(int index) {
     setState(() {
       touchedIndex = index;
     });
   }
 
   void setTouchedCategoryPk(String? categoryPk) {
-    if (categoryPk == null) return;
+    if (categoryPk == null) {
+      setTouchedIndex(-1);
+      return;
+    }
     int index = 0;
     bool found = false;
     for (CategoryWithTotal category in widget.data) {
@@ -219,252 +245,420 @@ class PieChartDisplayState extends State<PieChartDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    return PinWheelReveal(
-      delay: Duration(milliseconds: 0),
-      duration: Duration(milliseconds: 850),
-      child: PieChart(
-        PieChartData(
-          startDegreeOffset: -45,
-          pieTouchData: PieTouchData(
-              touchCallback: (FlTouchEvent event, pieTouchResponse) {
-            // print(event.runtimeType);
-            setState(() {
-              if (!event.isInterestedForInteractions ||
-                  pieTouchResponse == null ||
-                  pieTouchResponse.touchedSection == null) {
-                return;
-              }
-              if (event.runtimeType == FlTapDownEvent &&
-                  touchedIndex !=
-                      pieTouchResponse.touchedSection!.touchedSectionIndex) {
-                touchedIndex =
-                    pieTouchResponse.touchedSection!.touchedSectionIndex;
-                // print("TOUCHED");
-                // print(touchedIndex);
-                // print(widget.data);
-                widget.setSelectedCategory(
-                    widget.data[touchedIndex].category.categoryPk,
-                    widget.data[touchedIndex].category);
-              } else if (event.runtimeType == FlTapDownEvent) {
-                touchedIndex = -1;
-                widget.setSelectedCategory("-1", null);
-              } else if (event.runtimeType == FlLongPressMoveUpdate) {
-                touchedIndex =
-                    pieTouchResponse.touchedSection!.touchedSectionIndex;
-                widget.setSelectedCategory(
-                    widget.data[touchedIndex].category.categoryPk,
-                    widget.data[touchedIndex].category);
-              }
-            });
-          }),
-          borderData: FlBorderData(
-            show: false,
+    final double pieRadius =
+        enableDoubleColumn(context) == false || widget.disableLarge
+            ? 66.0
+            : 88.0;
+    final Color textColor = getColor(context, "black");
+    final Color subtextColor = getColor(context, "textLight");
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth.isFinite &&
+                constraints.maxWidth > 0
+            ? constraints.maxWidth
+            : (enableDoubleColumn(context) == false || widget.disableLarge
+                ? 320.0
+                : 360.0);
+        final double height = constraints.maxHeight.isFinite &&
+                constraints.maxHeight > 0
+            ? constraints.maxHeight
+            : (enableDoubleColumn(context) == false || widget.disableLarge
+                ? 220.0
+                : 250.0);
+        final Size chartSize = Size(width, height);
+
+        return SizedBox(
+          width: width,
+          height: height,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              PinWheelReveal(
+                delay: Duration.zero,
+                duration: const Duration(milliseconds: 850),
+                child: PieChart(
+                  PieChartData(
+                    startDegreeOffset: -90,
+                    pieTouchData: PieTouchData(
+                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                        setState(() {
+                          if (!event.isInterestedForInteractions ||
+                              pieTouchResponse == null ||
+                              pieTouchResponse.touchedSection == null) {
+                            return;
+                          }
+                          if (event.runtimeType == FlTapDownEvent &&
+                              touchedIndex !=
+                                  pieTouchResponse
+                                      .touchedSection!.touchedSectionIndex) {
+                            touchedIndex = pieTouchResponse
+                                .touchedSection!.touchedSectionIndex;
+                            widget.setSelectedCategory(
+                              widget.data[touchedIndex].category.categoryPk,
+                              widget.data[touchedIndex].category,
+                            );
+                          } else if (event.runtimeType == FlTapDownEvent) {
+                            touchedIndex = -1;
+                            widget.setSelectedCategory("-1", null);
+                          } else if (event.runtimeType ==
+                              FlLongPressMoveUpdate) {
+                            touchedIndex = pieTouchResponse
+                                .touchedSection!.touchedSectionIndex;
+                            widget.setSelectedCategory(
+                              widget.data[touchedIndex].category.categoryPk,
+                              widget.data[touchedIndex].category,
+                            );
+                          }
+                        });
+                      },
+                    ),
+                    borderData: FlBorderData(show: false),
+                    sectionsSpace: 0,
+                    centerSpaceRadius: 0,
+                    sections: showingSections(),
+                  ),
+                  swapAnimationDuration: const Duration(milliseconds: 1300),
+                  swapAnimationCurve: const ElasticOutCurve(0.6),
+                ),
+              ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    size: chartSize,
+                    painter: PieChartCalloutPainter(
+                      data: widget.data,
+                      totalSpent: widget.totalSpent,
+                      touchedIndex: touchedIndex,
+                      pieRadius: pieRadius,
+                      textColor: textColor,
+                      subtextColor: subtextColor,
+                      startDegreeOffset: -90.0,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          sectionsSpace: 0,
-          centerSpaceRadius: 0,
-          sections: showingSections(),
-        ),
-        swapAnimationDuration: Duration(milliseconds: 1300),
-        swapAnimationCurve: ElasticOutCurve(0.6),
-      ),
+        );
+      },
     );
   }
 
   List<PieChartSectionData> showingSections() {
-    double totalPercentAccumulated = 0;
+    final double baseRadius =
+        enableDoubleColumn(context) == false || widget.disableLarge
+            ? 66.0
+            : 88.0;
+
     return List.generate(widget.data.length, (i) {
       final bool isTouched = i == touchedIndex;
-      final double radius =
-          enableDoubleColumn(context) == false || widget.disableLarge
-              ? isTouched
-                  ? 106.0
-                  : 100.0
-              : isTouched
-                  ? 146.0
-                  : 136.0;
-      final double widgetScale = isTouched ? 1.3 : 1.0;
-      bool isTouchingSameColorSection = false;
-      if (nullIfIndexOutOfRange(widget.data, i - 1)?.category?.colour ==
-              widget.data[i].category.colour ||
-          nullIfIndexOutOfRange(widget.data, i + 1)?.category?.colour ==
-              widget.data[i].category.colour) {
-        isTouchingSameColorSection = true;
-      }
-      final Color color = dynamicPastel(
-        context,
-        HexColor(widget.data[i].category.colour,
-            defaultColor: Theme.of(context).colorScheme.primary),
-        amountLight: 0.3 +
-            (isTouchingSameColorSection && i % 3 == 0 ? 0.2 : 0) +
-            (isTouchingSameColorSection && i % 3 == 1 ? 0.35 : 0),
-        amountDark: 0.1 +
-            (isTouchingSameColorSection && i % 3 == 0 ? 0.2 : 0) +
-            (isTouchingSameColorSection && i % 3 == 1 ? 0.35 : 0),
-      );
-      double percent = widget.totalSpent == 0
-          ? 0
-          : (widget.data[i].total / widget.totalSpent * 100).abs();
-      totalPercentAccumulated = totalPercentAccumulated + percent;
+      final double radius = isTouched ? baseRadius + 6.0 : baseRadius;
+      final Color color = getSpendingHeatmapColor(i, widget.data.length);
+
       return PieChartSectionData(
         color: color,
         value: widget.totalSpent == 0
-            ? 5
+            ? 5.0
             : (widget.data[i].total / widget.totalSpent).abs(),
         title: "",
         radius: radius,
-        badgeWidget: _Badge(
-          totalPercentAccumulated: totalPercentAccumulated,
-          showLabels: i < showLabels,
-          scale: widgetScale,
-          color: color,
-          iconName: widget.data[i].category.iconName ?? "",
-          categoryColor: HexColor(widget.data[i].category.colour,
-              defaultColor: Theme.of(context).colorScheme.primary),
-          emojiIconName: widget.data[i].category.emojiIconName,
-          percent: percent,
-          isTouched: isTouched,
-        ),
-        titlePositionPercentageOffset: 1.4,
-        badgePositionPercentageOffset: .98,
+        badgeWidget: null,
       );
     });
   }
 }
 
-class _Badge extends StatelessWidget {
-  final double scale;
-  final Color color;
-  final String iconName;
-  final String? emojiIconName;
-  final double percent;
-  final bool isTouched;
-  final bool showLabels;
-  final Color categoryColor;
-  final double totalPercentAccumulated;
-
-  const _Badge({
-    Key? key,
-    required this.scale,
-    required this.color,
-    required this.iconName,
-    required this.emojiIconName,
+class CalloutCandidate {
+  CalloutCandidate({
+    required this.index,
+    required this.categoryName,
     required this.percent,
-    required this.isTouched,
-    required this.showLabels,
-    required this.categoryColor,
-    required this.totalPercentAccumulated,
-  }) : super(key: key);
+    required this.color,
+    required this.midAngleRad,
+    required this.slicePoint,
+    required this.isRight,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    bool showIcon = percent.abs() < 5;
-    return AnimatedScale(
-      curve: showIcon ? Curves.easeInOutCubicEmphasized : ElasticOutCurve(0.6),
-      duration:
-          showIcon ? Duration(milliseconds: 700) : Duration(milliseconds: 1300),
-      scale: showIcon && isTouched == false
-          ? 0
-          : (showLabels || isTouched ? (showIcon ? 1 : scale) : 0),
-      child: AnimatedSwitcher(
-        duration: Duration(milliseconds: 500),
-        child: Container(
-          key: ValueKey(iconName),
-          height: 45,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: color,
-              width: 2.5,
-            ),
-          ),
-          child: Stack(
-            alignment: AlignmentDirectional.center,
-            children: [
-              AnimatedOpacity(
-                duration: Duration(milliseconds: 200),
-                opacity: this.scale == 1 ? 0 : 1,
-                child: Center(
-                  child: Transform.translate(
-                    offset: Offset(
-                      0,
-                      // Prevent overlapping labels when displayed on top
-                      // Divider percent by 2, because the label is in the middle
-                      // This means any label location that is past 50% will change orientation
-                      totalPercentAccumulated - percent / 2 < 50 ? -34 : 34,
-                    ),
-                    child: IntrinsicWidth(
-                      child: Container(
-                        height: 20,
-                        padding: EdgeInsetsDirectional.symmetric(horizontal: 5),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadiusDirectional.circular(5),
-                          border: Border.all(
-                            color: color,
-                            width: 1.5,
-                          ),
-                          color: Theme.of(context).colorScheme.background,
-                        ),
-                        child: Center(
-                          child: MediaQuery(
-                            child: TextFont(
-                              text: convertToPercent(percent),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              textAlign: TextAlign.center,
-                            ),
-                            data: MediaQuery.of(context)
-                                .copyWith(textScaleFactor: 1.0),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Theme.of(context).colorScheme.background,
-                ),
-                child: Center(
-                  // child: SimpleShadow(
-                  //   child: Image(
-                  //     image: assetImage,
-                  //     width: 23,
-                  //   ),
-                  //   opacity: 0.8,
-                  //   color: categoryColor,
-                  //   offset: Offset(0, 0),
-                  //   sigma: 1,
-                  // ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.light
-                          ? dynamicPastel(context, categoryColor,
-                              amountLight: 0.55, amountDark: 0.35)
-                          : Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                    padding: EdgeInsetsDirectional.all(8),
-                    child: emojiIconName != null
-                        ? Container()
-                        : CacheCategoryIcon(
-                            iconName: iconName,
-                            size: 34,
-                          ),
-                  ),
-                ),
-              ),
-              emojiIconName != null
-                  ? EmojiIcon(
-                      emojiIconName: emojiIconName,
-                      size: 34 * 0.7,
-                    )
-                  : SizedBox.shrink(),
-            ],
-          ),
-        ),
-      ),
-    );
+  final int index;
+  final String categoryName;
+  final double percent;
+  final Color color;
+  final double midAngleRad;
+  final Offset slicePoint;
+  final bool isRight;
+  double targetY = 0.0;
+}
+
+void resolveCalloutCollisions(
+    List<CalloutCandidate> list, double minY, double maxY, double minSpacing) {
+  if (list.isEmpty) return;
+  if (list.length == 1) {
+    list[0].targetY = list[0].slicePoint.dy.clamp(minY, maxY);
+    return;
+  }
+  for (final c in list) {
+    c.targetY = c.slicePoint.dy.clamp(minY, maxY);
+  }
+  for (int i = 1; i < list.length; i++) {
+    if (list[i].targetY < list[i - 1].targetY + minSpacing) {
+      list[i].targetY = list[i - 1].targetY + minSpacing;
+    }
+  }
+  if (list.last.targetY > maxY) {
+    final double overflow = list.last.targetY - maxY;
+    for (int i = 0; i < list.length; i++) {
+      list[i].targetY -= overflow;
+    }
+  }
+  for (int i = list.length - 2; i >= 0; i--) {
+    if (list[i].targetY > list[i + 1].targetY - minSpacing) {
+      list[i].targetY = list[i + 1].targetY - minSpacing;
+    }
+  }
+  if (list.first.targetY < minY) {
+    final double underflow = minY - list.first.targetY;
+    for (int i = 0; i < list.length; i++) {
+      list[i].targetY += underflow;
+    }
   }
 }
+
+class PieChartCalloutPainter extends CustomPainter {
+  PieChartCalloutPainter({
+    required this.data,
+    required this.totalSpent,
+    required this.touchedIndex,
+    required this.pieRadius,
+    required this.textColor,
+    required this.subtextColor,
+    this.startDegreeOffset = -90.0,
+  });
+
+  final List<CategoryWithTotal> data;
+  final double totalSpent;
+  final int touchedIndex;
+  final double pieRadius;
+  final Color textColor;
+  final Color subtextColor;
+  final double startDegreeOffset;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (totalSpent <= 0 || data.isEmpty) return;
+
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    double currentAngleDeg = startDegreeOffset;
+    final List<CalloutCandidate> leftCandidates = [];
+    final List<CalloutCandidate> rightCandidates = [];
+
+    for (int i = 0; i < data.length; i++) {
+      final double fraction =
+          totalSpent == 0 ? 0.0 : (data[i].total / totalSpent).abs();
+      final double percent = fraction * 100.0;
+      final double sweepDeg = fraction * 360.0;
+      final double midAngleDeg = currentAngleDeg + sweepDeg / 2.0;
+      currentAngleDeg += sweepDeg;
+
+      // Suppress callouts for slices < 1%
+      if (percent < 1.0) continue;
+
+      final double midAngleRad = midAngleDeg * (pi / 180.0);
+      final double cosVal = cos(midAngleRad);
+      final double sinVal = sin(midAngleRad);
+
+      final Offset slicePoint = Offset(
+        center.dx + cosVal * pieRadius,
+        center.dy + sinVal * pieRadius,
+      );
+
+      final candidate = CalloutCandidate(
+        index: i,
+        categoryName: data[i].category.name,
+        percent: percent,
+        color: getSpendingHeatmapColor(i, data.length),
+        midAngleRad: midAngleRad,
+        slicePoint: slicePoint,
+        isRight: cosVal >= 0,
+      );
+
+      if (candidate.isRight) {
+        rightCandidates.add(candidate);
+      } else {
+        leftCandidates.add(candidate);
+      }
+    }
+
+    leftCandidates.sort((a, b) => a.slicePoint.dy.compareTo(b.slicePoint.dy));
+    rightCandidates.sort((a, b) => a.slicePoint.dy.compareTo(b.slicePoint.dy));
+
+    const double minY = 18.0;
+    final double maxY = size.height - 18.0;
+    const double preferredSpacing = 28.0;
+
+    final double leftSpacing = leftCandidates.isEmpty
+        ? preferredSpacing
+        : min(preferredSpacing, (maxY - minY) / leftCandidates.length);
+    final double rightSpacing = rightCandidates.isEmpty
+        ? preferredSpacing
+        : min(preferredSpacing, (maxY - minY) / rightCandidates.length);
+
+    resolveCalloutCollisions(leftCandidates, minY, maxY, leftSpacing);
+    resolveCalloutCollisions(rightCandidates, minY, maxY, rightSpacing);
+
+    final bool hasSelection = touchedIndex >= 0;
+
+    // Render left candidates
+    for (final c in leftCandidates) {
+      final bool isSelected = touchedIndex == c.index;
+      final double opacity = hasSelection && !isSelected ? 0.35 : 1.0;
+
+      final titlePainter = TextPainter(
+        text: TextSpan(
+          text: c.categoryName,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            color: textColor.withOpacity(opacity),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+        ellipsis: "...",
+      );
+
+      final percentPainter = TextPainter(
+        text: TextSpan(
+          text: "${c.percent.toStringAsFixed(1)} %",
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w500,
+            color: subtextColor.withOpacity(opacity),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      );
+
+      final double textRight = max(8.0, center.dx - pieRadius - 18.0);
+      final double maxTextWidth = max(20.0, textRight - 4.0);
+      titlePainter.layout(maxWidth: maxTextWidth);
+      percentPainter.layout(maxWidth: maxTextWidth);
+
+      final double lineEndX = textRight + 4.0;
+      final double targetY = c.targetY;
+
+      final Path linePath = Path();
+      linePath.moveTo(c.slicePoint.dx, c.slicePoint.dy);
+
+      const double tickDist = 8.0;
+      final double tickX = c.slicePoint.dx + cos(c.midAngleRad) * tickDist;
+      final double tickY = c.slicePoint.dy + sin(c.midAngleRad) * tickDist;
+      linePath.lineTo(tickX, tickY);
+
+      final double elbowX = min(tickX - 6.0, lineEndX + 10.0);
+      linePath.lineTo(elbowX, targetY);
+      linePath.lineTo(lineEndX, targetY);
+
+      final linePaint = Paint()
+        ..color = c.color.withOpacity(opacity)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isSelected ? 2.2 : 1.4
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+
+      canvas.drawPath(linePath, linePaint);
+
+      final double titleX = textRight - titlePainter.width;
+      final double percentX = textRight - percentPainter.width;
+      final double titleY = targetY - titlePainter.height + 1.0;
+      final double percentY = targetY + 2.0;
+
+      titlePainter.paint(canvas, Offset(titleX, titleY));
+      percentPainter.paint(canvas, Offset(percentX, percentY));
+    }
+
+    // Render right candidates
+    for (final c in rightCandidates) {
+      final bool isSelected = touchedIndex == c.index;
+      final double opacity = hasSelection && !isSelected ? 0.35 : 1.0;
+
+      final titlePainter = TextPainter(
+        text: TextSpan(
+          text: c.categoryName,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            color: textColor.withOpacity(opacity),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+        ellipsis: "...",
+      );
+
+      final percentPainter = TextPainter(
+        text: TextSpan(
+          text: "${c.percent.toStringAsFixed(1)} %",
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w500,
+            color: subtextColor.withOpacity(opacity),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      );
+
+      final double textLeft =
+          min(size.width - 8.0, center.dx + pieRadius + 18.0);
+      final double maxTextWidth = max(20.0, size.width - 4.0 - textLeft);
+      titlePainter.layout(maxWidth: maxTextWidth);
+      percentPainter.layout(maxWidth: maxTextWidth);
+
+      final double lineStartX = textLeft - 4.0;
+      final double targetY = c.targetY;
+
+      final Path linePath = Path();
+      linePath.moveTo(c.slicePoint.dx, c.slicePoint.dy);
+
+      const double tickDist = 8.0;
+      final double tickX = c.slicePoint.dx + cos(c.midAngleRad) * tickDist;
+      final double tickY = c.slicePoint.dy + sin(c.midAngleRad) * tickDist;
+      linePath.lineTo(tickX, tickY);
+
+      final double elbowX = max(tickX + 6.0, lineStartX - 10.0);
+      linePath.lineTo(elbowX, targetY);
+      linePath.lineTo(lineStartX, targetY);
+
+      final linePaint = Paint()
+        ..color = c.color.withOpacity(opacity)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isSelected ? 2.2 : 1.4
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+
+      canvas.drawPath(linePath, linePaint);
+
+      final double titleX = textLeft;
+      final double percentX = textLeft;
+      final double titleY = targetY - titlePainter.height + 1.0;
+      final double percentY = targetY + 2.0;
+
+      titlePainter.paint(canvas, Offset(titleX, titleY));
+      percentPainter.paint(canvas, Offset(percentX, percentY));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant PieChartCalloutPainter oldDelegate) {
+    return oldDelegate.touchedIndex != touchedIndex ||
+        oldDelegate.totalSpent != totalSpent ||
+        oldDelegate.pieRadius != pieRadius ||
+        oldDelegate.textColor != textColor ||
+        oldDelegate.subtextColor != subtextColor ||
+        oldDelegate.startDegreeOffset != startDegreeOffset ||
+        oldDelegate.data != data;
+  }
+}
+
