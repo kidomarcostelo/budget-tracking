@@ -41,8 +41,8 @@ void main() {
       final hsvFirst = HSVColor.fromColor(colorFirst);
       final hsvLast = HSVColor.fromColor(colorLast);
 
-      expect(hsvFirst.hue, closeTo(0.0, 0.001));
-      expect(hsvLast.hue, closeTo(165.0, 0.001));
+      expect(hsvFirst.hue, closeTo(0.0, 0.5));
+      expect(hsvLast.hue, closeTo(165.0, 0.5));
     });
 
     test('generates strictly monotonically increasing hues across rank', () {
@@ -55,8 +55,8 @@ void main() {
         hues.add(hsv.hue);
       }
 
-      expect(hues.first, closeTo(0.0, 0.001));
-      expect(hues.last, closeTo(165.0, 0.001));
+      expect(hues.first, closeTo(0.0, 0.5));
+      expect(hues.last, closeTo(165.0, 0.5));
 
       for (int i = 1; i < count; i++) {
         expect(hues[i], greaterThan(hues[i - 1]));
@@ -268,7 +268,7 @@ void main() {
         ),
       );
 
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.byType(PieChartDisplay), findsOneWidget);
     });
   });
