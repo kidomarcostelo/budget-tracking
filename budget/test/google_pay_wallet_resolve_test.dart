@@ -206,5 +206,27 @@ void main() {
         expect(wallet?.name, equals('Cash'));
       },
     );
+
+    // ── Database DAO method: getWalletByLongestContainedName ──────────────
+    test(
+      'FinanceDatabase.getWalletByLongestContainedName returns longest matching wallet',
+      () async {
+        await seedWallet(pk: 'ub', name: 'UnionBank', order: 0);
+        await seedWallet(pk: 'ubv', name: 'UnionBank Visa', order: 1);
+
+        final match = await testDb.getWalletByLongestContainedName(
+          'UnionBank Visa Platinum Card',
+        );
+        expect(match?.name, equals('UnionBank Visa'));
+
+        final noMatch = await testDb.getWalletByLongestContainedName(
+          'Completely Unrelated Bank',
+        );
+        expect(noMatch, isNull);
+
+        final emptyMatch = await testDb.getWalletByLongestContainedName('');
+        expect(emptyMatch, isNull);
+      },
+    );
   });
 }

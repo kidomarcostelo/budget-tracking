@@ -190,7 +190,7 @@ class GooglePayParser {
         //     e.g. card="UnionBank Visa Platinum", wallets=["UnionBank","UnionBank Visa"]
         //          → "UnionBank Visa" (14 chars) preferred over "UnionBank" (9 chars)
         final bestMatch =
-            await _resolveByLongestContainedName(result.cardName!);
+            await database.getWalletByLongestContainedName(result.cardName!);
         if (bestMatch != null) return bestMatch;
       }
 
@@ -204,30 +204,6 @@ class GooglePayParser {
     }
 
     return null;
-  }
-
-  /// Finds the wallet whose name is the longest string contained within [cardName].
-  /// Performs case-insensitive containment check.
-  /// Returns null if no wallet name is contained in [cardName].
-  static Future<TransactionWallet?> _resolveByLongestContainedName(
-    String cardName,
-  ) async {
-    final allWallets = await database.getAllWallets();
-    final cardNameLower = cardName.toLowerCase();
-
-    TransactionWallet? bestMatch;
-    int bestLength = 0;
-
-    for (final wallet in allWallets) {
-      final nameLower = wallet.name.trim().toLowerCase();
-      if (nameLower.isEmpty) continue;
-      if (cardNameLower.contains(nameLower) && nameLower.length > bestLength) {
-        bestMatch = wallet;
-        bestLength = nameLower.length;
-      }
-    }
-
-    return bestMatch;
   }
 
   /// Suggests a matching [TransactionCategory] from Cashew's database.

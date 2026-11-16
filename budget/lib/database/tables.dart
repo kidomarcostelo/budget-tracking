@@ -3073,6 +3073,30 @@ class FinanceDatabase extends _$FinanceDatabase {
     return wallet;
   }
 
+  /// Finds the wallet whose name is the longest string contained within [searchString].
+  /// Performs case-insensitive containment check across all wallets.
+  /// Returns null if no wallet name is contained in [searchString].
+  Future<TransactionWallet?> getWalletByLongestContainedName(
+      String searchString) async {
+    final searchLower = searchString.trim().toLowerCase();
+    if (searchLower.isEmpty) return null;
+
+    final allWallets = await getAllWallets();
+    TransactionWallet? bestMatch;
+    int bestLength = 0;
+
+    for (final wallet in allWallets) {
+      final nameLower = wallet.name.trim().toLowerCase();
+      if (nameLower.isEmpty) continue;
+      if (searchLower.contains(nameLower) && nameLower.length > bestLength) {
+        bestMatch = wallet;
+        bestLength = nameLower.length;
+      }
+    }
+
+    return bestMatch;
+  }
+
   Stream<List<TransactionAssociatedTitle>> watchAllAssociatedTitlesInCategory(
       String categoryFk,
       {int? limit}) {
