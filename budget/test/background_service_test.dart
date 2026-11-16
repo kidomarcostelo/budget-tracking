@@ -87,7 +87,8 @@ void main() {
       final optRes = await BackgroundServiceManager.instance
           .isIgnoringBatteryOptimizations(platformOverride: PlatformOS.isIOS);
       final reqRes = await BackgroundServiceManager.instance
-          .requestIgnoreBatteryOptimizations(platformOverride: PlatformOS.isIOS);
+          .requestIgnoreBatteryOptimizations(
+              platformOverride: PlatformOS.isIOS);
 
       expect(startRes, isFalse);
       expect(stopRes, isFalse);

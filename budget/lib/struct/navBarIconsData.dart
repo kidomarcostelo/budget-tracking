@@ -158,5 +158,12 @@ Map<String, NavBarIconData> getNavBarIconsData() {
       labelLong: "goals-details",
       navigationIndexedStackIndex: 15,
     ),
+    "stats": NavBarIconData(
+      iconData: appStateSettings["outlinedIcons"]
+          ? Icons.bar_chart_outlined
+          : Icons.bar_chart_rounded,
+      label: "stats",
+      navigationIndexedStackIndex: 18,
+    ),
   };
 }

@@ -3,6 +3,7 @@ import 'package:budget/functions.dart';
 import 'package:budget/pages/editBudgetPage.dart';
 import 'package:budget/pages/editHomePage.dart';
 import 'package:budget/pages/editObjectivesPage.dart';
+import 'package:budget/pages/statsPage.dart';
 import 'package:budget/pages/subscriptionsPage.dart';
 import 'package:budget/pages/transactionsListPage.dart';
 import 'package:budget/pages/upcomingOverdueTransactionsPage.dart';
@@ -60,6 +61,8 @@ class BottomNavBarState extends State<BottomNavBar> {
         upcomingOverdueTransactionsStateKey.currentState?.scrollToTop();
       if (navigationStackedIndex == 17)
         creditDebtTransactionsKey.currentState?.scrollToTop();
+      if (navigationStackedIndex == 18)
+        statsPageStateKey.currentState?.scrollToTop();
     } else {
       // We need to change to the navigation index
       widget.onChanged(navigationStackedIndex);
@@ -80,6 +83,8 @@ class BottomNavBarState extends State<BottomNavBar> {
       return navBarIconsData[appStateSettings["customNavBarShortcut2"]]
               ?.navigationIndexedStackIndex ??
           2;
+    } else if (barIndex == 3) {
+      return navBarIconsData["stats"]?.navigationIndexedStackIndex ?? 18;
     } else {
       return 3;
     }
@@ -101,8 +106,11 @@ class BottomNavBarState extends State<BottomNavBar> {
                 ?.navigationIndexedStackIndex ??
             2))
       return 2;
-    else
+    else if (stackedIndex ==
+        (navBarIconsData["stats"]?.navigationIndexedStackIndex ?? 18))
       return 3;
+    else
+      return 4;
   }
 
   @override
@@ -195,13 +203,23 @@ class BottomNavBarState extends State<BottomNavBar> {
                 flex: 20,
                 child: NavBarIcon(
                   onItemTapped: onItemTapped,
-                  icon: navBarIconsData["more"]!.iconData,
+                  icon: navBarIconsData["stats"]!.iconData,
                   navigationBarIndex: 3,
                   currentNavigationBarIndex: navigationBarIndex,
                 ),
               ),
               NavBarSpaceButton(
-                onPress: () => onItemTapped(3),
+                onPress: () => onItemTapped(4),
+                flex: 20,
+                child: NavBarIcon(
+                  onItemTapped: onItemTapped,
+                  icon: navBarIconsData["more"]!.iconData,
+                  navigationBarIndex: 4,
+                  currentNavigationBarIndex: navigationBarIndex,
+                ),
+              ),
+              NavBarSpaceButton(
+                onPress: () => onItemTapped(4),
                 flex: 9,
                 child: Container(),
               ),
@@ -297,6 +315,11 @@ class BottomNavBarState extends State<BottomNavBar> {
                   tooltip: "",
                 );
               },
+            ),
+            NavigationDestination(
+              icon: Icon(navBarIconsData["stats"]!.iconData),
+              label: navBarIconsData["stats"]!.label.tr(),
+              tooltip: "",
             ),
             NavigationDestination(
               icon: Icon(navBarIconsData["more"]!.iconData),
