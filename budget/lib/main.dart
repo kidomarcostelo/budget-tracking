@@ -9,6 +9,7 @@ import 'package:budget/struct/logging.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/initializeBiometrics.dart';
+import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:budget/widgets/util/sharedReceiptCapture.dart';
 import 'package:budget/widgets/util/onAppResume.dart';
@@ -62,6 +63,7 @@ void main() async {
         appStateSettings["notificationScanning"] == true) {
       await DedupeLedger.instance.loadFromDatabase();
       await BackgroundServiceManager.instance.startKeepAlive();
+      await NotificationDispatcher.instance.flushBufferedNotifications();
     }
     tz.initializeTimeZones();
     final String? locationName = await FlutterTimezone.getLocalTimezone();
@@ -158,6 +160,11 @@ class App extends StatelessWidget {
           updateGlobalAppLifecycleState: true,
           onAppResume: () async {
             await setHighRefreshRate();
+            if (getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid &&
+                appStateSettings["notificationScanning"] == true) {
+              await NotificationDispatcher.instance
+                  .flushBufferedNotifications();
+            }
           },
           child: InitializeBiometrics(
             child: InitializeNotificationService(
