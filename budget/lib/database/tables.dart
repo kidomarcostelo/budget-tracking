@@ -1956,6 +1956,51 @@ class FinanceDatabase extends _$FinanceDatabase {
     return pendingList.length;
   }
 
+  Future<Transaction?> getLatestPendingTransaction() async {
+    return (select(transactions)
+          ..where((t) => t.pending.equals(true))
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.dateCreated),
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
+  Future<Transaction?> findPendingTransaction({
+    double? amount,
+    String? name,
+  }) async {
+    if (amount != null) {
+      final cleanAmount = amount.abs();
+      final match = await (select(transactions)
+            ..where((t) =>
+                t.pending.equals(true) &
+                ((t.amount.isBiggerOrEqualValue(cleanAmount - 0.01) &
+                        t.amount.isSmallerOrEqualValue(cleanAmount + 0.01)) |
+                    (t.amount.isBiggerOrEqualValue(-cleanAmount - 0.01) &
+                        t.amount.isSmallerOrEqualValue(-cleanAmount + 0.01))))
+            ..orderBy([(t) => OrderingTerm.desc(t.dateCreated)])
+            ..limit(1))
+          .getSingleOrNull();
+      if (match != null) return match;
+    }
+    if (name != null && name.trim().isNotEmpty) {
+      final cleanName = name.trim().toLowerCase().replaceAll('%', '');
+      final match = await (select(transactions)
+            ..where((t) =>
+                t.pending.equals(true) & t.name.lower().like('%$cleanName%'))
+            ..orderBy([(t) => OrderingTerm.desc(t.dateCreated)])
+            ..limit(1))
+          .getSingleOrNull();
+      if (match != null) return match;
+    }
+    return (select(transactions)
+          ..where((t) => t.pending.equals(true))
+          ..orderBy([(t) => OrderingTerm.desc(t.dateCreated)])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   // This gets all overdue subscription transactions
   (Stream<List<Transaction>>, Future<List<Transaction>>) getAllSubscriptions() {
     final query = select(transactions)

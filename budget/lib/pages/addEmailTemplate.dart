@@ -4,6 +4,7 @@ import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/pages/autoTransactionsPageEmail.dart';
 import 'package:budget/pages/settingsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/navigationSidebar.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
@@ -364,6 +365,7 @@ class _AddEmailTemplateState extends State<AddEmailTemplate> {
       insert: widget.scannerTemplate == null,
       createTemplate(),
     );
+    await NotificationDispatcher.instance.syncTemplateKeywordsToPreferences();
     savingHapticFeedback();
     popRoute(context);
   }

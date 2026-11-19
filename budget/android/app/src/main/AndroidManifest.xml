@@ -104,6 +104,16 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <!-- BT-0019: Native Kotlin Notification Buffer for killed-state capture -->
+        <service
+            android:name=".CashewNativeNotificationListener"
+            android:label="@string/notification_capture_service_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
         <!-- BT-0016: Background Keep-Alive Service for tap-to-pay notification capture -->
         <service
             android:name=".CashewKeepAliveService"

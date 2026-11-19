@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addTransactionPage.dart';
@@ -82,9 +83,15 @@ class GooglePayParser {
   );
 
   /// Checks if the package belongs to Google Wallet or Google Pay ecosystem.
-  static bool isRecognizedPackage(String? packageName) {
+  static bool isRecognizedPackage(String? packageName,
+      {bool isDebug = kDebugMode}) {
     if (packageName == null) return false;
-    return recognizedPackages.contains(packageName);
+    if (recognizedPackages.contains(packageName)) return true;
+    if (isDebug &&
+        (packageName == 'android' || packageName == 'com.android.shell')) {
+      return true;
+    }
+    return false;
   }
 
   /// Determines if an event comes from Google Wallet/Pay and contains payment info.
@@ -246,6 +253,7 @@ class GooglePayParser {
       willPushRoute: willPushRoute,
       isPossibleDuplicate: isPossibleDuplicate,
       possibleDuplicateEntry: possibleDuplicateEntry,
+      isIncome: false,
     );
     return true;
   }

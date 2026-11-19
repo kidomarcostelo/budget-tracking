@@ -260,7 +260,7 @@ class DedupeLedger {
   /// Normalizes monetary amounts to fixed 2-decimal strings to prevent IEEE 754 float comparison drift.
   static String? normalizeAmount(double? amount) {
     if (amount == null) return null;
-    return amount.toStringAsFixed(2);
+    return amount.abs().toStringAsFixed(2);
   }
 
   /// Strips gateway / aggregator prefixes like "SQ *MERCHANT", "PAYPAL *MERCHANT" (BT-0002 §c).
@@ -697,10 +697,35 @@ class DedupeLedger {
     await _tryPersist(entry);
   }
 
+  bool _isNotificationMatch(
+    DedupeEntryRecord existing, {
+    required String packageName,
+    required String notificationId,
+    String? normAmount,
+    String? title,
+    required DateTime now,
+    required Duration window,
+  }) {
+    if (existing.packageName != packageName ||
+        existing.notificationId != notificationId) {
+      return false;
+    }
+    // If amount is known for both and differs, they cannot be the same payment
+    if (normAmount != null &&
+        existing.amountNormalized != null &&
+        existing.amountNormalized != normAmount) {
+      return false;
+    }
+    final diff = now.difference(existing.dateTimeCreated).abs();
+    return diff <= window;
+  }
+
   /// Searches active ledger entries for an exact notification match within [window].
   DedupeEntryRecord? findExactNotificationMatch({
     required String? packageName,
     required String? notificationId,
+    String? normAmount,
+    String? title,
     required DateTime now,
     required Duration window,
   }) {
@@ -711,21 +736,29 @@ class DedupeLedger {
       return null;
     }
     for (final existing in entries.reversed) {
-      if (existing.packageName == packageName &&
-          existing.notificationId == notificationId) {
-        final diff = now.difference(existing.dateTimeCreated).abs();
-        if (diff <= window) {
-          return existing;
-        }
+      if (_isNotificationMatch(
+        existing,
+        packageName: packageName,
+        notificationId: notificationId,
+        normAmount: normAmount,
+        title: title,
+        now: now,
+        window: window,
+      )) {
+        return existing;
       }
     }
     for (final existing in uncertainEntries.reversed) {
-      if (existing.packageName == packageName &&
-          existing.notificationId == notificationId) {
-        final diff = now.difference(existing.dateTimeCreated).abs();
-        if (diff <= window) {
-          return existing;
-        }
+      if (_isNotificationMatch(
+        existing,
+        packageName: packageName,
+        notificationId: notificationId,
+        normAmount: normAmount,
+        title: title,
+        now: now,
+        window: window,
+      )) {
+        return existing;
       }
     }
     return null;
@@ -838,6 +871,8 @@ class DedupeLedger {
     final exactMatch = findExactNotificationMatch(
       packageName: packageName,
       notificationId: notificationId,
+      normAmount: normAmount,
+      title: title,
       now: now,
       window: window,
     );

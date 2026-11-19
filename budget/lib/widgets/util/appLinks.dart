@@ -185,9 +185,16 @@ Future<Transaction?> processAddTransactionFromParams(
   String walletPk = wallet?.walletPk ?? appStateSettings["selectedWalletPk"];
   DateTime? dateCreated = await getDateTimeFromParams(params, context);
   double amount = getAmountFromParams(params);
+  bool? explicitIncome = getIncomeFromParams(params);
+  bool isIncome = explicitIncome ??
+      (mainAndSubCategory.main != null &&
+              mainAndSubCategory.main!.categoryPk != "0"
+          ? mainAndSubCategory.main!.income
+          : amount > 0);
+  double finalAmount = isIncome ? amount.abs() : -amount.abs();
 
   final dedupeResult = await checkPaymentDedupe(
-    amount: amount,
+    amount: amount.abs(),
     params: params,
     eventTime: dateCreated,
     currency: wallet?.currency ?? params["currency"],
@@ -209,7 +216,8 @@ Future<Transaction?> processAddTransactionFromParams(
         context,
         AddTransactionPage(
           routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-          selectedAmount: amount,
+          selectedAmount: amount.abs(),
+          selectedIncome: isIncome,
           selectedCategory: mainAndSubCategory.main,
           selectedSubCategory: mainAndSubCategory.sub,
           selectedWallet: wallet,
@@ -231,7 +239,9 @@ Future<Transaction?> processAddTransactionFromParams(
           await database.getAllCategories();
       if (allCategories.isNotEmpty) {
         mainAndSubCategory.main = allCategories.firstWhere(
-          (c) => c.categoryPk != "0" && (amount < 0 ? c.income == false : true),
+          (c) =>
+              c.categoryPk != "0" &&
+              (isIncome ? c.income == true : c.income == false),
           orElse: () => allCategories.first,
         );
       }
@@ -300,13 +310,13 @@ Future<Transaction?> processAddTransactionFromParams(
     Transaction(
       transactionPk: "-1",
       name: title,
-      amount: amount,
+      amount: finalAmount,
       note: note,
       categoryFk: mainAndSubCategory.main?.categoryPk ?? "",
       subCategoryFk: mainAndSubCategory.sub?.categoryPk,
       walletFk: walletPk,
       dateCreated: dateCreated ?? DateTime.now(),
-      income: amount > 0,
+      income: isIncome,
       paid: true,
       skipPaid: false,
       methodAdded: MethodAdded.appLink,
@@ -372,6 +382,7 @@ Future<void> dispatchParsedTransaction({
   bool willPushRoute = false,
   bool isPossibleDuplicate = false,
   DedupeEntryRecord? possibleDuplicateEntry,
+  bool isIncome = false,
 }) async {
   final bool isNonBlocking =
       appStateSettings["notificationScanningNonBlocking"] == true;
@@ -380,9 +391,10 @@ Future<void> dispatchParsedTransaction({
     pushRoute(
       null,
       AddTransactionPage(
-        useCategorySelectedIncome: true,
+        useCategorySelectedIncome: category != null,
+        selectedIncome: isIncome,
         routesToPopAfterDelete: RoutesToPopAfterDelete.None,
-        selectedAmount: amount,
+        selectedAmount: amount.abs(),
         selectedTitle: title,
         selectedNotes: note,
         selectedCategory: category,
@@ -394,12 +406,13 @@ Future<void> dispatchParsedTransaction({
       ),
     );
   } else {
-    processAddTransactionFromParams(navigatorKey.currentContext, {
+    await processAddTransactionFromParams(navigatorKey.currentContext, {
       'title': title,
       if (note != null) 'note': note,
       'categoryPk': category?.categoryPk,
       'walletPk': wallet?.walletPk,
-      'amount': amount.toString(),
+      'amount': amount.abs().toString(),
+      'income': isIncome.toString(),
       'date': date.toString(),
       'skipDedupe': 'true',
       'pending': isNonBlocking ? 'true' : 'false',

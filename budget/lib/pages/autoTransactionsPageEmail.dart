@@ -134,6 +134,7 @@ Future queueTransactionFromMessage(
     willPushRoute: willPushRoute,
     isPossibleDuplicate: isPossibleDuplicate,
     possibleDuplicateEntry: possibleDuplicateEntry,
+    isIncome: category?.income ?? false,
   );
 }
 
@@ -1004,6 +1005,8 @@ class ScannerTemplateEntry extends StatelessWidget {
                       if (action == DeletePopupAction.Delete) {
                         await database.deleteScannerTemplate(
                             scannerTemplate.scannerTemplatePk);
+                        await NotificationDispatcher.instance
+                            .syncTemplateKeywordsToPreferences();
                         popRoute(context);
                         openSnackbar(
                           SnackbarMessage(

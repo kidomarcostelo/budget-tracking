@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/backgroundService.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/googlePayParser.dart';
+import 'package:budget/struct/notificationsGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 typedef TransactionQueueHandler = Future<dynamic> Function(
   String messageString, {
@@ -44,6 +47,10 @@ class ExtractedNotificationDetails {
 class NotificationDispatcher {
   NotificationDispatcher._();
   static final NotificationDispatcher instance = NotificationDispatcher._();
+
+  /// Notification ID posted by native Android CashewNativeNotificationListener
+  /// when a transaction is buffered while the Flutter process was killed.
+  static const int nativePendingReviewNotificationId = 9992;
 
   StreamSubscription<ServiceNotificationEvent>? _subscription;
   final List<String> recentCapturedNotifications = [];
@@ -325,6 +332,8 @@ class NotificationDispatcher {
 
     bool status = await isPermissionGranted();
     if (status == true) {
+      await syncTemplateKeywordsToPreferences();
+      await flushBufferedNotifications();
       _subscription = NotificationListenerService.notificationsStream.listen(
         (event) => handleEvent(event),
       );
@@ -340,6 +349,123 @@ class NotificationDispatcher {
     final platform = platformOverride ?? getPlatform(ignoreEmulation: true);
     await BackgroundServiceManager.instance
         .stopKeepAlive(platformOverride: platform);
+  }
+
+  static const String bufferStorageKey = "cashew_notification_buffer";
+  static const String templateKeywordsStorageKey = "cashew_template_keywords";
+
+  Future<int>? _activeFlushFuture;
+
+  /// Synchronizes user-configured scanner template keywords to SharedPreferences so the native
+  /// Android listener can capture bank notifications even when Cashew is terminated.
+  Future<void> syncTemplateKeywordsToPreferences({
+    SharedPreferences? preferencesOverride,
+  }) async {
+    try {
+      final templates = await database.getAllScannerTemplates();
+      final keywords = templates
+          .map((t) => t.contains.trim())
+          .where((k) => k.isNotEmpty)
+          .toSet()
+          .toList();
+      final prefs = preferencesOverride ?? sharedPreferences;
+      await prefs.setString(templateKeywordsStorageKey, jsonEncode(keywords));
+    } catch (_) {}
+  }
+
+  /// Flushes any pending notifications buffered in native SharedPreferences while
+  /// Cashew was terminated or inactive.
+  ///
+  /// Returns the number of events successfully flushed and dispatched.
+  Future<int> flushBufferedNotifications({
+    SharedPreferences? preferencesOverride,
+  }) {
+    if (_activeFlushFuture != null) return _activeFlushFuture!;
+    final future = _flushBufferedNotificationsImpl(
+      preferencesOverride: preferencesOverride,
+    );
+    _activeFlushFuture = future;
+    return future.whenComplete(() {
+      _activeFlushFuture = null;
+    });
+  }
+
+  Future<int> _flushBufferedNotificationsImpl({
+    SharedPreferences? preferencesOverride,
+  }) async {
+    SharedPreferences? prefs = preferencesOverride;
+    if (prefs == null) {
+      try {
+        prefs = sharedPreferences;
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    try {
+      await prefs.reload();
+    } catch (_) {}
+
+    final rawBuffer = prefs.getString(bufferStorageKey);
+    if (rawBuffer == null || rawBuffer.trim().isEmpty || rawBuffer == "[]") {
+      return 0;
+    }
+
+    // Immediately clear the buffer in SharedPreferences to prevent double-flushing
+    await prefs.setString(bufferStorageKey, "[]");
+
+    try {
+      await flutterLocalNotificationsPlugin
+          .cancel(nativePendingReviewNotificationId);
+    } catch (_) {}
+
+    List<dynamic> entries;
+    try {
+      final decoded = jsonDecode(rawBuffer);
+      if (decoded is List) {
+        entries = decoded;
+      } else {
+        return 0;
+      }
+    } catch (e) {
+      print(
+          "NotificationDispatcher: Failed to decode notification buffer JSON: $e");
+      return 0;
+    }
+
+    int processedCount = 0;
+    for (final entry in entries) {
+      if (entry is! Map) continue;
+      try {
+        final idVal = entry["id"];
+        final timestampVal = entry["timestamp"];
+        final event = ServiceNotificationEvent(
+          id: idVal is int
+              ? idVal
+              : (int.tryParse(idVal?.toString() ?? '') ?? 0),
+          packageName: entry["packageName"]?.toString() ?? '',
+          title: entry["title"]?.toString() ?? '',
+          content: entry["content"]?.toString() ?? '',
+          hasRemoved: false,
+          canReply: false,
+          haveExtraPicture: false,
+          onGoing: false,
+          timestamp: timestampVal is int
+              ? timestampVal
+              : (int.tryParse(timestampVal?.toString() ?? '') ?? 0),
+          appIcon: null,
+          extrasPicture: null,
+          largeIcon: null,
+        );
+
+        final handled = await handleEvent(event);
+        if (handled) processedCount++;
+      } catch (e) {
+        print("NotificationDispatcher: Error handling buffered event: $e");
+      }
+    }
+
+    return processedCount;
   }
 
   /// Appends a raw message string to [recentCapturedNotifications], maintaining a max size of 50.
