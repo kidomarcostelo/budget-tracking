@@ -668,6 +668,9 @@ class CategoryWithTotal {
     this.categoryBudgetLimit,
   });
 
+  /// Returns the absolute magnitude of [total] for clean presentation without polarity signs.
+  double get totalMagnitude => total.abs();
+
   @override
   String toString() {
     return 'CategoryWithTotal {'
