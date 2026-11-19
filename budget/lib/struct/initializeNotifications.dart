@@ -143,8 +143,8 @@ Future<bool> runNotificationPayLoads(context) async {
       ));
       return true;
     }
-    final uncertainEntry =
-        DedupeLedger.instance.getUncertainEntryForTransaction(transaction.transactionPk);
+    final uncertainEntry = DedupeLedger.instance
+        .getUncertainEntryForTransaction(transaction.transactionPk);
     final bool isDuplicate = uncertainEntry != null;
     pushRoute(
       context,

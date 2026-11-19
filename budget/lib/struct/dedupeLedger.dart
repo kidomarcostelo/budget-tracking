@@ -260,7 +260,7 @@ class DedupeLedger {
   /// Normalizes monetary amounts to fixed 2-decimal strings to prevent IEEE 754 float comparison drift.
   static String? normalizeAmount(double? amount) {
     if (amount == null) return null;
-    return amount.toStringAsFixed(2);
+    return amount.abs().toStringAsFixed(2);
   }
 
   /// Strips gateway / aggregator prefixes like "SQ *MERCHANT", "PAYPAL *MERCHANT" (BT-0002 §c).

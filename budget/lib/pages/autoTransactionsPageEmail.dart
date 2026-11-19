@@ -134,6 +134,7 @@ Future queueTransactionFromMessage(
     willPushRoute: willPushRoute,
     isPossibleDuplicate: isPossibleDuplicate,
     possibleDuplicateEntry: possibleDuplicateEntry,
+    isIncome: category?.income ?? false,
   );
 }
 

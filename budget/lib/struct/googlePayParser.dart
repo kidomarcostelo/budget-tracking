@@ -253,6 +253,7 @@ class GooglePayParser {
       willPushRoute: willPushRoute,
       isPossibleDuplicate: isPossibleDuplicate,
       possibleDuplicateEntry: possibleDuplicateEntry,
+      isIncome: false,
     );
     return true;
   }
