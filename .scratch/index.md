@@ -6,7 +6,7 @@ Each task is a folder `.scratch/BT-NNNN-<slug>/` with its `task.md` (copied from
 - IDs are stable and never renumbered. Rows are ordered by ID, which is creation order.
 - To add a task: take `Next ID`, create `.scratch/BT-<NNNN>-<slug>/task.md`, add a row below, and bump `Next ID`.
 
-Next ID: 0018
+Next ID: 0021
 
 | ID | Title | Issue | Folder |
 |----|-------|-------|--------|
@@ -27,3 +27,6 @@ Next ID: 0018
 | BT-0015 | Non-blocking notification with pending transaction queue | [#33](https://github.com/kidomarcostelo/budget-tracking/issues/33) | [BT-0015-non-blocking-notifications](BT-0015-non-blocking-notifications/task.md) |
 | BT-0016 | Background keep-alive service and notification listener for tap-to-pay capture | TBD | [BT-0016-background-headless-listener](BT-0016-background-headless-listener/task.md) |
 | BT-0017 | Enhanced Pie Chart, Category Spending Legend, and Dedicated Stats Page | [#40](https://github.com/kidomarcostelo/budget-tracking/issues/40) | [BT-0017-enhanced-piechart-and-stats-page](BT-0017-enhanced-piechart-and-stats-page/task.md) |
+| BT-0018 | Fix Google Pay Wallet Resolution — Prefer Most Specific Wallet Name Match | [#49](https://github.com/kidomarcostelo/budget-tracking/pull/49) | [BT-0018-googlepay-wallet-resolution-specificity](BT-0018-googlepay-wallet-resolution-specificity/task.md) |
+| BT-0019 | Research Headless Background Notification Capture for Google Wallet When App is Closed | [#50](https://github.com/kidomarcostelo/budget-tracking/issues/50) | [BT-0019-headless-background-notification-listener](BT-0019-headless-background-notification-listener/task.md) |
+| BT-0020 | Fix Stats category expenses, negative signs, and subcategory pie slices | [#51](https://github.com/kidomarcostelo/budget-tracking/issues/51) | [BT-0020-stats-category-totals-and-pie-slices](BT-0020-stats-category-totals-and-pie-slices/task.md) |

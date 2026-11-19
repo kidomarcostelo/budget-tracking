@@ -214,7 +214,7 @@ class StatsPageState extends State<StatsPage>
             final TotalSpentCategoriesSummary incomeSummary =
                 watchTotalSpentInTimeRangeHelper(
               dataInput: incomeCategories,
-              showAllSubcategories: true,
+              showAllSubcategories: false,
               multiplyTotalBy: 1,
               absoluteTotal: true,
             );
@@ -222,7 +222,7 @@ class StatsPageState extends State<StatsPage>
             final TotalSpentCategoriesSummary expenseSummary =
                 watchTotalSpentInTimeRangeHelper(
               dataInput: expenseCategories,
-              showAllSubcategories: true,
+              showAllSubcategories: false,
               multiplyTotalBy: 1,
               absoluteTotal: true,
             );

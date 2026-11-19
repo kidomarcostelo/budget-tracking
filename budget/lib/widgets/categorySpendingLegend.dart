@@ -52,7 +52,7 @@ class CategorySpendingLegend extends StatelessWidget {
         final bool isSelected = selectedCategoryPk == category.categoryPk;
         final double percent = totalSpent == 0
             ? 0
-            : (categoryWithTotal.total / totalSpent * 100).abs();
+            : (categoryWithTotal.totalMagnitude / totalSpent.abs() * 100);
         final Color pillColor =
             getSpendingHeatmapColor(index, categoriesWithTotal.length);
         final List<CategoryWithTotal> subcategories =
@@ -150,7 +150,8 @@ class _CategorySpendingRow extends StatelessWidget {
                 const SizedBox(width: 10),
                 // Formatted amount
                 TextFont(
-                  text: convertToMoney(allWallets, categoryWithTotal.total),
+                  text: convertToMoney(
+                      allWallets, categoryWithTotal.totalMagnitude),
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -175,8 +176,9 @@ class _CategorySpendingRow extends StatelessWidget {
                 start: 24, end: 8, bottom: 8, top: 2),
             child: Column(
               children: subcategories.map((sub) {
-                final double subPercent =
-                    totalSpent == 0 ? 0 : (sub.total / totalSpent * 100).abs();
+                final double subPercent = totalSpent == 0
+                    ? 0
+                    : (sub.totalMagnitude / totalSpent.abs() * 100);
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Row(
@@ -207,7 +209,7 @@ class _CategorySpendingRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       TextFont(
-                        text: convertToMoney(allWallets, sub.total),
+                        text: convertToMoney(allWallets, sub.totalMagnitude),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),

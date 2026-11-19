@@ -101,7 +101,7 @@ class PieChartWrapper extends StatelessWidget {
       }
     }
     // Sort descending by absolute spending so index 0 is always largest spending category
-    dataFiltered.sort((a, b) => b.total.abs().compareTo(a.total.abs()));
+    dataFiltered.sort((a, b) => b.totalMagnitude.compareTo(a.totalMagnitude));
 
     final double containerWidth = customWidth ??
         (enableDoubleColumn(context) == false || disableLarge ? 320.0 : 360.0);
@@ -360,7 +360,7 @@ class PieChartDisplayState extends State<PieChartDisplay> {
         color: color,
         value: widget.totalSpent == 0
             ? 5.0
-            : (widget.data[i].total / widget.totalSpent).abs(),
+            : (widget.data[i].totalMagnitude / widget.totalSpent.abs()),
         title: "",
         radius: radius,
         badgeWidget: null,
@@ -454,7 +454,7 @@ class PieChartCalloutPainter extends CustomPainter {
 
     for (int i = 0; i < data.length; i++) {
       final double fraction =
-          totalSpent == 0 ? 0.0 : (data[i].total / totalSpent).abs();
+          totalSpent == 0 ? 0.0 : (data[i].totalMagnitude / totalSpent.abs());
       final double percent = fraction * 100.0;
       final double sweepDeg = fraction * 360.0;
       final double midAngleDeg = currentAngleDeg + sweepDeg / 2.0;
