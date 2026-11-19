@@ -5,6 +5,8 @@ import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/googlePayParser.dart';
 import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:budget/struct/settings.dart';
+import 'package:drift/drift.dart' as drift;
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -244,6 +246,223 @@ void main() {
       );
       expect(count2, equals(0));
       expect(handlerInvocations, equals(1));
+    });
+
+    test(
+        'concurrent calls to flushBufferedNotifications share same Future lock',
+        () async {
+      final entry = {
+        'id': 401,
+        'packageName': 'com.google.android.apps.walletnfcrel',
+        'title': 'Google Wallet',
+        'content': 'Paid PHP 250.00 at Lawson with MariBank',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      };
+
+      await testPrefs.setString(
+        NotificationDispatcher.bufferStorageKey,
+        jsonEncode([entry]),
+      );
+
+      // Trigger two flushes concurrently
+      final future1 = dispatcher.flushBufferedNotifications(
+        preferencesOverride: testPrefs,
+      );
+      final future2 = dispatcher.flushBufferedNotifications(
+        preferencesOverride: testPrefs,
+      );
+
+      final results = await Future.wait([future1, future2]);
+      // Both futures should yield the exact same single result without double-flushing
+      expect(results[0], equals(results[1]));
+    });
+
+    test('nativePendingReviewNotificationId is 9992', () {
+      expect(NotificationDispatcher.nativePendingReviewNotificationId,
+          equals(9992));
+    });
+  });
+
+  group('Template keywords sync and killed-state bank capture', () {
+    late FinanceDatabase testDb;
+
+    setUp(() async {
+      testDb = FinanceDatabase(NativeDatabase.memory());
+      database = testDb;
+
+      await testDb.createOrUpdateWallet(
+        TransactionWallet(
+          walletPk: '0',
+          name: 'Main Wallet',
+          colour: '0xff000000',
+          dateCreated: DateTime.now(),
+          order: 0,
+          currency: 'PHP',
+          decimals: 2,
+        ),
+        insert: false,
+      );
+
+      await testDb.createOrUpdateCategory(
+        TransactionCategory(
+          categoryPk: '0',
+          name: 'Default',
+          colour: '0xffff0000',
+          dateCreated: DateTime.now(),
+          order: 0,
+          income: false,
+        ),
+        insert: false,
+        updateSharedEntry: false,
+      );
+    });
+
+    tearDown(() async {
+      await testDb.close();
+    });
+
+    test('syncTemplateKeywordsToPreferences writes scanner template keywords',
+        () async {
+      await testDb.createOrUpdateScannerTemplate(
+        ScannerTemplate(
+          scannerTemplatePk: '1',
+          dateCreated: DateTime.now(),
+          templateName: 'UnionBank Alert',
+          contains: 'UnionBank',
+          defaultCategoryFk: '0',
+          ignore: false,
+          walletFk: '0',
+          titleTransactionBefore: '',
+          titleTransactionAfter: '',
+          amountTransactionBefore: 'PHP ',
+          amountTransactionAfter: ' spent',
+          dateTimeModified: DateTime.now(),
+        ),
+        insert: true,
+      );
+
+      await testDb.createOrUpdateScannerTemplate(
+        ScannerTemplate(
+          scannerTemplatePk: '2',
+          dateCreated: DateTime.now(),
+          templateName: 'BDO Pay',
+          contains: 'BDO Pay',
+          defaultCategoryFk: '0',
+          ignore: false,
+          walletFk: '0',
+          titleTransactionBefore: '',
+          titleTransactionAfter: '',
+          amountTransactionBefore: 'PHP ',
+          amountTransactionAfter: ' paid',
+          dateTimeModified: DateTime.now(),
+        ),
+        insert: true,
+      );
+
+      await dispatcher.syncTemplateKeywordsToPreferences(
+        preferencesOverride: testPrefs,
+      );
+
+      final rawKeywords = testPrefs
+          .getString(NotificationDispatcher.templateKeywordsStorageKey);
+      expect(rawKeywords, isNotNull);
+      final decoded = jsonDecode(rawKeywords!) as List;
+      expect(decoded, contains('UnionBank'));
+      expect(decoded, contains('BDO Pay'));
+    });
+
+    test('findPendingTransaction matches by amount and merchant name in SQL',
+        () async {
+      final now = DateTime.now();
+      await testDb.createOrUpdateTransaction(
+        Transaction(
+          transactionPk: 'tx-1',
+          name: 'Jollibee',
+          amount: -175.0,
+          note: 'Dinner',
+          categoryFk: '0',
+          walletFk: '0',
+          dateCreated: now,
+          income: false,
+          paid: false,
+          skipPaid: false,
+          pending: true,
+        ),
+      );
+
+      await testDb.createOrUpdateTransaction(
+        Transaction(
+          transactionPk: 'tx-2',
+          name: 'Starbucks',
+          amount: -220.0,
+          note: 'Coffee',
+          categoryFk: '0',
+          walletFk: '0',
+          dateCreated: now.add(const Duration(minutes: 1)),
+          income: false,
+          paid: false,
+          skipPaid: false,
+          pending: true,
+        ),
+      );
+
+      // Match by amount
+      final matchedByAmount =
+          await testDb.findPendingTransaction(amount: 175.0);
+      expect(matchedByAmount, isNotNull);
+      expect(matchedByAmount!.name, equals('Jollibee'));
+
+      // Match by name
+      final matchedByName =
+          await testDb.findPendingTransaction(name: 'Starbucks');
+      expect(matchedByName, isNotNull);
+      expect(matchedByName!.amount, equals(-220.0));
+
+      // Match fallback to latest pending
+      final latest = await testDb.findPendingTransaction();
+      expect(latest, isNotNull);
+      expect(latest!.name, equals('Starbucks'));
+    });
+  });
+
+  group('DedupeLedger notification matching without test-harness pollution',
+      () {
+    test(
+        'distinguishes consecutive notifications sharing notification ID if amounts differ',
+        () async {
+      final t0 = DateTime.now();
+      // First transaction
+      final res1 = await DedupeLedger.instance.checkAndRecordNotification(
+        packageName: 'com.any.bank',
+        notificationId: 'shared_id_100',
+        amount: 150.0,
+        currency: 'PHP',
+        title: 'Jollibee',
+        eventTime: t0,
+      );
+      expect(res1.isDuplicate, isFalse);
+
+      // Second transaction sharing ID 100 but different amount
+      final res2 = await DedupeLedger.instance.checkAndRecordNotification(
+        packageName: 'com.any.bank',
+        notificationId: 'shared_id_100',
+        amount: 220.0,
+        currency: 'PHP',
+        title: 'Starbucks',
+        eventTime: t0.add(const Duration(seconds: 10)),
+      );
+      expect(res2.isDuplicate, isFalse);
+
+      // Third transaction with exact same amount within window IS duplicate
+      final res3 = await DedupeLedger.instance.checkAndRecordNotification(
+        packageName: 'com.any.bank',
+        notificationId: 'shared_id_100',
+        amount: 220.0,
+        currency: 'PHP',
+        title: 'Starbucks Updated',
+        eventTime: t0.add(const Duration(seconds: 20)),
+      );
+      expect(res3.isDuplicate, isTrue);
     });
   });
 }

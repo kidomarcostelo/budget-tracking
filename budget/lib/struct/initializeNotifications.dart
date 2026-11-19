@@ -119,6 +119,10 @@ Future<bool> runNotificationPayLoads(context) async {
     bool isLatest = notificationPayloadUri.queryParameters["latest"] == "true";
     String? amountParam = notificationPayloadUri.queryParameters["amount"];
     String? merchantParam = notificationPayloadUri.queryParameters["merchant"];
+    // Ensure any buffered notifications have finished flushing and persisting to DB
+    if (getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid) {
+      await NotificationDispatcher.instance.flushBufferedNotifications();
+    }
     Transaction? transaction;
     if (isLatest) {
       if (amountParam != null || merchantParam != null) {
@@ -129,10 +133,6 @@ Future<bool> runNotificationPayLoads(context) async {
         );
       }
       transaction ??= await database.getLatestPendingTransaction();
-      if (transaction == null) {
-        await Future.delayed(const Duration(milliseconds: 300));
-        transaction = await database.getLatestPendingTransaction();
-      }
     } else if (transactionPk != null) {
       transaction = await database.tryGetTransactionFromPk(transactionPk);
     }

@@ -1967,30 +1967,35 @@ class FinanceDatabase extends _$FinanceDatabase {
     double? amount,
     String? name,
   }) async {
-    final allPending = await (select(transactions)
-          ..where((t) => t.pending.equals(true))
-          ..orderBy([(t) => OrderingTerm.desc(t.dateCreated)]))
-        .get();
-    if (allPending.isEmpty) return null;
     if (amount != null) {
       final cleanAmount = amount.abs();
-      for (final tx in allPending) {
-        if ((tx.amount.abs() - cleanAmount).abs() < 0.01) {
-          return tx;
-        }
-      }
+      final match = await (select(transactions)
+            ..where((t) =>
+                t.pending.equals(true) &
+                ((t.amount.isBiggerOrEqualValue(cleanAmount - 0.01) &
+                        t.amount.isSmallerOrEqualValue(cleanAmount + 0.01)) |
+                    (t.amount.isBiggerOrEqualValue(-cleanAmount - 0.01) &
+                        t.amount.isSmallerOrEqualValue(-cleanAmount + 0.01))))
+            ..orderBy([(t) => OrderingTerm.desc(t.dateCreated)])
+            ..limit(1))
+          .getSingleOrNull();
+      if (match != null) return match;
     }
     if (name != null && name.trim().isNotEmpty) {
-      final cleanName = name.trim().toLowerCase();
-      for (final tx in allPending) {
-        if (tx.name.trim().toLowerCase() == cleanName ||
-            tx.name.trim().toLowerCase().contains(cleanName) ||
-            cleanName.contains(tx.name.trim().toLowerCase())) {
-          return tx;
-        }
-      }
+      final cleanName = name.trim().toLowerCase().replaceAll('%', '');
+      final match = await (select(transactions)
+            ..where((t) =>
+                t.pending.equals(true) & t.name.lower().like('%$cleanName%'))
+            ..orderBy([(t) => OrderingTerm.desc(t.dateCreated)])
+            ..limit(1))
+          .getSingleOrNull();
+      if (match != null) return match;
     }
-    return allPending.first;
+    return (select(transactions)
+          ..where((t) => t.pending.equals(true))
+          ..orderBy([(t) => OrderingTerm.desc(t.dateCreated)])
+          ..limit(1))
+        .getSingleOrNull();
   }
 
   // This gets all overdue subscription transactions

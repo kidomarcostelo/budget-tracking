@@ -1005,6 +1005,8 @@ class ScannerTemplateEntry extends StatelessWidget {
                       if (action == DeletePopupAction.Delete) {
                         await database.deleteScannerTemplate(
                             scannerTemplate.scannerTemplatePk);
+                        await NotificationDispatcher.instance
+                            .syncTemplateKeywordsToPreferences();
                         popRoute(context);
                         openSnackbar(
                           SnackbarMessage(

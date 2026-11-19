@@ -697,6 +697,29 @@ class DedupeLedger {
     await _tryPersist(entry);
   }
 
+  bool _isNotificationMatch(
+    DedupeEntryRecord existing, {
+    required String packageName,
+    required String notificationId,
+    String? normAmount,
+    String? title,
+    required DateTime now,
+    required Duration window,
+  }) {
+    if (existing.packageName != packageName ||
+        existing.notificationId != notificationId) {
+      return false;
+    }
+    // If amount is known for both and differs, they cannot be the same payment
+    if (normAmount != null &&
+        existing.amountNormalized != null &&
+        existing.amountNormalized != normAmount) {
+      return false;
+    }
+    final diff = now.difference(existing.dateTimeCreated).abs();
+    return diff <= window;
+  }
+
   /// Searches active ledger entries for an exact notification match within [window].
   DedupeEntryRecord? findExactNotificationMatch({
     required String? packageName,
@@ -713,49 +736,29 @@ class DedupeLedger {
       return null;
     }
     for (final existing in entries.reversed) {
-      if (existing.packageName == packageName &&
-          existing.notificationId == notificationId) {
-        // If amount is known for both and differs, they cannot be the same payment
-        if (normAmount != null &&
-            existing.amountNormalized != null &&
-            existing.amountNormalized != normAmount) {
-          continue;
-        }
-        // For shell/debug simulations where notification ID is constant, verify title
-        if (packageName == 'com.android.shell' &&
-            title != null &&
-            existing.title != null &&
-            existing.title!.isNotEmpty &&
-            title.isNotEmpty &&
-            existing.title!.toLowerCase() != title.toLowerCase()) {
-          continue;
-        }
-        final diff = now.difference(existing.dateTimeCreated).abs();
-        if (diff <= window) {
-          return existing;
-        }
+      if (_isNotificationMatch(
+        existing,
+        packageName: packageName,
+        notificationId: notificationId,
+        normAmount: normAmount,
+        title: title,
+        now: now,
+        window: window,
+      )) {
+        return existing;
       }
     }
     for (final existing in uncertainEntries.reversed) {
-      if (existing.packageName == packageName &&
-          existing.notificationId == notificationId) {
-        if (normAmount != null &&
-            existing.amountNormalized != null &&
-            existing.amountNormalized != normAmount) {
-          continue;
-        }
-        if (packageName == 'com.android.shell' &&
-            title != null &&
-            existing.title != null &&
-            existing.title!.isNotEmpty &&
-            title.isNotEmpty &&
-            existing.title!.toLowerCase() != title.toLowerCase()) {
-          continue;
-        }
-        final diff = now.difference(existing.dateTimeCreated).abs();
-        if (diff <= window) {
-          return existing;
-        }
+      if (_isNotificationMatch(
+        existing,
+        packageName: packageName,
+        notificationId: notificationId,
+        normAmount: normAmount,
+        title: title,
+        now: now,
+        window: window,
+      )) {
+        return existing;
       }
     }
     return null;

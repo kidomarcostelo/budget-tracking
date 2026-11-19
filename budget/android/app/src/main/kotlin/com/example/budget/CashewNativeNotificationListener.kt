@@ -28,6 +28,7 @@ class CashewNativeNotificationListener : NotificationListenerService() {
     companion object {
         const val PREFS_NAME = "FlutterSharedPreferences"
         const val BUFFER_KEY = "flutter.cashew_notification_buffer"
+        const val TEMPLATE_KEYWORDS_KEY = "flutter.cashew_template_keywords"
         const val CHANNEL_ID = "pendingTransactions"
         const val NOTIFICATION_ID = 9992
         const val MAX_BUFFER_SIZE = 50
@@ -76,8 +77,31 @@ class CashewNativeNotificationListener : NotificationListenerService() {
         postReviewNotification(title, content)
     }
 
+    private fun matchesTemplateKeyword(title: String, content: String): Boolean {
+        return try {
+            val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val raw = prefs.getString(TEMPLATE_KEYWORDS_KEY, null) ?: return false
+            val array = JSONArray(raw)
+            val combined = "$title $content"
+            for (i in 0 until array.length()) {
+                val keyword = array.optString(i)?.trim() ?: continue
+                if (keyword.isNotEmpty() && combined.contains(keyword, ignoreCase = true)) {
+                    return true
+                }
+            }
+            false
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private fun isRelevantPaymentNotification(packageName: String, title: String, content: String): Boolean {
         if (RECOGNIZED_PACKAGES.contains(packageName)) {
+            return true
+        }
+
+        // BT-0019: Capture bank notifications matching user-configured scanner templates
+        if (matchesTemplateKeyword(title, content)) {
             return true
         }
 

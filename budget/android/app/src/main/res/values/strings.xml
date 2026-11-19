@@ -9,4 +9,5 @@
     <string name="pending_transaction_notification_title">New transaction detected</string>
     <string name="new_transaction_detected">New transaction detected</string>
     <string name="pending_transaction_notification_text">Tap to review your recent payment in Cashew</string>
+    <string name="notification_capture_service_label">Cashew Notification Capture</string>
 </resources>

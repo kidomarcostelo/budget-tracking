@@ -48,6 +48,10 @@ class NotificationDispatcher {
   NotificationDispatcher._();
   static final NotificationDispatcher instance = NotificationDispatcher._();
 
+  /// Notification ID posted by native Android CashewNativeNotificationListener
+  /// when a transaction is buffered while the Flutter process was killed.
+  static const int nativePendingReviewNotificationId = 9992;
+
   StreamSubscription<ServiceNotificationEvent>? _subscription;
   final List<String> recentCapturedNotifications = [];
 
@@ -328,6 +332,7 @@ class NotificationDispatcher {
 
     bool status = await isPermissionGranted();
     if (status == true) {
+      await syncTemplateKeywordsToPreferences();
       await flushBufferedNotifications();
       _subscription = NotificationListenerService.notificationsStream.listen(
         (event) => handleEvent(event),
@@ -347,12 +352,45 @@ class NotificationDispatcher {
   }
 
   static const String bufferStorageKey = "cashew_notification_buffer";
+  static const String templateKeywordsStorageKey = "cashew_template_keywords";
+
+  Future<int>? _activeFlushFuture;
+
+  /// Synchronizes user-configured scanner template keywords to SharedPreferences so the native
+  /// Android listener can capture bank notifications even when Cashew is terminated.
+  Future<void> syncTemplateKeywordsToPreferences({
+    SharedPreferences? preferencesOverride,
+  }) async {
+    try {
+      final templates = await database.getAllScannerTemplates();
+      final keywords = templates
+          .map((t) => t.contains.trim())
+          .where((k) => k.isNotEmpty)
+          .toSet()
+          .toList();
+      final prefs = preferencesOverride ?? sharedPreferences;
+      await prefs.setString(templateKeywordsStorageKey, jsonEncode(keywords));
+    } catch (_) {}
+  }
 
   /// Flushes any pending notifications buffered in native SharedPreferences while
   /// Cashew was terminated or inactive.
   ///
   /// Returns the number of events successfully flushed and dispatched.
   Future<int> flushBufferedNotifications({
+    SharedPreferences? preferencesOverride,
+  }) {
+    if (_activeFlushFuture != null) return _activeFlushFuture!;
+    final future = _flushBufferedNotificationsImpl(
+      preferencesOverride: preferencesOverride,
+    );
+    _activeFlushFuture = future;
+    return future.whenComplete(() {
+      _activeFlushFuture = null;
+    });
+  }
+
+  Future<int> _flushBufferedNotificationsImpl({
     SharedPreferences? preferencesOverride,
   }) async {
     SharedPreferences? prefs = preferencesOverride;
@@ -377,7 +415,8 @@ class NotificationDispatcher {
     await prefs.setString(bufferStorageKey, "[]");
 
     try {
-      await flutterLocalNotificationsPlugin.cancel(9992);
+      await flutterLocalNotificationsPlugin
+          .cancel(nativePendingReviewNotificationId);
     } catch (_) {}
 
     List<dynamic> entries;
