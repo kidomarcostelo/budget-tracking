@@ -150,7 +150,8 @@ class _CategorySpendingRow extends StatelessWidget {
                 const SizedBox(width: 10),
                 // Formatted amount
                 TextFont(
-                  text: convertToMoney(allWallets, categoryWithTotal.total),
+                  text:
+                      convertToMoney(allWallets, categoryWithTotal.total.abs()),
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -207,7 +208,7 @@ class _CategorySpendingRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       TextFont(
-                        text: convertToMoney(allWallets, sub.total),
+                        text: convertToMoney(allWallets, sub.total.abs()),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
