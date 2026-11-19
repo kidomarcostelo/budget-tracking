@@ -5,7 +5,8 @@
     <string name="background_monitor_notification_title">Cashew background monitor active</string>
     <string name="background_monitor_notification_text">Listening for Google Pay and payment notifications</string>
     <string name="pending_notification_channel_name">Pending Transactions</string>
-    <string name="pending_notification_channel_description">Alerts for tap-to-pay transactions captured while Cashew was closed</string>
-    <string name="pending_transaction_notification_title">Transaction Captured</string>
+    <string name="pending_notification_channel_description">Notifications for transactions detected from notifications</string>
+    <string name="pending_transaction_notification_title">New transaction detected</string>
+    <string name="new_transaction_detected">New transaction detected</string>
     <string name="pending_transaction_notification_text">Tap to review your recent payment in Cashew</string>
 </resources>

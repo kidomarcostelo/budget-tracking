@@ -88,9 +88,7 @@ class GooglePayParser {
     if (packageName == null) return false;
     if (recognizedPackages.contains(packageName)) return true;
     if (isDebug &&
-        (packageName == 'android' ||
-            packageName == 'com.budget.tracker_app' ||
-            packageName == 'com.budget.tracker_app.debug')) {
+        (packageName == 'android' || packageName == 'com.android.shell')) {
       return true;
     }
     return false;

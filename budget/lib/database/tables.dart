@@ -1953,6 +1953,46 @@ class FinanceDatabase extends _$FinanceDatabase {
     return pendingList.length;
   }
 
+  Future<Transaction?> getLatestPendingTransaction() async {
+    return (select(transactions)
+          ..where((t) => t.pending.equals(true))
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.dateCreated),
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
+  Future<Transaction?> findPendingTransaction({
+    double? amount,
+    String? name,
+  }) async {
+    final allPending = await (select(transactions)
+          ..where((t) => t.pending.equals(true))
+          ..orderBy([(t) => OrderingTerm.desc(t.dateCreated)]))
+        .get();
+    if (allPending.isEmpty) return null;
+    if (amount != null) {
+      final cleanAmount = amount.abs();
+      for (final tx in allPending) {
+        if ((tx.amount.abs() - cleanAmount).abs() < 0.01) {
+          return tx;
+        }
+      }
+    }
+    if (name != null && name.trim().isNotEmpty) {
+      final cleanName = name.trim().toLowerCase();
+      for (final tx in allPending) {
+        if (tx.name.trim().toLowerCase() == cleanName ||
+            tx.name.trim().toLowerCase().contains(cleanName) ||
+            cleanName.contains(tx.name.trim().toLowerCase())) {
+          return tx;
+        }
+      }
+    }
+    return allPending.first;
+  }
+
   // This gets all overdue subscription transactions
   (Stream<List<Transaction>>, Future<List<Transaction>>) getAllSubscriptions() {
     final query = select(transactions)

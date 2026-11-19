@@ -5,6 +5,7 @@ import 'package:budget/pages/pendingTransactionsPage.dart';
 import 'package:budget/pages/upcomingOverdueTransactionsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/dedupeLedger.dart';
+import 'package:budget/struct/notificationDispatcher.dart';
 import 'package:budget/struct/notificationsGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/upcomingTransactionsFunctions.dart';
@@ -51,6 +52,10 @@ Future<String?> initializeNotifications() async {
 onSelectNotification(NotificationResponse notificationResponse) async {
   String? payloadData = notificationResponse.payload;
   notificationPayload = payloadData;
+  if (getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid &&
+      appStateSettings["notificationScanning"] == true) {
+    await NotificationDispatcher.instance.flushBufferedNotifications();
+  }
   runNotificationPayLoadsNoContext();
 }
 
@@ -111,9 +116,26 @@ Future<bool> runNotificationPayLoads(context) async {
     Uri notificationPayloadUri = Uri.parse(currentPayload);
     String? transactionPk =
         notificationPayloadUri.queryParameters["transactionPk"];
-    if (transactionPk == null) return false;
-    Transaction? transaction =
-        await database.tryGetTransactionFromPk(transactionPk);
+    bool isLatest = notificationPayloadUri.queryParameters["latest"] == "true";
+    String? amountParam = notificationPayloadUri.queryParameters["amount"];
+    String? merchantParam = notificationPayloadUri.queryParameters["merchant"];
+    Transaction? transaction;
+    if (isLatest) {
+      if (amountParam != null || merchantParam != null) {
+        final double? targetAmount = double.tryParse(amountParam ?? "");
+        transaction = await database.findPendingTransaction(
+          amount: targetAmount,
+          name: merchantParam,
+        );
+      }
+      transaction ??= await database.getLatestPendingTransaction();
+      if (transaction == null) {
+        await Future.delayed(const Duration(milliseconds: 300));
+        transaction = await database.getLatestPendingTransaction();
+      }
+    } else if (transactionPk != null) {
+      transaction = await database.tryGetTransactionFromPk(transactionPk);
+    }
     if (transaction == null || transaction.pending != true) {
       openSnackbar(SnackbarMessage(
         title: "transaction-no-longer-pending".tr(),
@@ -122,7 +144,7 @@ Future<bool> runNotificationPayLoads(context) async {
       return true;
     }
     final uncertainEntry =
-        DedupeLedger.instance.getUncertainEntryForTransaction(transactionPk);
+        DedupeLedger.instance.getUncertainEntryForTransaction(transaction.transactionPk);
     final bool isDuplicate = uncertainEntry != null;
     pushRoute(
       context,
@@ -154,6 +176,10 @@ Future<void> showPendingTransactionNotification({
   bool isPossibleDuplicate = false,
 }) async {
   if (kIsWeb) return;
+
+  if (notificationPayload?.startsWith("openPendingTransaction") == true) {
+    return;
+  }
 
   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
     'pendingTransactions',

@@ -71,13 +71,22 @@ void main() {
         isFalse,
       );
       expect(
-        GooglePayParser.isRecognizedPackage('com.budget.tracker_app.debug',
-            isDebug: true),
+        GooglePayParser.isRecognizedPackage('com.android.shell', isDebug: true),
         isTrue,
       );
       expect(
-        GooglePayParser.isRecognizedPackage('com.budget.tracker_app.debug',
+        GooglePayParser.isRecognizedPackage('com.android.shell',
             isDebug: false),
+        isFalse,
+      );
+      expect(
+        GooglePayParser.isRecognizedPackage('com.budget.tracker_app.debug',
+            isDebug: true),
+        isFalse,
+      );
+      expect(
+        GooglePayParser.isRecognizedPackage('com.budget.tracker_app',
+            isDebug: true),
         isFalse,
       );
       expect(

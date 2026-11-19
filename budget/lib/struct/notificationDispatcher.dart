@@ -6,6 +6,7 @@ import 'package:budget/struct/backgroundService.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/dedupeLedger.dart';
 import 'package:budget/struct/googlePayParser.dart';
+import 'package:budget/struct/notificationsGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
@@ -374,6 +375,10 @@ class NotificationDispatcher {
 
     // Immediately clear the buffer in SharedPreferences to prevent double-flushing
     await prefs.setString(bufferStorageKey, "[]");
+
+    try {
+      await flutterLocalNotificationsPlugin.cancel(9992);
+    } catch (_) {}
 
     List<dynamic> entries;
     try {

@@ -701,6 +701,8 @@ class DedupeLedger {
   DedupeEntryRecord? findExactNotificationMatch({
     required String? packageName,
     required String? notificationId,
+    String? normAmount,
+    String? title,
     required DateTime now,
     required Duration window,
   }) {
@@ -713,6 +715,21 @@ class DedupeLedger {
     for (final existing in entries.reversed) {
       if (existing.packageName == packageName &&
           existing.notificationId == notificationId) {
+        // If amount is known for both and differs, they cannot be the same payment
+        if (normAmount != null &&
+            existing.amountNormalized != null &&
+            existing.amountNormalized != normAmount) {
+          continue;
+        }
+        // For shell/debug simulations where notification ID is constant, verify title
+        if (packageName == 'com.android.shell' &&
+            title != null &&
+            existing.title != null &&
+            existing.title!.isNotEmpty &&
+            title.isNotEmpty &&
+            existing.title!.toLowerCase() != title.toLowerCase()) {
+          continue;
+        }
         final diff = now.difference(existing.dateTimeCreated).abs();
         if (diff <= window) {
           return existing;
@@ -722,6 +739,19 @@ class DedupeLedger {
     for (final existing in uncertainEntries.reversed) {
       if (existing.packageName == packageName &&
           existing.notificationId == notificationId) {
+        if (normAmount != null &&
+            existing.amountNormalized != null &&
+            existing.amountNormalized != normAmount) {
+          continue;
+        }
+        if (packageName == 'com.android.shell' &&
+            title != null &&
+            existing.title != null &&
+            existing.title!.isNotEmpty &&
+            title.isNotEmpty &&
+            existing.title!.toLowerCase() != title.toLowerCase()) {
+          continue;
+        }
         final diff = now.difference(existing.dateTimeCreated).abs();
         if (diff <= window) {
           return existing;
@@ -838,6 +868,8 @@ class DedupeLedger {
     final exactMatch = findExactNotificationMatch(
       packageName: packageName,
       notificationId: notificationId,
+      normAmount: normAmount,
+      title: title,
       now: now,
       window: window,
     );
