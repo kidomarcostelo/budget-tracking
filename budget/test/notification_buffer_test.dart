@@ -62,8 +62,10 @@ void main() {
     });
 
     test(
-        'debug simulation packages (android, debug appId) recognized only when isDebug is true',
+        'debug simulation packages (android, com.android.shell) recognized when isDebug or notificationScanningDebug is true',
         () {
+      // By default with isDebug: false and notificationScanningDebug unset
+      appStateSettings["notificationScanningDebug"] = false;
       expect(
         GooglePayParser.isRecognizedPackage('android', isDebug: true),
         isTrue,
@@ -81,6 +83,32 @@ void main() {
             isDebug: false),
         isFalse,
       );
+
+      // When notificationScanningDebug is enabled in release mode (isDebug: false)
+      appStateSettings["notificationScanningDebug"] = true;
+      expect(
+        GooglePayParser.isRecognizedPackage('android', isDebug: false),
+        isTrue,
+      );
+      expect(
+        GooglePayParser.isRecognizedPackage('com.android.shell',
+            isDebug: false),
+        isTrue,
+      );
+
+      // allowSimulationOverride takes precedence
+      expect(
+        GooglePayParser.isRecognizedPackage('com.android.shell',
+            isDebug: false, allowSimulationOverride: false),
+        isFalse,
+      );
+      expect(
+        GooglePayParser.isRecognizedPackage('com.android.shell',
+            isDebug: false, allowSimulationOverride: true),
+        isTrue,
+      );
+
+      // Unrelated packages remain unrecognized even with simulation enabled
       expect(
         GooglePayParser.isRecognizedPackage('com.budget.tracker_app.debug',
             isDebug: true),
@@ -96,6 +124,9 @@ void main() {
             isDebug: true),
         isFalse,
       );
+
+      // Reset setting
+      appStateSettings["notificationScanningDebug"] = false;
     });
   });
 
