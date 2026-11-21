@@ -95,6 +95,20 @@ class CashewNativeNotificationListener : NotificationListenerService() {
         }
     }
 
+    private fun isNotificationScanningDebugEnabled(): Boolean {
+        return try {
+            val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            if (prefs.getBoolean("flutter.notificationScanningDebug", false)) {
+                return true
+            }
+            val raw = prefs.getString("flutter.userSettings", null) ?: return false
+            val json = JSONObject(raw)
+            json.optBoolean("notificationScanningDebug", false)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private fun isRelevantPaymentNotification(packageName: String, title: String, content: String): Boolean {
         if (RECOGNIZED_PACKAGES.contains(packageName)) {
             return true
@@ -105,7 +119,7 @@ class CashewNativeNotificationListener : NotificationListenerService() {
             return true
         }
 
-        val isDebug = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        val isDebug = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0 || isNotificationScanningDebugEnabled()
         if (isDebug && (packageName == "android" || packageName == "com.android.shell")) {
             val combined = "$title $content"
             if (combined.contains("Google Pay", ignoreCase = true) ||
