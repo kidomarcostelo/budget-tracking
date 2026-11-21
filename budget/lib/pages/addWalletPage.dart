@@ -997,6 +997,66 @@ Future<String?> createCorrectionTransaction(
   return null;
 }
 
+Future<String> executeBalanceTransfer({
+  required AllWallets allWallets,
+  required TransactionWallet walletFrom,
+  required TransactionWallet walletTo,
+  required double enteredAmount,
+  required bool isNegative,
+  DateTime? selectedDateTime,
+  String selectedTitle = "",
+  String? initialNote,
+  String? initialObjectiveLoanPk,
+  String? selectedObjectivePk,
+}) async {
+  String transferString = getWalletStringName(allWallets, walletFrom) +
+      (isNegative ? " ← " : " → ") +
+      getWalletStringName(allWallets, walletTo);
+
+  String note = "transferred-balance".tr() + "\n" + transferString;
+  if (initialNote != null && initialNote.trim().isNotEmpty) {
+    note += "\n${initialNote.trim()}";
+  }
+
+  // Want these times to be the same so we know the pairing of balance corrections
+  DateTime selectedDateTimeSetToNow = selectedDateTime ?? DateTime.now();
+
+  final String? effectiveObjectivePk =
+      initialObjectiveLoanPk == null ? selectedObjectivePk : null;
+
+  String? transactionPk = await createCorrectionTransaction(
+    enteredAmount *
+        getAmountRatioWalletTransferTo(allWallets, walletTo.walletPk),
+    walletTo,
+    note: note,
+    dateTime: selectedDateTimeSetToNow.add(Duration(seconds: 1)),
+    title: selectedTitle == ""
+        ? (allWallets.indexedByPk[walletTo.walletPk]!.name +
+            " " +
+            (isNegative ? "transfer-out".tr() : "transfer-in".tr()))
+        : selectedTitle,
+    objectivePk: isNegative ? null : effectiveObjectivePk,
+  );
+
+  await createCorrectionTransaction(
+    objectiveLoanPk: initialObjectiveLoanPk,
+    objectivePk: isNegative ? effectiveObjectivePk : null,
+    pairedTransactionFk: transactionPk,
+    enteredAmount *
+        getAmountRatioWalletTransferFrom(allWallets, walletFrom.walletPk),
+    walletFrom,
+    note: note,
+    dateTime: selectedDateTimeSetToNow,
+    title: selectedTitle == ""
+        ? (allWallets.indexedByPk[walletFrom.walletPk]!.name +
+            " " +
+            (isNegative == false ? "transfer-out".tr() : "transfer-in".tr()))
+        : selectedTitle,
+  );
+
+  return transferString;
+}
+
 class TransferBalancePopup extends StatefulWidget {
   const TransferBalancePopup({
     required this.wallet,
@@ -1008,7 +1068,6 @@ class TransferBalancePopup extends StatefulWidget {
     this.initialTitle,
     this.initialNote,
     this.initialObjectiveLoanPk,
-    this.initialObjectivePk,
     this.initialIsNegative,
     super.key,
   });
@@ -1021,7 +1080,6 @@ class TransferBalancePopup extends StatefulWidget {
   final String? initialTitle;
   final String? initialNote;
   final String? initialObjectiveLoanPk;
-  final String? initialObjectivePk;
   final bool? initialIsNegative;
 
   @override
@@ -1040,7 +1098,7 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
       : null;
   late DateTime? selectedDateTime = widget.initialDate ?? null;
   late String selectedTitle = widget.initialTitle ?? "";
-  late String? selectedObjectivePk = widget.initialObjectivePk;
+  String? selectedObjectivePk;
   late TransactionWallet? walletForCurrency =
       Provider.of<AllWallets>(context, listen: false)
                   .indexedByPk[appStateSettings["selectedWalletPk"]]
@@ -1051,16 +1109,6 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
               .indexedByPk[appStateSettings["selectedWalletPk"]];
 
   // double transferFee = 0;
-
-  @override
-  void didUpdateWidget(covariant TransferBalancePopup oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.initialObjectivePk != oldWidget.initialObjectivePk) {
-      setState(() {
-        selectedObjectivePk = widget.initialObjectivePk;
-      });
-    }
-  }
 
   @override
   void initState() {
@@ -1164,46 +1212,17 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
       return;
     }
 
-    String transferString = getWalletStringName(allWallets, walletFrom) +
-        (isNegative ? " ← " : " → ") +
-        getWalletStringName(allWallets, walletTo);
-
-    String note = "transferred-balance".tr() + "\n" + transferString;
-    if (widget.initialNote != null && widget.initialNote!.trim().isNotEmpty) {
-      note += "\n${widget.initialNote!.trim()}";
-    }
-
-    // Want these times to be the same so we know the pairing of balance corrections
-    DateTime selectedDateTimeSetToNow = selectedDateTime ?? DateTime.now();
-
-    String? transactionPk = await createCorrectionTransaction(
-      enteredAmount *
-          getAmountRatioWalletTransferTo(allWallets, walletTo!.walletPk),
-      walletTo!,
-      note: note,
-      dateTime: selectedDateTimeSetToNow.add(Duration(seconds: 1)),
-      title: selectedTitle == ""
-          ? (allWallets.indexedByPk[walletTo!.walletPk]!.name +
-              " " +
-              (isNegative ? "transfer-out".tr() : "transfer-in".tr()))
-          : selectedTitle,
-      objectivePk: isNegative ? null : selectedObjectivePk,
-    );
-
-    await createCorrectionTransaction(
-      objectiveLoanPk: widget.initialObjectiveLoanPk,
-      objectivePk: isNegative ? selectedObjectivePk : null,
-      pairedTransactionFk: transactionPk,
-      enteredAmount *
-          getAmountRatioWalletTransferFrom(allWallets, walletFrom.walletPk),
-      walletFrom,
-      note: note,
-      dateTime: selectedDateTimeSetToNow,
-      title: selectedTitle == ""
-          ? (allWallets.indexedByPk[walletFrom.walletPk]!.name +
-              " " +
-              (isNegative == false ? "transfer-out".tr() : "transfer-in".tr()))
-          : selectedTitle,
+    final String transferString = await executeBalanceTransfer(
+      allWallets: allWallets,
+      walletFrom: walletFrom,
+      walletTo: walletTo!,
+      enteredAmount: enteredAmount,
+      isNegative: isNegative,
+      selectedDateTime: selectedDateTime,
+      selectedTitle: selectedTitle,
+      initialNote: widget.initialNote,
+      initialObjectiveLoanPk: widget.initialObjectiveLoanPk,
+      selectedObjectivePk: selectedObjectivePk,
     );
     // Deal with transfer fee
     // if (transferFee != 0) {
@@ -1373,17 +1392,18 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
               }),
             ],
           ),
-          SelectObjective(
-            setSelectedObjective: (String? pk) {
-              setState(() {
-                selectedObjectivePk = pk;
-              });
-            },
-            selectedObjectivePk: selectedObjectivePk,
-            extraHorizontalPadding: 13,
-            wrapped: false,
-            objectiveType: ObjectiveType.goal,
-          ),
+          if (widget.initialObjectiveLoanPk == null)
+            SelectObjective(
+              setSelectedObjective: (String? pk) {
+                setState(() {
+                  selectedObjectivePk = pk;
+                });
+              },
+              selectedObjectivePk: selectedObjectivePk,
+              extraHorizontalPadding: 13,
+              wrapped: false,
+              objectiveType: ObjectiveType.goal,
+            ),
           SelectAmount(
             amountTappableBuilder: (onLongPress, amountConverted) {
               return Padding(
