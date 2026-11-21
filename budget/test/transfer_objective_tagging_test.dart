@@ -1,7 +1,6 @@
 import 'dart:ffi';
 import 'package:budget/database/tables.dart';
 import 'package:budget/pages/addWalletPage.dart';
-import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:drift/native.dart';
@@ -133,12 +132,12 @@ void main() {
         500.0,
         efWallet,
         objectiveLoanPk: 'loan-123',
-        objectivePk: 'goal-456',
+        objectivePk: 'obj-456',
       );
 
       expect(txPk, isNotNull);
       final createdTx = await testDb.getTransactionFromPk(txPk!);
-      // tables.dart cleanseTransactionForLongTermLoan ensures loan and goal are mutually exclusive
+      // tables.dart cleanseTransactionForLongTermLoan ensures loan and savings objective are mutually exclusive
       expect(createdTx.objectiveLoanFk, 'loan-123');
       expect(createdTx.objectiveFk, isNull);
     });
@@ -221,7 +220,7 @@ void main() {
       await createCorrectionTransaction(
         8000.0,
         efWallet,
-        title: 'Other goal transfer',
+        title: 'Other objective transfer',
         objectivePk: 'obj-travel-fund',
       );
 
@@ -231,7 +230,7 @@ void main() {
     });
 
     test(
-        'Simulated transferBalance tags incoming destination transaction with selected objective and leaves source untagged',
+        'executeBalanceTransfer tags incoming destination transaction with selected objective and leaves source untagged',
         () async {
       final objective = Objective(
         objectivePk: 'obj-emergency-fund',
@@ -247,61 +246,46 @@ void main() {
       );
       await testDb.createOrUpdateObjective(objective, insert: true);
 
-      const double transferAmount = 8000.0;
-      const String selectedObjectivePk = 'obj-emergency-fund';
-      const bool isNegative = false;
-
-      // Replicate the exact transferBalance logic in addWalletPage.dart
-      final now = DateTime.now();
-      final destinationTxPk = await createCorrectionTransaction(
-        transferAmount *
-            getAmountRatioWalletTransferTo(allWallets, efWallet.walletPk),
-        efWallet,
-        note: 'Transferred balance: Payroll -> EF',
-        dateTime: now.add(const Duration(seconds: 1)),
-        title: 'Emergency Fund transfer-in',
-        objectivePk: isNegative ? null : selectedObjectivePk,
+      await executeBalanceTransfer(
+        allWallets: allWallets,
+        walletFrom: payrollWallet,
+        walletTo: efWallet,
+        enteredAmount: 8000.0,
+        isNegative: false,
+        selectedTitle: '',
+        initialNote: null,
+        initialObjectiveLoanPk: null,
+        selectedObjectivePk: 'obj-emergency-fund',
       );
 
-      final sourceTxPk = await createCorrectionTransaction(
-        objectiveLoanPk: null,
-        objectivePk: isNegative ? selectedObjectivePk : null,
-        pairedTransactionFk: destinationTxPk,
-        transferAmount *
-            getAmountRatioWalletTransferFrom(
-                allWallets, payrollWallet.walletPk),
-        payrollWallet,
-        note: 'Transferred balance: Payroll -> EF',
-        dateTime: now,
-        title: 'Payroll Account transfer-out',
-      );
+      final transactions = await testDb.allTransactions;
+      expect(transactions.length, 2);
 
-      expect(destinationTxPk, isNotNull);
-      expect(sourceTxPk, isNotNull);
-
-      final destTx = await testDb.getTransactionFromPk(destinationTxPk!);
-      final srcTx = await testDb.getTransactionFromPk(sourceTxPk!);
+      final destTx =
+          transactions.firstWhere((t) => t.walletFk == efWallet.walletPk);
+      final srcTx =
+          transactions.firstWhere((t) => t.walletFk == payrollWallet.walletPk);
 
       // Destination wallet has positive income amount and is tagged with objective
       expect(destTx.amount, 8000.0);
       expect(destTx.income, isTrue);
-      expect(destTx.walletFk, 'wallet-ef');
+      expect(destTx.categoryFk, '0');
       expect(destTx.objectiveFk, 'obj-emergency-fund');
 
       // Source wallet has negative expense amount and has NO objective tag
       expect(srcTx.amount, -8000.0);
       expect(srcTx.income, isFalse);
-      expect(srcTx.walletFk, 'wallet-payroll');
+      expect(srcTx.categoryFk, '0');
       expect(srcTx.objectiveFk, isNull);
 
       // Objective reflects exactly the +8000.0 without source double-counting
-      final goalTotal =
+      final objectiveTotal =
           await testDb.watchTotalTowardsObjective(allWallets, objective).first;
-      expect(goalTotal, 8000.0);
+      expect(objectiveTotal, 8000.0);
     });
 
     test(
-        'Simulated reversed transfer (isNegative: true) tags incoming source transaction with selected objective',
+        'executeBalanceTransfer reversed transfer (isNegative: true) tags incoming source transaction with selected objective',
         () async {
       final objective = Objective(
         objectivePk: 'obj-emergency-fund',
@@ -317,39 +301,26 @@ void main() {
       );
       await testDb.createOrUpdateObjective(objective, insert: true);
 
-      // When arrow is flipped, enteredAmount is negative
-      const double transferAmount = -8000.0;
-      const String selectedObjectivePk = 'obj-emergency-fund';
-      const bool isNegative = true;
-
-      final now = DateTime.now();
-      // First call (walletTo) is transfer-out (-8000.0) -> objectivePk is null
-      final walletToTxPk = await createCorrectionTransaction(
-        transferAmount *
-            getAmountRatioWalletTransferTo(allWallets, efWallet.walletPk),
-        efWallet,
-        note: 'Transferred balance: EF -> Payroll',
-        dateTime: now.add(const Duration(seconds: 1)),
-        title: 'Emergency Fund transfer-out',
-        objectivePk: isNegative ? null : selectedObjectivePk,
+      // Inverted transfer: payroll is receiving, ef is sending
+      await executeBalanceTransfer(
+        allWallets: allWallets,
+        walletFrom: payrollWallet,
+        walletTo: efWallet,
+        enteredAmount: -8000.0,
+        isNegative: true,
+        selectedTitle: '',
+        initialNote: null,
+        initialObjectiveLoanPk: null,
+        selectedObjectivePk: 'obj-emergency-fund',
       );
 
-      // Second call (walletFrom) is transfer-in (+8000.0) -> objectivePk is tagged!
-      final walletFromTxPk = await createCorrectionTransaction(
-        objectiveLoanPk: null,
-        objectivePk: isNegative ? selectedObjectivePk : null,
-        pairedTransactionFk: walletToTxPk,
-        transferAmount *
-            getAmountRatioWalletTransferFrom(
-                allWallets, payrollWallet.walletPk),
-        payrollWallet,
-        note: 'Transferred balance: EF -> Payroll',
-        dateTime: now,
-        title: 'Payroll Account transfer-in',
-      );
+      final transactions = await testDb.allTransactions;
+      expect(transactions.length, 2);
 
-      final toTx = await testDb.getTransactionFromPk(walletToTxPk!);
-      final fromTx = await testDb.getTransactionFromPk(walletFromTxPk!);
+      final toTx =
+          transactions.firstWhere((t) => t.walletFk == efWallet.walletPk);
+      final fromTx =
+          transactions.firstWhere((t) => t.walletFk == payrollWallet.walletPk);
 
       expect(toTx.amount, -8000.0);
       expect(toTx.income, isFalse);
@@ -359,9 +330,41 @@ void main() {
       expect(fromTx.income, isTrue);
       expect(fromTx.objectiveFk, 'obj-emergency-fund');
 
-      final goalTotal =
+      final objectiveTotal =
           await testDb.watchTotalTowardsObjective(allWallets, objective).first;
-      expect(goalTotal, 8000.0);
+      expect(objectiveTotal, 8000.0);
+    });
+
+    test(
+        'executeBalanceTransfer suppresses savings objective when initialObjectiveLoanPk is present (prevents erasure)',
+        () async {
+      await executeBalanceTransfer(
+        allWallets: allWallets,
+        walletFrom: payrollWallet,
+        walletTo: efWallet,
+        enteredAmount: 500.0,
+        isNegative: false,
+        selectedTitle: '',
+        initialNote: null,
+        initialObjectiveLoanPk: 'loan-repayment-1',
+        selectedObjectivePk: 'obj-savings-accidental',
+      );
+
+      final transactions = await testDb.allTransactions;
+      expect(transactions.length, 2);
+
+      final destTx =
+          transactions.firstWhere((t) => t.walletFk == efWallet.walletPk);
+      final srcTx =
+          transactions.firstWhere((t) => t.walletFk == payrollWallet.walletPk);
+
+      // Source is tagged with the loan objective
+      expect(srcTx.objectiveLoanFk, 'loan-repayment-1');
+      expect(srcTx.objectiveFk, isNull);
+
+      // Destination is NOT tagged with savings objective because loan transfer took precedence
+      expect(destTx.objectiveLoanFk, isNull);
+      expect(destTx.objectiveFk, isNull);
     });
   });
 }

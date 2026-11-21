@@ -2,7 +2,7 @@
 
 **ID:** BT-0021  
 **Issue Reference:** [#55](https://github.com/kidomarcostelo/budget-tracking/issues/55)  
-**Status:** In Progress (Ready for Research & Planning)  
+**Status:** Completed (PR #56 under review)  
 **Assignee / Agent:** Higher-Reasoning Agent  
 
 ---
@@ -50,7 +50,7 @@ When transferring money between these accounts in Cashew:
 ---
 
 ## 4. Verification & Testing
-- [ ] Unit / Widget tests added or updated
-- [ ] Static analysis passes: `flutter analyze`
-- [ ] Code formatted: `dart format --output=none --set-exit-if-changed .`
-- [ ] All test suites pass: `flutter test`
+- [x] Unit / Widget tests added or updated
+- [x] Static analysis passes: `flutter analyze`
+- [x] Code formatted: `dart format --output=none --set-exit-if-changed .`
+- [x] All test suites pass: `flutter test`
