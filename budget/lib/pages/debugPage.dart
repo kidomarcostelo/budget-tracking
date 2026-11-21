@@ -257,9 +257,8 @@ class DebugPage extends StatelessWidget {
               await updateSettings("notificationScanningDebug", value,
                   updateGlobalState: false);
             },
-            title: "ADB Notification Simulation",
-            description:
-                "Allow ADB shell commands (com.android.shell) to mock payment alerts in release mode",
+            title: "adb-notification-simulation".tr(),
+            description: "adb-notification-simulation-description".tr(),
             initialValue: appStateSettings["notificationScanningDebug"] == true,
             icon: appStateSettings["outlinedIcons"]
                 ? Icons.adb_outlined

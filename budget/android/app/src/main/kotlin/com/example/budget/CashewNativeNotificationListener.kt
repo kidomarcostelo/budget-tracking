@@ -98,8 +98,8 @@ class CashewNativeNotificationListener : NotificationListenerService() {
     private fun isNotificationScanningDebugEnabled(): Boolean {
         return try {
             val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            if (prefs.getBoolean("flutter.notificationScanningDebug", false)) {
-                return true
+            if (prefs.contains("flutter.notificationScanningDebug")) {
+                return prefs.getBoolean("flutter.notificationScanningDebug", false)
             }
             val raw = prefs.getString("flutter.userSettings", null) ?: return false
             val json = JSONObject(raw)
@@ -119,8 +119,8 @@ class CashewNativeNotificationListener : NotificationListenerService() {
             return true
         }
 
-        val isDebug = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0 || isNotificationScanningDebugEnabled()
-        if (isDebug && (packageName == "android" || packageName == "com.android.shell")) {
+        val isSimulationAllowed = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0 || isNotificationScanningDebugEnabled()
+        if (isSimulationAllowed && (packageName == "android" || packageName == "com.android.shell")) {
             val combined = "$title $content"
             if (combined.contains("Google Pay", ignoreCase = true) ||
                 combined.contains("Google Wallet", ignoreCase = true) ||

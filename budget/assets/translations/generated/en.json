@@ -1226,5 +1226,7 @@
   "transaction-no-longer-pending": "Transaction is no longer pending",
   "stats": "Stats",
   "previous-period": "Previous Period",
-  "next-period": "Next Period"
+  "next-period": "Next Period",
+  "adb-notification-simulation": "ADB Notification Simulation",
+  "adb-notification-simulation-description": "Allow ADB and shell commands (com.android.shell, android) to mock payment alerts in release mode"
 }
