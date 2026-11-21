@@ -6,7 +6,7 @@ Each task is a folder `.scratch/BT-NNNN-<slug>/` with its `task.md` (copied from
 - IDs are stable and never renumbered. Rows are ordered by ID, which is creation order.
 - To add a task: take `Next ID`, create `.scratch/BT-<NNNN>-<slug>/task.md`, add a row below, and bump `Next ID`.
 
-Next ID: 0021
+Next ID: 0022
 
 | ID | Title | Issue | Folder |
 |----|-------|-------|--------|
@@ -30,3 +30,4 @@ Next ID: 0021
 | BT-0018 | Fix Google Pay Wallet Resolution — Prefer Most Specific Wallet Name Match | [#49](https://github.com/kidomarcostelo/budget-tracking/pull/49) | [BT-0018-googlepay-wallet-resolution-specificity](BT-0018-googlepay-wallet-resolution-specificity/task.md) |
 | BT-0019 | Research Headless Background Notification Capture for Google Wallet When App is Closed | [#50](https://github.com/kidomarcostelo/budget-tracking/issues/50) | [BT-0019-headless-background-notification-listener](BT-0019-headless-background-notification-listener/task.md) |
 | BT-0020 | Fix Stats category expenses, negative signs, and subcategory pie slices | [#51](https://github.com/kidomarcostelo/budget-tracking/issues/51) | [BT-0020-stats-category-totals-and-pie-slices](BT-0020-stats-category-totals-and-pie-slices/task.md) |
+| BT-0021 | Tag Balance Transfers to Savings Objectives in Transfer Popup | [#55](https://github.com/kidomarcostelo/budget-tracking/issues/55) | [BT-0021-tag-transfers-to-savings-objectives](BT-0021-tag-transfers-to-savings-objectives/task.md) |
