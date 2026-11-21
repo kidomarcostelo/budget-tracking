@@ -966,6 +966,7 @@ Future<String?> createCorrectionTransaction(
   String? title,
   String? pairedTransactionFk,
   String? objectiveLoanPk,
+  String? objectivePk,
 }) async {
   await initializeBalanceCorrectionCategory();
 
@@ -985,6 +986,7 @@ Future<String?> createCorrectionTransaction(
       paid: true,
       skipPaid: false,
       objectiveLoanFk: objectiveLoanPk,
+      objectiveFk: objectivePk,
     ),
   );
   if (rowId != null) {
@@ -1006,6 +1008,7 @@ class TransferBalancePopup extends StatefulWidget {
     this.initialTitle,
     this.initialNote,
     this.initialObjectiveLoanPk,
+    this.initialObjectivePk,
     this.initialIsNegative,
     super.key,
   });
@@ -1018,6 +1021,7 @@ class TransferBalancePopup extends StatefulWidget {
   final String? initialTitle;
   final String? initialNote;
   final String? initialObjectiveLoanPk;
+  final String? initialObjectivePk;
   final bool? initialIsNegative;
 
   @override
@@ -1036,6 +1040,7 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
       : null;
   late DateTime? selectedDateTime = widget.initialDate ?? null;
   late String selectedTitle = widget.initialTitle ?? "";
+  late String? selectedObjectivePk = widget.initialObjectivePk;
   late TransactionWallet? walletForCurrency =
       Provider.of<AllWallets>(context, listen: false)
                   .indexedByPk[appStateSettings["selectedWalletPk"]]
@@ -1046,6 +1051,16 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
               .indexedByPk[appStateSettings["selectedWalletPk"]];
 
   // double transferFee = 0;
+
+  @override
+  void didUpdateWidget(covariant TransferBalancePopup oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialObjectivePk != oldWidget.initialObjectivePk) {
+      setState(() {
+        selectedObjectivePk = widget.initialObjectivePk;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -1172,10 +1187,12 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
               " " +
               (isNegative ? "transfer-out".tr() : "transfer-in".tr()))
           : selectedTitle,
+      objectivePk: isNegative ? null : selectedObjectivePk,
     );
 
     await createCorrectionTransaction(
       objectiveLoanPk: widget.initialObjectiveLoanPk,
+      objectivePk: isNegative ? selectedObjectivePk : null,
       pairedTransactionFk: transactionPk,
       enteredAmount *
           getAmountRatioWalletTransferFrom(allWallets, walletFrom.walletPk),
@@ -1355,6 +1372,17 @@ class _TransferBalancePopupState extends State<TransferBalancePopup> {
                 });
               }),
             ],
+          ),
+          SelectObjective(
+            setSelectedObjective: (String? pk) {
+              setState(() {
+                selectedObjectivePk = pk;
+              });
+            },
+            selectedObjectivePk: selectedObjectivePk,
+            extraHorizontalPadding: 13,
+            wrapped: false,
+            objectiveType: ObjectiveType.goal,
           ),
           SelectAmount(
             amountTappableBuilder: (onLongPress, amountConverted) {
