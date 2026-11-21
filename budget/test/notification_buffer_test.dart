@@ -96,18 +96,6 @@ void main() {
         isTrue,
       );
 
-      // allowSimulationOverride takes precedence
-      expect(
-        GooglePayParser.isRecognizedPackage('com.android.shell',
-            isDebug: false, allowSimulationOverride: false),
-        isFalse,
-      );
-      expect(
-        GooglePayParser.isRecognizedPackage('com.android.shell',
-            isDebug: false, allowSimulationOverride: true),
-        isTrue,
-      );
-
       // Unrelated packages remain unrecognized even with simulation enabled
       expect(
         GooglePayParser.isRecognizedPackage('com.budget.tracker_app.debug',

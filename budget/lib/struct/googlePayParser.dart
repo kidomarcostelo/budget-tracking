@@ -84,11 +84,11 @@ class GooglePayParser {
 
   /// Checks if the package belongs to Google Wallet or Google Pay ecosystem.
   static bool isRecognizedPackage(String? packageName,
-      {bool isDebug = kDebugMode, bool? allowSimulationOverride}) {
+      {bool isDebug = kDebugMode}) {
     if (packageName == null) return false;
     if (recognizedPackages.contains(packageName)) return true;
-    final bool allowSimulation = allowSimulationOverride ??
-        (isDebug || appStateSettings["notificationScanningDebug"] == true);
+    final bool allowSimulation =
+        isDebug || appStateSettings["notificationScanningDebug"] == true;
     if (allowSimulation &&
         (packageName == 'android' || packageName == 'com.android.shell')) {
       return true;
